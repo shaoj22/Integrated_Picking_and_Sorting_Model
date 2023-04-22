@@ -7,7 +7,7 @@ Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import DrawTools
+import utils
 
 class Map:
     """ map class
@@ -81,28 +81,21 @@ class Map:
         dist = np.abs(x1-x2) + np.abs(y1-y2)
         return dist
 
-    def render(self):
+    def render(self, routes=[]):
         ax = plt.gca()
-        psize = 1
-        draw_tool = DrawTools(pixel_size=psize)
-        for idx in range(self.idx_num):
-            x, y = self.idx2xy[idx]
-            type = self.idx2type[idx]
-            # mirror y axis in picture
-            y = self.map_width - y - 1
-            # draw each type
-            if type == "pod":
-                draw_tool.draw_pixel(ax, x, y, facecolor='y') # 货架
-            elif type == "aisle":
-                draw_tool.draw_pixel(ax, x, y, facecolor='w') # 通道
-            elif type == "pickerIn":
-                draw_tool.draw_pixel(ax, x, y, facecolor='g') # 入口
-            elif type == "pickerOut":
-                draw_tool.draw_pixel(ax, x, y, facecolor='r') # 出口
-        plt.xlim(0, self.map_length * psize)
-        plt.ylim(0, self.map_width * psize)
-        plt.axis("off")
+        # draw map
+        draw_tool = utils.DrawTools() 
+        draw_tool.draw_map(ax, self)
+        # draw routes
+        for route in routes:
+            for edge in route:
+                # draw arrows
+                x1, y1 = self.idx2xy[edge[0]]
+                x2, y2 = self.idx2xy[edge[1]]
+                plt.arrow(x1, y1, x2-x1, y2-y1, head_width=0.5, head_length=1, fc='k', ec='k')
+        # show picture
         plt.show()
+       
 
 class Instance:
     """ instance class
@@ -149,6 +142,7 @@ class Instance:
         self.D1 = list(range(2*self.n, 3*self.n)) # 任务终点
         self.D2 = list(range(3*self.n, 4*self.n)) # 任务回程终点
         self.W = list(range(4*self.n, 4*self.n+self.robotNum)) # 机器人起点
+        self.N = self.P1 + self.P2 + self.D1 + self.D2 + self.W # 所有节点
         # calculate distance/time matrix
         self.disMatrix = self.cal_disMatrix()
         self.timeMatrix = self.disMatrix / self.robot_speed
@@ -195,7 +189,7 @@ class Instance:
         """
         robots = []
         for i in range(robot_num):
-            x, y = i, self.map.map_width-1 # 地图左下角
+            x, y = i+1, self.map.map_width-1 # 地图左下角
             idx = self.map.xy2idx[x, y]
             robot = {
                 "pos_idx" : idx, # 位置编号
@@ -285,13 +279,29 @@ class Instance:
                 disMatrix[i, j] = self.map.get_distance(self.nodes[i]["pos_idx"], self.nodes[j]["pos_idx"])
         return disMatrix
 
+    def render(self, routes=[], model=None):
+        """
+        input routes or model, draw map, robots, routes
+        """
+        ax = plt.gca()
+        draw_tool = utils.DrawTools() 
+        # draw map
+        draw_tool.draw_instance(ax, self)
+        # draw routes
+        if model is not None:
+            routes = utils.model2routes(model, self)
+        if routes:
+            draw_tool.draw_routes(ax, self.map, routes)
+        # draw robots
+        plt.show()
+
 if __name__ == "__main__":
     # generate instance
     w_num = 3
     l_num = 4
-    task_num = 10
-    robot_num = 3
+    task_num = 3
+    robot_num = 2
     instance = Instance(w_num, l_num, task_num, robot_num)
     print("generate {} tasks".format(10))
-    # show map structure
-    instance.map.render()
+    # show structure
+    instance.render()

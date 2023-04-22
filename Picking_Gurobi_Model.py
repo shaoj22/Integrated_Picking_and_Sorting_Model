@@ -81,12 +81,13 @@ class Picking_Gurobi_Model():
             MODEL.setParam("TimeLimit", self.time_limit)
         MODEL.optimize()
         end_Time = time.time()
-        Time = end_Time - start_Time
+        # 记录结果
+        result_info = {}
+        result_info["timecost"] = end_Time - start_Time
 
-        # 输出并记录解的情况
         if MODEL.status == 2:
             Obj = MODEL.ObjVal
-            # 记录下表是IP的解
+            # 经过各点的时间（可能松弛）
             SolutionT = []
             for i in self.N:
                 T = []
@@ -95,22 +96,27 @@ class Picking_Gurobi_Model():
                     T_i_k = MODEL.getVarByName(var_name1).X
                     T.append(T_i_k)
                 SolutionT.append(T)
+            # 有效的边
+            SolutionX = [[[i, j] for i in self.N for j in self.N if MODEL.getVarByName(f"x[{i},{j},{k}]").X == 1] for k in self.K]
         else:
             raise Exception("model is infeasible")
-        objBound = MODEL.objBound
-        end_Time = time.time()
-        Time =  end_Time - start_Time
-        return MODEL, Obj, Time, objBound, SolutionT
+        result_info["pass_times"] = SolutionT
+        result_info["valid_edges"] = SolutionX
+        result_info["best_obj"] = MODEL.ObjVal
+        result_info["upper_bound"] = MODEL.objBound
+        result_info["model"] = MODEL #? space cost
+        return result_info
 
 if __name__ == "__main__":
     w_num = 3
     l_num = 3
     task_num = 10
-    robot_num = 1
-    problem = Instance(w_num, l_num, task_num, robot_num)
-    alg = Picking_Gurobi_Model(Instance = problem, time_limit = 3600)
-    model, Obj, Time, objBound, SolutionT= alg.run_gurobi()
-    print("最优解为：", Obj)
-    print("上界：",objBound)
-    print(Time)
-    print(SolutionT)
+    robot_num = 2
+    instance = Instance(w_num, l_num, task_num, robot_num)
+    alg = Picking_Gurobi_Model(Instance = instance, time_limit = 3600)
+    result_info = alg.run_gurobi()
+    instance.render(model=result_info["model"])
+    print("最优解为：", result_info["best_obj"])
+    print("上界：",result_info["upper_bound"])
+    print("用时：", result_info["timecost"])
+    print("有效边：", result_info["valid_edges"])
