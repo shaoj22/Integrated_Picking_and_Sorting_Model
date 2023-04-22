@@ -232,12 +232,12 @@ class Picking_Gurobi_Model():
         return MODEL, Obj, Time, objBound, SolutionT, SolutionI, SolutionTo
 
 if __name__ == "__main__":
-    w_num = 2
-    l_num = 2
-    bins_num = 10
-    robot_num = 2
-    picking_station_num = 1
-    orders_num = 1
+    w_num = 4
+    l_num = 4
+    bins_num = 50
+    robot_num = 5
+    picking_station_num = 3
+    orders_num = 5
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     alg = Picking_Gurobi_Model(Instance = problem, time_limit = 3600)
     model, Obj, Time, objBound, SolutionT, SolutionI, SolutionTo = alg.run_gurobi()
