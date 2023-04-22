@@ -63,22 +63,31 @@ class DrawTools:
             row, col = instance.map.idx2xy[robot["pos_idx"]]
             self.draw_robot(ax, row, col, "r")
     
-    def draw_edge(self, ax, map, edge):
+    def draw_edge(self, ax, map, edge, color='r'):
         x1, y1 = map.idx2xy[edge[0]]
         x2, y2 = map.idx2xy[edge[1]]
-        plt.arrow(x1+self.psize/2, y1+self.psize/2, x2-x1, y2-y1, head_width=0.2, head_length=0.2, fc='k', ec='k')
+        plt.arrow(x1+self.psize/2, y1+self.psize/2, x2-x1, y2-y1, head_width=0.2, head_length=0.2, fc=color, ec=color)
     
     def draw_routes(self, ax, map, routes):
-        for route in routes:
-            for edge in route:
-                self.draw_edge(ax, map, edge)
+        color_list = ["r", "g", "b", "c", "m", "k", "w", "nav"]
+        for ri in range(len(routes)):
+            for edge in routes[ri]:
+                self.draw_edge(ax, map, edge, color=color_list[ri])
 
 def model2routes(model, instance):
     # get instance idx routes
     routes = [[[i, j] for i in instance.N for j in instance.N if model.getVarByName(f"x[{i},{j},{k}]").X == 1] for k in range(instance.robotNum)]
-    # transfer to map idx routes
+    # preprocess
     for route in routes:
-        for edge in route:
-            for i in range(2):
-                edge[i] = instance.nodes[edge[i]]["pos_idx"]
+        i = 0
+        while i < len(route):
+            edge = route[i]
+            # delete edge from node to robot start
+            if edge[1] in instance.W: 
+                route.pop(i)
+                continue
+            # transfer to map idx routes
+            for j in range(2):
+                edge[j] = instance.nodes[edge[j]]["pos_idx"]
+            i += 1
     return routes

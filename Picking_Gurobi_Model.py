@@ -56,8 +56,9 @@ class Picking_Gurobi_Model():
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N for k in self.K if j != i) >= 1 for i in self.N)
         # 4. 同一个任务用同一个车
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i) == gp.quicksum( x[j, 2 * self.n + i,k] for j in self.N) for i in (self.P1+self.P2) for k in self.K)
-        # 5. 一个车只能出发一次
-        MODEL.addConstrs( gp.quicksum( x[self.W[k],j,k] for j in self.N if j !=self.W[k]) == 1 for k in self.K)
+        # 5. 一个车只能从自己的出发点出发一次
+        MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p == self.W[k]) <= 1 for k in self.K)
+        MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p != self.W[k]) <= 0 for k in self.K)
         # 6. 载重约束
         MODEL.addConstrs( gp.quicksum( Q[i,k] for i in self.N ) <= self.Q for k in self.K)
         # 7. 时间约束
@@ -110,7 +111,7 @@ class Picking_Gurobi_Model():
 if __name__ == "__main__":
     w_num = 3
     l_num = 3
-    task_num = 10
+    task_num = 2
     robot_num = 2
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(Instance = instance, time_limit = 3600)
