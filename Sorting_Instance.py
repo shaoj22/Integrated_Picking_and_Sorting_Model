@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 class Instance():
-    def __init__(self, N = 5, P = 2, v = 0.25, O = 2, f1 = 5, bigM = 500, T1 = 10):
+    def __init__(self, N = 4, P = 2, v = 0.25, O = 1, f1 = 5, bigM = 500, T1 = 10):
         '''
         :param A: 用于控制料箱到达时间的常量矩阵
         :param S: 料箱i在拣选站处完成拣选需要的时间，即拣选时间；

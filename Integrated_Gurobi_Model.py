@@ -128,9 +128,9 @@ class Picking_Gurobi_Model():
         # --------------------------------------------------------------------------------------------------------------
         # 关于料箱i在拣选站p的结束拣选时间
         # 约束条件1：料箱i的结束拣选时间一定大于等于它的开始拣选时间（当yip=0时）
-        MODEL.addConstrs( Te[i,p] == Ts[i,p] + self.picking_time for i in range(self.n) for p in range(self.P))
+        MODEL.addConstrs( Te[i,p] == Ts[i,p] + self.picking_time * y[i,p] for i in range(self.n) for p in range(self.P))
         # 约束条件3：当料箱i去拣选站p时，Te=Ts+S
-        MODEL.addConstrs( Te[i,p] - self.picking_time - Ts[i,p] >= (y[i,p] - 1) * M for i in range(self.n) for p in range(self.P))
+        # MODEL.addConstrs( Te[i,p] - self.picking_time - Ts[i,p] >= (y[i,p] - 1) * M for i in range(self.n) for p in range(self.P))
         # --------------------------------------------------------------------------------------------------------------
         # 关于料箱i到达拣选站p的时间
         # 约束条件1：料箱i到达第一个拣选站p=0时的时间（初始化）：
@@ -138,7 +138,7 @@ class Picking_Gurobi_Model():
         # 约束条件3：料箱到达下一个拣选站的时间为：在上一个拣选站结束拣选的时间+路程时间（----------标记）约束条件3和约束条件2二选一就可以，到底是大于等于还是等于？
         MODEL.addConstrs( Ta[i,p] == Te[i,p-1] + (self.Dip[i][p] - self.Dip[i][p-1])/self.v for i in range(self.n) for p in range(1,self.P))
         # 约束条件4：开始拣选时间的约束——料箱i在p开始拣选的时间一定大于or等于在上一个拣选站结束拣选的时间+路程时间
-        MODEL.addConstrs( Ts[i,0] >= Ta[i,0] for i in range(self.n))
+        # MODEL.addConstrs( Ts[i,0] >= Ta[i,0] for i in range(self.n))
         MODEL.addConstrs( Ts[i, p] >= Ta[i, p] for i in range(self.n) for p in range(self.P))
         # MODEL.addConstrs( Ts[i,p] - Te[i,p-1] -(self.Dip[i][p] - self.Dip[i][p-1])/self.v >= 0 for i in range(self.N) for p in range(1,self.P))
         # --------------------------------------------------------------------------------------------------------------
@@ -234,10 +234,10 @@ class Picking_Gurobi_Model():
 if __name__ == "__main__":
     w_num = 4
     l_num = 4
-    bins_num = 50
-    robot_num = 5
-    picking_station_num = 3
-    orders_num = 5
+    bins_num = 10
+    robot_num = 2
+    picking_station_num = 2
+    orders_num = 2
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     alg = Picking_Gurobi_Model(Instance = problem, time_limit = 3600)
     model, Obj, Time, objBound, SolutionT, SolutionI, SolutionTo = alg.run_gurobi()
