@@ -117,7 +117,7 @@ class Instance:
         """
         # set params
         self.capacity = 8 # 机器人容量
-        self.pick_time = 30 # 环形拣选台拣货时间
+        self.pick_time = 120 # 环形拣选台拣货时间
         self.min_time_gap = 100 # readyTime和dueTime的最小间隔
         self.latest_ready_time = 100 # readyTime的最大值
         self.latest_due_time = 10000 # dueTime的最大值
