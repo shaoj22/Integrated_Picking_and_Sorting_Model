@@ -234,8 +234,8 @@ class Picking_Gurobi_Model():
 if __name__ == "__main__":
     w_num = 4
     l_num = 4
-    bins_num = 10
-    robot_num = 2
+    bins_num = 50
+    robot_num = 10
     picking_station_num = 2
     orders_num = 2
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
