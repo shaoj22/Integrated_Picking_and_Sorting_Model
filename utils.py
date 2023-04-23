@@ -69,10 +69,11 @@ class DrawTools:
         plt.arrow(x1+self.psize/2, y1+self.psize/2, x2-x1, y2-y1, head_width=0.2, head_length=0.2, fc=color, ec=color)
     
     def draw_routes(self, ax, map, routes):
-        color_list = ["r", "g", "b", "c", "m", "k", "w", "nav"]
+        cmap = plt.get_cmap('Set1')
+        colors = [cmap(i) for i in np.linspace(0, 1, len(routes))]
         for ri in range(len(routes)):
             for edge in routes[ri]:
-                self.draw_edge(ax, map, edge, color=color_list[ri])
+                self.draw_edge(ax, map, edge, color=colors[ri])
 
 def model2routes(model, instance):
     # get instance idx routes
