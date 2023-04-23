@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 class Instance():
-    def __init__(self, N = 4, P = 2, v = 0.25, O = 1, f1 = 5, bigM = 500, T1 = 10):
+    def __init__(self, N = 10, P = 2, v = 0.25, O = 2, f1 = 5, bigM = 300, T1 = 10):
         '''
         :param A: 用于控制料箱到达时间的常量矩阵
         :param S: 料箱i在拣选站处完成拣选需要的时间，即拣选时间；
@@ -61,7 +61,7 @@ class Instance():
             sum1 += sum(self.IO[i])
         self.sumIO = sum1
         # self.I = [ i * self.f1 for i in range(self.N)]
-        self.I = [ 4,4,4,5,5]
+        self.I = [ 4,4,4,5,5,6,6,8,9,10,12,35]
 
 
 if __name__ == "__main__":

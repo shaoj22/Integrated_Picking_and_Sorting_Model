@@ -89,7 +89,8 @@ class Picking_Gurobi_Model():
         # # 4. 同一个任务用同一个车
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i) == gp.quicksum( x[j, 2 * self.n + i,k] for j in self.N) for i in (self.P1+self.P2) for k in self.K)
         # 一个车只能出发一次
-        MODEL.addConstrs( gp.quicksum( x[self.W[k],j,k] for j in self.N if j !=self.W[k]) == 1 for k in self.K)
+        MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p == self.W[k]) <= 1 for k in self.K)
+        MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p != self.W[k]) <= 0 for k in self.K)
         # 5. 载重约束
         MODEL.addConstrs( gp.quicksum( Q[i,k] for i in self.N ) <= self.Q for k in self.K)
         # 6. 时间约束
@@ -99,10 +100,10 @@ class Picking_Gurobi_Model():
         MODEL.addConstrs( T[i, k] >= self.nodes[i]["readyTime"] for i in self.N for k in self.K)
         MODEL.addConstrs( T[i, k] <= self.nodes[i]["dueTime"] for i in self.N for k in self.K)
 
-        MODEL.addConstrs( T[i,k] - T[j,k] >= M * (f[i,j,k] - 1) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
-        MODEL.addConstrs( T[i,k] - T[j,k] <= M * f[i,j,k] for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
-        MODEL.addConstrs( T[i + 2 * self.n, k] - T[j + 2 * self.n, k] >= M * (f[i, j,k] - 1) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
-        MODEL.addConstrs( T[i + 2 * self.n, k] - T[j + 2 * self.n, k] <= M * f[i, j,k] for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
+        # MODEL.addConstrs( T[i,k] - T[j,k] >= M * (f[i,j,k] - 1) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
+        # MODEL.addConstrs( T[i,k] - T[j,k] <= M * f[i,j,k] for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
+        # MODEL.addConstrs( T[i + 2 * self.n, k] - T[j + 2 * self.n, k] >= M * (f[i, j,k] - 1) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
+        # MODEL.addConstrs( T[i + 2 * self.n, k] - T[j + 2 * self.n, k] <= M * f[i, j,k] for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
 
         # ______________________________________________________________________________________________________________
         # 到达P2的时间>=到达环形输送机出口的时间
@@ -232,15 +233,16 @@ class Picking_Gurobi_Model():
         return MODEL, Obj, Time, objBound, SolutionT, SolutionI, SolutionTo
 
 if __name__ == "__main__":
-    w_num = 4
-    l_num = 4
-    bins_num = 50
+    w_num = 3
+    l_num = 3
+    bins_num = 20
     robot_num = 10
     picking_station_num = 2
     orders_num = 2
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     alg = Picking_Gurobi_Model(Instance = problem, time_limit = 3600)
     model, Obj, Time, objBound, SolutionT, SolutionI, SolutionTo = alg.run_gurobi()
+    problem.render(model=model)
     print("最优解为：", Obj)
     print("上界：",objBound)
     print(Time)
