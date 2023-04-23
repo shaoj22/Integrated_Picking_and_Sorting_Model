@@ -23,17 +23,10 @@ class Picking_Gurobi_Model():
         # distance and time
         self.disMatrix = Instance.disMatrix
         self.timeMatrix = Instance.timeMatrix
-        self.bigM = 300
-
-
-
-
 
     def run_gurobi(self):
-        M = self.bigM # 大M
         start_Time = time.time() # 记录模型开始计算时间
         MODEL = gp.Model('Picking_Gurobi_Model') # 创建Gurobi模型
-        # MODEL.setParam('OutputFlag', 0)
         # 添加决策变量
         x_list = [(i,j,k) for i in self.N for j in self.N for k in self.K]
         x = MODEL.addVars(x_list, vtype=GRB.BINARY, name="x")  # 车k从点i去点j
@@ -42,17 +35,17 @@ class Picking_Gurobi_Model():
         T_list = [(i,k) for i in self.N for k in self.K]
         T = MODEL.addVars( T_list, vtype=GRB.CONTINUOUS, name="T")  # 车k在i的时间
         FT = MODEL.addVar( vtype=GRB.CONTINUOUS, name="FT") # 所有任务完成的时间
-        f_list = [(i,j,k) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K]
+        f_list = [(i,j) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2)]
         f = MODEL.addVars( f_list, vtype=GRB.BINARY, name="f")
         # 添加优化类型和目标函数
         MODEL.modelSense = GRB.MINIMIZE
         MODEL.setObjective( FT )
         # 添加约束条件
-        # 1. 最大完成时间约束：
+        # 1. 最大完成时间约束
         MODEL.addConstrs( FT >= T[i,k] for i in self.N for k in self.K)
-        # 2. 流平衡约束：
+        # 2. 流平衡约束
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i ) == gp.quicksum( x[j,i,k] for j in self.N if j !=i ) for i in self.N for k in self.K )
-        # 3. 完成所有任务：
+        # 3. 完成所有任务
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N for k in self.K if j != i) >= 1 for i in self.N)
         # 4. 同一个任务用同一个车
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i) == gp.quicksum( x[j, 2 * self.n + i,k] for j in self.N) for i in (self.P1+self.P2) for k in self.K)
@@ -62,7 +55,7 @@ class Picking_Gurobi_Model():
         # 6. 载重约束
         MODEL.addConstrs( gp.quicksum( Q[i,k] for i in self.N ) <= self.Q for k in self.K)
         # 7. 时间约束
-        MODEL.addConstrs( T[j,k] >= T[i,k] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"] - M * (1 - x[i,j,k]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) for k in self.K)
+        MODEL.addConstrs( (x[i, j, k] == 1) >> (T[j,k] >= T[i,k] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) for k in self.K)
         # 到达终点的时间>=起点+服务+路程时间
         MODEL.addConstrs( T[2 * self.n + i,k] >= T[i,k] + self.timeMatrix[i, 2 * self.n + i] + self.nodes[i]["serviceTime"] for i in (self.P1 + self.P2) for k in self.K)
 
@@ -71,15 +64,11 @@ class Picking_Gurobi_Model():
         # 到达P2的时间>=D1的时间+分拣站的服务时间
         MODEL.addConstrs( T[i - self.n,k] >= T[i, k] + self.delta_T for i in self.D1 for k in self.K)
 
-        MODEL.addConstrs( T[i,k] - T[j,k] >= M * (f[i,j,k] - 1) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
-        MODEL.addConstrs( T[i,k] - T[j,k] <= M * f[i,j,k] for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
-        MODEL.addConstrs( T[i + 2 * self.n, k] - T[j + 2 * self.n, k] >= M * (f[i, j,k] - 1) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
-        MODEL.addConstrs( T[i + 2 * self.n, k] - T[j + 2 * self.n, k] <= M * f[i, j,k] for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
-
         # --------------------------------------------------------------------------------------------------------------
         # 求解模型
         if self.time_limit is not None:
             MODEL.setParam("TimeLimit", self.time_limit)
+        # MODEL.setParam('OutputFlag', 0)
         MODEL.optimize()
         end_Time = time.time()
         # 记录结果
@@ -111,7 +100,7 @@ class Picking_Gurobi_Model():
 if __name__ == "__main__":
     w_num = 3
     l_num = 3
-    task_num = 2
+    task_num = 10
     robot_num = 2
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(Instance = instance, time_limit = 3600)
