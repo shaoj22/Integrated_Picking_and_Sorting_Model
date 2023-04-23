@@ -1,7 +1,7 @@
 import gurobipy as gp
 from gurobipy import GRB
 import time
-from instance import Instance
+from Picking_Instance import Instance
 
 class Picking_Gurobi_Model():
     def __init__(self, Instance, time_limit=None):
@@ -52,18 +52,18 @@ class Picking_Gurobi_Model():
         MODEL.addConstrs( FT >= T[i,k] for i in self.N for k in self.K)
         # 2. 流平衡约束：
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i ) == gp.quicksum( x[j,i,k] for j in self.N if j !=i ) for i in self.N for k in self.K )
-        # # 3. 完成所有任务：
+        # 3. 完成所有任务：
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N for k in self.K if j != i) >= 1 for i in self.N)
-        # # 4. 同一个任务用同一个车
+        # 4. 同一个任务用同一个车
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i) == gp.quicksum( x[j, 2 * self.n + i,k] for j in self.N) for i in (self.P1+self.P2) for k in self.K)
-        # 5. 载重约束
+        # 5. 一个车只能从自己的出发点出发一次
+        MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p == self.W[k]) <= 1 for k in self.K)
+        MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p != self.W[k]) <= 0 for k in self.K)
+        # 6. 载重约束
         MODEL.addConstrs( gp.quicksum( Q[i,k] for i in self.N ) <= self.Q for k in self.K)
-        # MODEL.addConstrs( Q[j,k] >= Q[i,k] + self.nodes[j]["demand"] -  self.Q * (1 - x[i,j,k]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) for k in self.K if i != j)
-        # MODEL.addConstrs( Q[i,k] >= 0 for i in self.N for k in self.K)
-        # MODEL.addConstrs( Q[i,k] <= self.Q for i in self.N for k in self.K)
-        # 6. 时间约束
+        # 7. 时间约束
         MODEL.addConstrs( T[j,k] >= T[i,k] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"] - M * (1 - x[i,j,k]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) for k in self.K)
-        # 到达终点的时间=起点+服务+路程时间
+        # 到达终点的时间>=起点+服务+路程时间
         MODEL.addConstrs( T[2 * self.n + i,k] >= T[i,k] + self.timeMatrix[i, 2 * self.n + i] + self.nodes[i]["serviceTime"] for i in (self.P1 + self.P2) for k in self.K)
 
         MODEL.addConstrs( T[i, k] >= self.nodes[i]["readyTime"] for i in self.N for k in self.K)
@@ -76,30 +76,19 @@ class Picking_Gurobi_Model():
         MODEL.addConstrs( T[i + 2 * self.n, k] - T[j + 2 * self.n, k] >= M * (f[i, j,k] - 1) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
         MODEL.addConstrs( T[i + 2 * self.n, k] - T[j + 2 * self.n, k] <= M * f[i, j,k] for i in (self.P1 + self.P2) for j in (self.P1 + self.P2) for k in self.K)
 
-
-
-
-
-
-
-
-
-
-
-
         # --------------------------------------------------------------------------------------------------------------
         # 求解模型
         if self.time_limit is not None:
             MODEL.setParam("TimeLimit", self.time_limit)
-        # 非线性优化参数
         MODEL.optimize()
         end_Time = time.time()
-        Time = end_Time - start_Time
+        # 记录结果
+        result_info = {}
+        result_info["timecost"] = end_Time - start_Time
 
-        # 输出并记录解的情况
         if MODEL.status == 2:
             Obj = MODEL.ObjVal
-            # 记录下表是IP的解
+            # 经过各点的时间（可能松弛）
             SolutionT = []
             for i in self.N:
                 T = []
@@ -108,24 +97,27 @@ class Picking_Gurobi_Model():
                     T_i_k = MODEL.getVarByName(var_name1).X
                     T.append(T_i_k)
                 SolutionT.append(T)
-
-
+            # 有效的边
+            SolutionX = [[[i, j] for i in self.N for j in self.N if MODEL.getVarByName(f"x[{i},{j},{k}]").X == 1] for k in self.K]
         else:
-            Obj = 0
-        objBound = MODEL.objBound
-        end_Time = time.time()
-        Time =  end_Time - start_Time
-        return MODEL, Obj, Time, objBound, SolutionT
+            raise Exception("model is infeasible")
+        result_info["pass_times"] = SolutionT
+        result_info["valid_edges"] = SolutionX
+        result_info["best_obj"] = MODEL.ObjVal
+        result_info["upper_bound"] = MODEL.objBound
+        result_info["model"] = MODEL #? space cost
+        return result_info
 
 if __name__ == "__main__":
-    w_num = 2
+    w_num = 3
     l_num = 3
     task_num = 2
-    robot_num = 1
-    problem = Instance(w_num, l_num, task_num, robot_num)
-    alg = Picking_Gurobi_Model(Instance = problem, time_limit = 3600)
-    model, Obj, Time, objBound, SolutionT= alg.run_gurobi()
-    print("最优解为：", Obj)
-    print("上界：",objBound)
-    print(Time)
-    print(SolutionT)
+    robot_num = 2
+    instance = Instance(w_num, l_num, task_num, robot_num)
+    alg = Picking_Gurobi_Model(Instance = instance, time_limit = 3600)
+    result_info = alg.run_gurobi()
+    instance.render(model=result_info["model"])
+    print("最优解为：", result_info["best_obj"])
+    print("上界：",result_info["upper_bound"])
+    print("用时：", result_info["timecost"])
+    print("有效边：", result_info["valid_edges"])
