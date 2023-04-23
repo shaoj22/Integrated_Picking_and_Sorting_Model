@@ -8,6 +8,7 @@ Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 import numpy as np
 import matplotlib.pyplot as plt
 import utils
+import tqdm
 
 class Map:
     """ map class
@@ -73,13 +74,49 @@ class Map:
                 # pod
                 self.idx2type[idx] = "pod"
                 self.type2idx["pod"].append(idx)
+        # set adjMatrix
+        self.set_adjMatrix()
+        # hash table record distance
+        self.dist_dict = {}
+
+    def set_adjMatrix(self):
+        # 设置邻接矩阵
+        self.adjMatrix = np.zeros((self.idx_num, self.idx_num))
+        for idx1 in range(self.idx_num):
+            x1, y1 = self.idx2xy[idx1]
+            # 将所有非pod格子的上下左右邻接关系设为1
+            if self.idx2type[idx1] != "pod":
+                for x2, y2 in [(x1-1, y1), (x1+1, y1), (x1, y1-1), (x1, y1+1)]:
+                    if 0 <= x2 < self.map_length and 0 <= y2 < self.map_width:
+                        idx2 = self.xy2idx[(x2, y2)]
+                        self.adjMatrix[idx1, idx2] = 1
 
     def get_distance(self, idx1, idx2):
-        # manhatton distance
-        x1, y1 = self.idx2xy[idx1]
-        x2, y2 = self.idx2xy[idx2]
-        dist = np.abs(x1-x2) + np.abs(y1-y2)
-        return dist
+        # 备忘录加速
+        if (idx1, idx2) in self.dist_dict:
+            return self.dist_dict[(idx1, idx2)]
+        # Dijkstra算法
+        visited = [False] * self.idx_num
+        distance = [float("inf")] * self.idx_num
+        distance[idx1] = 0
+        for i in range(self.idx_num):
+            # 找到未访问过的节点中距离起点最近的节点
+            min_idx = -1
+            min_dist = float("inf")
+            for idx in range(self.idx_num):
+                if not visited[idx] and distance[idx] < min_dist:
+                    min_idx = idx
+                    min_dist = distance[idx]
+            # 更新距离
+            visited[min_idx] = True
+            for idx in range(self.idx_num):
+                if not visited[idx] and self.adjMatrix[min_idx, idx] > 0:
+                    distance[idx] = min(distance[idx], distance[min_idx] + self.adjMatrix[min_idx, idx])
+        # 保存已求过的距离
+        for idx in range(self.idx_num):
+            self.dist_dict[(idx1, idx)] = distance[idx]
+            self.dist_dict[(idx, idx1)] = distance[idx]
+        return distance[idx2]
 
     def render(self, routes=[]):
         ax = plt.gca()
