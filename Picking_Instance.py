@@ -171,6 +171,7 @@ class Instance:
         self.D2 = list(range(3*self.n, 4*self.n)) # 任务回程终点
         self.W = list(range(4*self.n, 4*self.n+self.robotNum)) # 机器人起点
         self.N = self.P1 + self.P2 + self.D1 + self.D2 + self.W # 所有节点
+        self.K = list(range(self.robotNum)) # 机器人编号
         # calculate distance/time matrix
         self.disMatrix = self.cal_disMatrix()
         self.timeMatrix = self.disMatrix / self.robot_speed
