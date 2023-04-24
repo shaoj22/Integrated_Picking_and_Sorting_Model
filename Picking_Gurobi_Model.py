@@ -24,13 +24,15 @@ class Picking_Gurobi_Model():
         self.disMatrix = instance.disMatrix
         self.timeMatrix = instance.timeMatrix
     
-    def build_model(self, MODEL, delta_T=0):
+    def build_model(self, MODEL, delta_T=-1):
         """build objective, variables and constraints in picking problem    
 
         Args:
             MODEL (gurobi.model): original model
-            delta_T (int, optional): picking average time, 0 means ignore this constraint. Defaults to 0.
+            delta_T (int, optional): picking average time, -1 means ignore this constraint. Defaults to -1.
         """
+        if delta_T == -1:
+            delta_T = self.delta_T
         # 添加决策变量
         x_list = [(i,j,k) for i in self.N for j in self.N for k in self.K]
         x = MODEL.addVars(x_list, vtype=GRB.BINARY, name="x")  # 车k从点i去点j

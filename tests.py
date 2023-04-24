@@ -4,19 +4,21 @@ Project: Integrated_Picking---Sorting_Model
 File Created: Monday, 24th April 2023 10:42:23 am
 Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 '''
-from Integrated_Gurobi_Model import *
+import Integrated_Gurobi_Model
+import Picking_Gurobi_Model
 import numpy as np
+import time
 import utils
 
-def test_evaluate():
+def test_integrated_evaluate():
     w_num = 3
     l_num = 3
     bins_num = 5
     robot_num = 3
     picking_station_num = 2
     orders_num = 2
-    problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
-    alg = Integrated_Gurobi_Model(instance = problem, time_limit = 3600)
+    problem = Integrated_Gurobi_Model.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    alg = Integrated_Gurobi_Model.Integrated_Gurobi_Model(instance = problem, time_limit = 3600)
     model, Obj, Time, objBound, SolutionT, SolutionI, SolutionTo = alg.run_gurobi()
     print("\nmodel obj = {}, time_cost = {}".format(Obj, Time))
     # get solution
@@ -35,11 +37,33 @@ def test_evaluate():
             z_val[i][j] = model.getVarByName(f'z[{i},{j}]').x
     # evaluate solution
     start = time.time()
-    obj = utils.evaluate(problem, x_val, y_val, z_val)
+    obj = utils.integrated_evaluate(problem, x_val, y_val, z_val)
+    end = time.time()
+    print("evaluate obj = {}, time_cost = {}".format(obj, end - start))
+
+def test_picking_evaluate():
+    w_num = 3
+    l_num = 3
+    task_num = 5
+    robot_num = 2
+    instance = Picking_Gurobi_Model.Instance(w_num, l_num, task_num, robot_num)
+    alg = Picking_Gurobi_Model.Picking_Gurobi_Model(instance = instance, time_limit = 3600)
+    result_info = alg.run_gurobi()
+    model = result_info["model"]
+    # get solution
+    x_val = np.zeros((instance.nodeNum, instance.nodeNum, instance.robotNum))
+    for i in instance.N:
+        for j in instance.N:
+            for k in instance.K:
+                x_val[i][j][k] = model.getVarByName(f'x[{i},{j},{k}]').x
+    # evaluate solution
+    start = time.time()
+    obj = utils.picking_evaluate(instance, x_val)
     end = time.time()
     print("evaluate obj = {}, time_cost = {}".format(obj, end - start))
 
 if __name__ == "__main__":
-    test_evaluate()
+    # test_integrated_evaluate()
+    test_picking_evaluate()
 
 

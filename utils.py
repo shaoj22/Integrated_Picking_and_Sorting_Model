@@ -96,11 +96,11 @@ def instance_routes2map_routes(instance, routes):
             i += 1
     return routes
 
-def evaluate(instance, x_val, y_val, z_val):
+def integrated_evaluate(instance, x_val, y_val, z_val):
     """ evaluate solution with gurobi model
 
     Args:
-        instance (Integrated_Gurobi_Model): instance to build model
+        instance (Integrated_Gurobi_Model): integrated instance to build model
         x_val (list/ndarray[i,j,k]): values of variables x
         y_val (list/ndarray[i,p]): values of variables y
         z_val (list/ndarray[o,p]): values of variables z
@@ -141,3 +141,35 @@ def evaluate(instance, x_val, y_val, z_val):
     model.setParam("OutputFlag", 0)
     model.optimize()
     return model.ObjVal
+
+def picking_evaluate(instance, x_val):
+    """ evaluate solution with gurobi model
+
+    Args:
+        instance (Picking_Gurobi_Model): picking instance to build model
+        x_val (list/ndarray[i,j]): values of variables x
+
+    Returns:
+        obj: objective value of solution
+    """
+    from Picking_Gurobi_Model import Picking_Gurobi_Model
+    import gurobipy as gp
+    # 1. build model
+    model_builder = Picking_Gurobi_Model(instance)
+    model = gp.Model("Evaluate_Picking_Model")
+    # 2. set variables value
+    info = model_builder.build_model(model)
+    x = info["x"]
+    for i in instance.N:
+        for j in instance.N:
+            for k in instance.K:
+                if x_val[i, j, k] == 1:
+                    x[i, j, k].setAttr("LB", 1)
+                elif x_val[i, j, k] == 0:
+                    x[i, j, k].setAttr("UB", 0)
+    # 3. solve model
+    model.setParam("OutputFlag", 0)
+    model.optimize()
+    return model.ObjVal
+
+    
