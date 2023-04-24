@@ -75,10 +75,13 @@ class DrawTools:
             for edge in routes[ri]:
                 self.draw_edge(ax, map, edge, color=colors[ri])
 
-def model2routes(model, instance):
+def model2instance_routes(model, instance):
     # get instance idx routes
     routes = [[[i, j] for i in instance.N for j in instance.N if model.getVarByName(f"x[{i},{j},{k}]").X == 1] for k in range(instance.robotNum)]
-    # preprocess
+    return routes
+
+def instance_routes2map_routes(instance, routes):
+    # preprocess instance routes to map routes for render
     for route in routes:
         i = 0
         while i < len(route):
@@ -92,3 +95,38 @@ def model2routes(model, instance):
                 edge[j] = instance.nodes[edge[j]]["pos_idx"]
             i += 1
     return routes
+
+def evaluate(instance, x_val, y_val, z_val):
+    """ evaluate solution with gurobi model
+
+    Args:
+        instance (Integrated_Gurobi_Model): instance to build model
+        x_val (list/ndarray[i,j,k]): values of variables x
+        y_val (list/ndarray[i,p]): values of variables y
+        z_val (list/ndarray[o,p]): values of variables z
+
+    Returns:
+        obj: objective value of solution
+    """
+    # 1. build model
+    model_builder = Integrated_Gurobi_Model(instance)
+    model = gp.Model("Evaluate_Integrated_Model")
+    # 2. set variables value
+    info = model_builder.build_model(model)
+    x = info["x"]
+    y = info["y"]
+    z = info["z"]
+    for i in instance.N:
+        for j in instance.N:
+            for k in instance.K:
+                x[i, j, k].setAttr("X", x_val[i, j, k])
+    for i in range(instance.n):
+        for p in instance.P:
+            y[i, p].setAttr("X", y_val[i, p])
+    for o in instance.O:
+        for p in instance.P:
+            z[o, p].setAttr("X", z_val[o, p])
+    # 3. solve model
+    model.setParam("OutputFlag", 0)
+    model.optimize()
+    return model.ObjVal

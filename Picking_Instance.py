@@ -311,6 +311,7 @@ class Instance:
     def render(self, routes=[], model=None):
         """
         input routes or model, draw map, robots, routes
+        ps: routes here is instance routes
         """
         ax = plt.gca()
         draw_tool = utils.DrawTools() 
@@ -318,9 +319,10 @@ class Instance:
         draw_tool.draw_instance(ax, self)
         # draw routes
         if model is not None:
-            routes = utils.model2routes(model, self)
+            routes = utils.model2instance_routes(model, self)
         if routes:
-            draw_tool.draw_routes(ax, self.map, routes)
+            map_routes = utils.instance_routes2map_routes(self, routes)
+            draw_tool.draw_routes(ax, self.map, map_routes)
         # draw robots
         plt.show()
 
