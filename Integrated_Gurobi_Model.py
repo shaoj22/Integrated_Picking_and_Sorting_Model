@@ -19,13 +19,10 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
 
         self.bigM = 1000
 
-    def run_gurobi(self):
+    def build_model(self, MODEL):
         M = self.bigM # 大M
-        start_Time = time.time() # 记录模型开始计算时间
-        MODEL = gp.Model('Picking_and_Sorting_Gurobi_Model') # 创建Gurobi模型
-        info = self.build_model(MODEL, delta_T=0) # 构建模型
+        info = super().build_model(MODEL, delta_T=0) # 构建picking模型
         T = info["T"] # 获取T变量
-        # MODEL.setParam('OutputFlag', 0)
         # 添加决策变量
         I_list = [ i for i in range(self.n)]
         I = MODEL.addVars( I_list, vtype=GRB.INTEGER, name="I")  # 料箱i的初始到达输送机的时间
@@ -41,11 +38,6 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         Te = MODEL.addVars(Te_list, vtype=GRB.INTEGER, name="Te" ) # 料箱i在拣选站p的结束拣选时间
         f2_list = [(i,j,p) for i in range(self.n) for j in range(self.n) for p in range(self.P)]
         f2 = MODEL.addVars( f2_list, vtype=GRB.BINARY, name="f2") # 料箱i是否先于料箱j到达拣选站p
-
-
-
-
-
 
 
         # 添加约束条件
@@ -90,23 +82,15 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # 拣选站处的缓存区大小约束
         MODEL.addConstrs( Ts[i,p] - Ta[i,p] <= (8-1) * self.picking_time for i in range(self.n) for p in range(self.P))
 
+    def run_gurobi(self):
+        start_Time = time.time() # 记录模型开始计算时间
+        MODEL = gp.Model('Picking_and_Sorting_Gurobi_Model') # 创建Gurobi模型
+        self.build_model(MODEL) # 构建模型目标、约束
 
-
-
-
-
-
-
-
-
-
-
-
-
-        # --------------------------------------------------------------------------------------------------------------
         # 求解模型
         if self.time_limit is not None:
             MODEL.setParam("TimeLimit", self.time_limit)
+        MODEL.setParam("OutputFlag", 1)
         # 非线性优化参数
         MODEL.optimize()
         end_Time = time.time()
