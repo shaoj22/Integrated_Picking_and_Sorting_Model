@@ -4,29 +4,33 @@ import time
 from Picking_Instance import Instance
 
 class Picking_Gurobi_Model():
-    def __init__(self, Instance, time_limit=None):
+    def __init__(self, instance, time_limit=None):
         # time_limit
         self.time_limit = time_limit
-        self.Q = Instance.capacity
-        self.delta_T = Instance.pick_time
+        self.Q = instance.capacity
+        self.delta_T = instance.pick_time
         # point
-        self.N = list(range(Instance.nodeNum))
-        self.nodes = Instance.nodes
-        self.n = Instance.n
-        self.P1 = Instance.P1
-        self.P2 = Instance.P2
-        self.D1 = Instance.D1
-        self.D2 = Instance.D2
-        self.W = Instance.W
+        self.N = list(range(instance.nodeNum))
+        self.nodes = instance.nodes
+        self.n = instance.n
+        self.P1 = instance.P1
+        self.P2 = instance.P2
+        self.D1 = instance.D1
+        self.D2 = instance.D2
+        self.W = instance.W
         # robot
-        self.K = list(range(Instance.robotNum))
+        self.K = list(range(instance.robotNum))
         # distance and time
-        self.disMatrix = Instance.disMatrix
-        self.timeMatrix = Instance.timeMatrix
+        self.disMatrix = instance.disMatrix
+        self.timeMatrix = instance.timeMatrix
+    
+    def build_model(self, MODEL, delta_T=0):
+        """build objective, variables and constraints in picking problem    
 
-    def run_gurobi(self):
-        start_Time = time.time() # 记录模型开始计算时间
-        MODEL = gp.Model('Picking_Gurobi_Model') # 创建Gurobi模型
+        Args:
+            MODEL (gurobi.model): original model
+            delta_T (int, optional): picking average time, 0 means ignore this constraint. Defaults to 0.
+        """
         # 添加决策变量
         x_list = [(i,j,k) for i in self.N for j in self.N for k in self.K]
         x = MODEL.addVars(x_list, vtype=GRB.BINARY, name="x")  # 车k从点i去点j
@@ -62,9 +66,17 @@ class Picking_Gurobi_Model():
         MODEL.addConstrs( T[i, k] >= self.nodes[i]["readyTime"] for i in self.N for k in self.K)
         MODEL.addConstrs( T[i, k] <= self.nodes[i]["dueTime"] for i in self.N for k in self.K)
         # 到达P2的时间>=D1的时间+分拣站的服务时间
-        MODEL.addConstrs( T[i - self.n,k] >= T[i, k] + self.delta_T for i in self.D1 for k in self.K)
+        MODEL.addConstrs( T[i - self.n,k] >= T[i, k] + delta_T for i in self.D1 for k in self.K)
 
-        # --------------------------------------------------------------------------------------------------------------
+        info = {
+            "T" : T
+        }
+        return info
+
+    def run_gurobi(self):
+        start_Time = time.time() # 记录模型开始计算时间
+        MODEL = gp.Model('Picking_Gurobi_Model') # 创建Gurobi模型
+        self.build_model(MODEL, delta_T=self.delta_T) # 创建模型
         # 求解模型
         if self.time_limit is not None:
             MODEL.setParam("TimeLimit", self.time_limit)
@@ -103,7 +115,7 @@ if __name__ == "__main__":
     task_num = 10
     robot_num = 2
     instance = Instance(w_num, l_num, task_num, robot_num)
-    alg = Picking_Gurobi_Model(Instance = instance, time_limit = 3600)
+    alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
     result_info = alg.run_gurobi()
     instance.render(model=result_info["model"])
     print("最优解为：", result_info["best_obj"])
