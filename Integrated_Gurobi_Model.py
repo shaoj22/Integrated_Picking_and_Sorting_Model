@@ -82,6 +82,10 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # 拣选站处的缓存区大小约束
         MODEL.addConstrs( Ts[i,p] - Ta[i,p] <= (8-1) * self.picking_time for i in range(self.n) for p in range(self.P))
 
+        info["y"] = y
+        info["z"] = z
+        return info
+
     def run_gurobi(self):
         start_Time = time.time() # 记录模型开始计算时间
         MODEL = gp.Model('Picking_and_Sorting_Gurobi_Model') # 创建Gurobi模型

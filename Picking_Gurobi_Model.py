@@ -69,7 +69,8 @@ class Picking_Gurobi_Model():
         MODEL.addConstrs( T[i - self.n,k] >= T[i, k] + delta_T for i in self.D1 for k in self.K)
 
         info = {
-            "T" : T
+            "x" : x, 
+            "T" : T, 
         }
         return info
 
