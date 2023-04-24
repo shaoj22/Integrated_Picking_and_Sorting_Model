@@ -108,6 +108,8 @@ def evaluate(instance, x_val, y_val, z_val):
     Returns:
         obj: objective value of solution
     """
+    from Integrated_Gurobi_Model import Integrated_Gurobi_Model
+    import gurobipy as gp
     # 1. build model
     model_builder = Integrated_Gurobi_Model(instance)
     model = gp.Model("Evaluate_Integrated_Model")
@@ -119,13 +121,22 @@ def evaluate(instance, x_val, y_val, z_val):
     for i in instance.N:
         for j in instance.N:
             for k in instance.K:
-                x[i, j, k].setAttr("X", x_val[i, j, k])
+                if x_val[i, j, k] == 1:
+                    x[i, j, k].setAttr("LB", 1)
+                elif x_val[i, j, k] == 0:
+                    x[i, j, k].setAttr("UB", 0)
     for i in range(instance.n):
-        for p in instance.P:
-            y[i, p].setAttr("X", y_val[i, p])
-    for o in instance.O:
-        for p in instance.P:
-            z[o, p].setAttr("X", z_val[o, p])
+        for p in range(instance.P):
+            if y_val[i, p] == 1:
+                y[i, p].setAttr("LB", 1)
+            elif y_val[i, p] == 0:
+                y[i, p].setAttr("UB", 0)
+    for o in range(instance.O):
+        for p in range(instance.P):
+            if z_val[o, p] == 1:
+                z[o, p].setAttr("LB", 1)
+            elif z_val[o, p] == 0:
+                z[o, p].setAttr("UB", 0)
     # 3. solve model
     model.setParam("OutputFlag", 0)
     model.optimize()
