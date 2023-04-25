@@ -75,32 +75,32 @@ class DrawTools:
             for edge in routes[ri]:
                 self.draw_edge(ax, map, edge, color=colors[ri])
 
-def model2instance_routes(model, instance):
-    # get instance idx routes
-    routes = [[[i, j] for i in instance.N for j in instance.N if model.getVarByName(f"x[{i},{j},{k}]").X == 1] for k in range(instance.robotNum)]
+def model2instance_routes(model, picking_instance):
+    # get picking_instance idx routes
+    routes = [[[i, j] for i in picking_instance.N for j in picking_instance.N if model.getVarByName(f"x[{i},{j},{k}]").X == 1] for k in range(picking_instance.robotNum)]
     return routes
 
-def instance_routes2map_routes(instance, routes):
-    # preprocess instance routes to map routes for render
+def instance_routes2map_routes(picking_instance, routes):
+    # preprocess picking_instance routes to map routes for render
     for route in routes:
         i = 0
         while i < len(route):
             edge = route[i]
             # delete edge from node to robot start
-            if edge[1] in instance.W: 
+            if edge[1] in picking_instance.W: 
                 route.pop(i)
                 continue
             # transfer to map idx routes
             for j in range(2):
-                edge[j] = instance.nodes[edge[j]]["pos_idx"]
+                edge[j] = picking_instance.nodes[edge[j]]["pos_idx"]
             i += 1
     return routes
 
-def integrated_evaluate(instance, x_val, y_val, z_val):
+def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     """ evaluate solution with gurobi model
 
     Args:
-        instance (Integrated_Gurobi_Model): integrated instance to build model
+        integrated_instance (Integrated_Gurobi_Model): integrated instance to build model
         x_val (list/ndarray[i,j,k]): values of variables x
         y_val (list/ndarray[i,p]): values of variables y
         z_val (list/ndarray[o,p]): values of variables z
@@ -110,29 +110,32 @@ def integrated_evaluate(instance, x_val, y_val, z_val):
     """
     from Integrated_Gurobi_Model import Integrated_Gurobi_Model
     import gurobipy as gp
+    x_val = np.array(x_val)
+    y_val = np.array(y_val)
+    z_val = np.array(z_val)
     # 1. build model
-    model_builder = Integrated_Gurobi_Model(instance)
+    model_builder = Integrated_Gurobi_Model(integrated_instance)
     model = gp.Model("Evaluate_Integrated_Model")
     # 2. set variables value
     info = model_builder.build_model(model)
     x = info["x"]
     y = info["y"]
     z = info["z"]
-    for i in instance.N:
-        for j in instance.N:
-            for k in instance.K:
+    for i in integrated_instance.N:
+        for j in integrated_instance.N:
+            for k in integrated_instance.K:
                 if x_val[i, j, k] == 1:
                     x[i, j, k].setAttr("LB", 1)
                 elif x_val[i, j, k] == 0:
                     x[i, j, k].setAttr("UB", 0)
-    for i in range(instance.n):
-        for p in range(instance.P):
+    for i in range(integrated_instance.n):
+        for p in range(integrated_instance.P):
             if y_val[i, p] == 1:
                 y[i, p].setAttr("LB", 1)
             elif y_val[i, p] == 0:
                 y[i, p].setAttr("UB", 0)
-    for o in range(instance.O):
-        for p in range(instance.P):
+    for o in range(integrated_instance.O):
+        for p in range(integrated_instance.P):
             if z_val[o, p] == 1:
                 z[o, p].setAttr("LB", 1)
             elif z_val[o, p] == 0:
@@ -142,34 +145,93 @@ def integrated_evaluate(instance, x_val, y_val, z_val):
     model.optimize()
     return model.ObjVal
 
-def picking_evaluate(instance, x_val):
+def build_picking_evaluate_model(picking_instance, x_val):
+    """ build gurobi model for evaluate picking solution
+
+    Args:
+        picking_instance (Picking_Gurobi_Model): picking instance to build model
+        x_val (list/ndarray[i,j]): values of variables x
+
+    Returns:
+        model: gurobi model
+    """
+    from Picking_Gurobi_Model import Picking_Gurobi_Model
+    import gurobipy as gp
+    # 1. build model
+    model_builder = Picking_Gurobi_Model(picking_instance)
+    model = gp.Model("Evaluate_Picking_Model")
+    # 2. set variables value
+    info = model_builder.build_model(model)
+    x = info["x"]
+    for i in picking_instance.N:
+        for j in picking_instance.N:
+            for k in picking_instance.K:
+                if x_val[i, j, k] == 1:
+                    x[i, j, k].setAttr("LB", 1)
+                elif x_val[i, j, k] == 0:
+                    x[i, j, k].setAttr("UB", 0)
+    # 3. update model
+    model.update()
+    return model
+
+def picking_evaluate(picking_instance, x_val):
     """ evaluate solution with gurobi model
 
     Args:
-        instance (Picking_Gurobi_Model): picking instance to build model
+        picking_instance (Picking_Gurobi_Model): picking instance to build model
         x_val (list/ndarray[i,j]): values of variables x
 
     Returns:
         obj: objective value of solution
     """
-    from Picking_Gurobi_Model import Picking_Gurobi_Model
-    import gurobipy as gp
-    # 1. build model
-    model_builder = Picking_Gurobi_Model(instance)
-    model = gp.Model("Evaluate_Picking_Model")
-    # 2. set variables value
-    info = model_builder.build_model(model)
-    x = info["x"]
-    for i in instance.N:
-        for j in instance.N:
-            for k in instance.K:
-                if x_val[i, j, k] == 1:
-                    x[i, j, k].setAttr("LB", 1)
-                elif x_val[i, j, k] == 0:
-                    x[i, j, k].setAttr("UB", 0)
-    # 3. solve model
+    model = build_picking_evaluate_model(picking_instance, x_val) 
     model.setParam("OutputFlag", 0)
     model.optimize()
     return model.ObjVal
 
-    
+def build_picking_integrated_evluate_model(integrated_instance, x_val):
+    """ build gurobi model for evaluate picking solution
+
+    Args:
+        integrated_instance (Integrated_Gurobi_Model): integrated instance to build model
+        x_val (list/ndarray[i,j]): values of variables x
+
+    Returns:
+        model: gurobi model
+    """
+    from Integrated_Gurobi_Model import Integrated_Gurobi_Model
+    import gurobipy as gp
+    # 1. build model
+    model_builder = Integrated_Gurobi_Model(integrated_instance)
+    model = gp.Model("Evaluate_Picking_Integrated_Model")
+    # 2. set variables value
+    info = model_builder.build_model(model)
+    x = info["x"]
+    for i in integrated_instance.N:
+        for j in integrated_instance.N:
+            for k in integrated_instance.K:
+                if x_val[i, j, k] == 1:
+                    x[i, j, k].setAttr("LB", 1)
+                elif x_val[i, j, k] == 0:
+                    x[i, j, k].setAttr("UB", 0)
+    # 3. update model
+    model.update()
+    return model
+
+def picking_integrated_evaluate(integrated_instance, x_val):
+    """ evaluate solution with gurobi model
+
+    Args:
+        instance (Integrated_Gurobi_Model): integrated instance to build model
+        x_val (list/ndarray[i,j]): values of variables x
+
+    Returns:
+        obj: objective value of solution
+    """
+    model = build_picking_integrated_evluate_model(integrated_instance, x_val) 
+    model.setParam("OutputFlag", 0)
+    model.optimize()
+    return model.ObjVal
+
+
+

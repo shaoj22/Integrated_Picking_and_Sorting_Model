@@ -62,8 +62,33 @@ def test_picking_evaluate():
     end = time.time()
     print("evaluate obj = {}, time_cost = {}".format(obj, end - start))
 
+def test_picking_integrated_evluate():
+    w_num = 3
+    l_num = 3
+    task_num = 5
+    robot_num = 2
+    picking_instance = Picking_Gurobi_Model.Instance(w_num, l_num, task_num, robot_num)
+    alg = Picking_Gurobi_Model.Picking_Gurobi_Model(instance = picking_instance, time_limit = 3600)
+    result_info = alg.run_gurobi()
+    model = result_info["model"]
+    # get solution
+    x_val = np.zeros((picking_instance.nodeNum, picking_instance.nodeNum, picking_instance.robotNum))
+    for i in picking_instance.N:
+        for j in picking_instance.N:
+            for k in picking_instance.K:
+                x_val[i][j][k] = model.getVarByName(f'x[{i},{j},{k}]').x
+    # evaluate solution
+    pickers_num = 10
+    orders_num = 5
+    integrated_instance = Integrated_Gurobi_Model.Instance(w_num, l_num, task_num, robot_num, pickers_num, orders_num)
+    start = time.time()
+    obj = utils.picking_integrated_evaluate(integrated_instance, x_val)
+    end = time.time()
+    print("evaluate obj = {}, time_cost = {}".format(obj, end - start))
+
 if __name__ == "__main__":
     # test_integrated_evaluate()
-    test_picking_evaluate()
+    # test_picking_evaluate()
+    test_picking_integrated_evluate()
 
 
