@@ -39,7 +39,7 @@ class Sorting_Gurobi():
         self.f1 = Instance.f1
         self.T1 = Instance.T1
         self.sumIO = Instance.sumIO
-        self.bigM = Instance.bigM
+        self.bigM = 500 
         self.I = Instance.I
         self.time_limit = time_limit
 
@@ -58,9 +58,9 @@ class Sorting_Gurobi():
         S = MODEL.addVars( S_list, vtype=GRB.INTEGER, name="S")  # 料箱i在拣选站p的拣选时间
         y_list = [(i, p) for i in range(self.N) for p in range(self.P)]
         y = MODEL.addVars(y_list, vtype=GRB.BINARY, name="y") # 料箱i是否被分配给了拣选站p
-        z_list = [(o,p) for o in range(self.O) for p in range(self.P)]
+        z_list = [(o, p) for o in range(self.O) for p in range(self.P)]
         z = MODEL.addVars(z_list, vtype=GRB.BINARY, name="z") # 订单o是否被分配给了拣选站p
-        Ta_list = [(i,p) for i in range(self.N) for p in range(self.P)]
+        Ta_list = [(i, p) for i in range(self.N) for p in range(self.P)]
         Ta = MODEL.addVars(Ta_list, vtype=GRB.INTEGER, name="Ta") # 料箱i到达拣选站p的时间
         Ts_list = [(i, p) for i in range(self.N) for p in range(self.P)]
         Ts = MODEL.addVars(Ts_list, vtype=GRB.INTEGER, name="Ts")  # 料箱i在拣选站p的开始拣选时间
@@ -118,93 +118,56 @@ class Sorting_Gurobi():
         # 拣选站处的缓存区大小约束
         MODEL.addConstrs( Ts[i,p] - Ta[i,p] <= (8-1) * self.T1 for i in range(self.N) for p in range(self.P))
 
-
-
-
         # --------------------------------------------------------------------------------------------------------------
-        # 求解模型
+         # 求解模型
         if self.time_limit is not None:
             MODEL.setParam("TimeLimit", self.time_limit)
-        # 非线性优化参数
+        # MODEL.setParam('OutputFlag', 0)
         MODEL.optimize()
         end_Time = time.time()
-        Time = end_Time - start_Time
+        # 记录结果
+        result_info = {}
+        result_info["timecost"] = end_Time - start_Time
 
-        # 输出并记录解的情况
         if MODEL.status == 2:
             Obj = MODEL.ObjVal
-            # 记录下表是IP的解
+            # 决策变量Y
             SolutionY = []
-            SolutionTS = []
-            SolutionTo = []
-            SolutionZ = []
-            SolutionTe = []
-            SolutionTa = []
             for i in range(self.N):
                 Y = []
-                TS = []
-                To = []
-                TE = []
-                TA = []
-                for j in range(self.P):
-                    var_name1 = f"y[{i},{j}]"
-                    var_name2 = f"Ts[{i},{j}]"
-                    var_nameTe = f"Te[{i},{j}]"
-                    var_nameTa = f"Ta[{i},{j}]"
-                    y_i_j = MODEL.getVarByName(var_name1).X
-                    Ts_i_j = MODEL.getVarByName(var_name2).X
-                    Te_i_j = MODEL.getVarByName(var_nameTe).X
-                    Ta_i_j = MODEL.getVarByName(var_nameTa).X
-                    Y.append(y_i_j)
-                    TS.append(Ts_i_j)
-                    To.append(Te_i_j+self.Dpi[i][j]/self.v)
-                    TE.append(Te_i_j)
-                    TA.append(Ta_i_j)
+                for p in range(self.P):
+                    var_name1 = f"y[{i},{p}]"
+                    y_i_p = MODEL.getVarByName(var_name1).X
+                    Y.append(y_i_p)
                 SolutionY.append(Y)
-                SolutionTS.append(TS)
-                SolutionTo.append(To)
-                SolutionTe.append(TE)
-                SolutionTa.append(TA)
-            # 记录下表是OP的解
+
+            # 决策变量Z
             SolutionZ = []
             for i in range(self.O):
                 Z = []
                 for j in range(self.P):
-                    var_name3 = f"z[{i},{j}]"
-                    z_i_j = MODEL.getVarByName(var_name3).X
+                    var_name2 = f"z[{i},{j}]"
+                    z_i_j = MODEL.getVarByName(var_name2).X
                     Z.append(z_i_j)
                 SolutionZ.append(Z)
-            # 记录I的解
-            SolutionI = []
-            for i in range(self.N):
-                var_name4 = f"I[{i}]"
-                I_i =MODEL.getVarByName(var_name4).X
-                SolutionI.append(I_i)
-
 
         else:
-            Obj = 0
-        objBound = MODEL.objBound
-        end_Time = time.time()
-        Time =  end_Time - start_Time
-        return MODEL, Obj, Time, objBound, SolutionY, SolutionTS, SolutionTo, SolutionZ, SolutionI, SolutionTe, SolutionTa
+            raise Exception("model is infeasible")
+        result_info["decision_variable_y"] = SolutionY
+        result_info["decision_variable_z"] = SolutionZ
+        result_info["best_obj"] = MODEL.ObjVal
+        result_info["upper_bound"] = MODEL.objBound
+        result_info["model"] = MODEL 
+
+        return result_info
+
 
 if __name__ == "__main__":
-    problem = Instance()
+    T = 0
+    N = 50
+    P = 10
+    O = 5
+    # 输入T N P O，可以得到Y Z 决策变量，存储于result_info里面。
+    problem = Instance(T, N, P, O)
     alg = Sorting_Gurobi(Instance = problem, time_limit=1800)
-    model, Obj, Time, objBound, SolutionY, SolutionTS, SolutionTo, SolutionZ, SolutionI, SolutionTe, SolutionTa= alg.run_gurobi()
-    # print('-' * 50)
-    print("最优解为：", Obj)
-    print("上界：",objBound)
-    print("料箱的初始达到时间：", problem.I)
-    print('-' * 50)
-    print("料箱分配结果：",SolutionY)
-    print("料箱与任务的关系：", problem.IO)
-    print("任务分配结果：", SolutionZ)
-    print('-' * 50)
-    print("每个料箱的到达时间：", SolutionTa)
-    print("每个料箱的开始拣选时间：", SolutionTS)
-    print("每个料箱的结束拣选时间：", SolutionTe)
-    print("每个料箱出去的时间：", SolutionTo)
-    print('-' * 50)
-    print(Time)
+    result_info = alg.run_gurobi()

@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 class Instance():
-    def __init__(self, N = 10, P = 2, v = 0.25, O = 2, f1 = 5, bigM = 300, T1 = 10):
+    def __init__(self, T = 0, N = 50, P = 10,  O = 5 ):
         '''
         :param A: 用于控制料箱到达时间的常量矩阵
         :param S: 料箱i在拣选站处完成拣选需要的时间，即拣选时间；
@@ -21,18 +21,18 @@ class Instance():
         self.P = P
         self.A = [ i for i in range(1,self.N+1)]
         self.O = O
-        self.T1 = T1
-        self.bigM = bigM
-        self.v = v
-        self.f1 = f1
+        self.T1 = 10
+        self.bigM = 500
+        self.v = 0.25
+        self.f1 = 10
         # 生成入口至拣选站的距离矩阵（固定长度为10）
         dip = []
         dpi = []
         x1 = 0
         for i in range(self.P):
-            x1 += 10
+            x1 += 5
             dip.append(x1)
-            x2 = 110 - x1
+            x2 = 55 - x1
             dpi.append(x2)
         Dip = [dip  for _ in range(self.N)]
         # 生成出口至拣选站的距离矩阵
@@ -60,8 +60,11 @@ class Instance():
         for i in range(len(self.IO)):
             sum1 += sum(self.IO[i])
         self.sumIO = sum1
-        # self.I = [ i * self.f1 for i in range(self.N)]
-        self.I = [ 4,4,4,5,5,6,6,8,9,10,12,35]
+
+        if T != 0:
+            self.I = T
+        else:
+            self.I = [ i * 10 for i in range(self.N)]
 
 
 if __name__ == "__main__":
