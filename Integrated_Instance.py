@@ -25,6 +25,8 @@ class Instance(Picking_Instance.Instance):
         """
         super().__init__(w_num, l_num, bins_num, robot_num)
         # add set conveyors params
+        self.distance_between_pickers = 5
+        self.conveyor_length = 55
         self.P = picking_station_num
         self.O = orders_num
         self.picking_time = 10
@@ -42,9 +44,9 @@ class Instance(Picking_Instance.Instance):
         dpi = []
         x1 = 0
         for i in range(P):
-            x1 += 10
+            x1 += self.distance_between_pickers
             dip.append(x1)
-            x2 = 110 - x1
+            x2 = self.conveyor_length - x1
             dpi.append(x2)
         Dip = [dip for _ in range(N)]
         # 生成出口至拣选站的距离矩阵
