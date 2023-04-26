@@ -172,7 +172,6 @@ class Instance:
         self.W = list(range(4*self.n, 4*self.n+self.robotNum)) # 机器人起点
         self.N = self.P1 + self.P2 + self.D1 + self.D2 + self.W # 所有节点
         self.K = list(range(self.robotNum)) # 机器人编号
-        self.node2type = {}
         # calculate distance/time matrix
         self.disMatrix = self.cal_disMatrix()
         self.timeMatrix = self.disMatrix / self.robot_speed
@@ -239,6 +238,7 @@ class Instance:
             demand = 1 for P1, P2; demand = -1 for D1, D2; demand = 0 for W
             serviceTime = level for P1, D1; serviceTime = 1 for P2, D2; serviceTime = 0 for W
         """
+        self.node2type = {}
         nodes = []
         for i in range(self.taskNum):
             # P1
