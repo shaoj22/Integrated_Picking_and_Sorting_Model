@@ -172,6 +172,7 @@ class Instance:
         self.W = list(range(4*self.n, 4*self.n+self.robotNum)) # 机器人起点
         self.N = self.P1 + self.P2 + self.D1 + self.D2 + self.W # 所有节点
         self.K = list(range(self.robotNum)) # 机器人编号
+        self.node2type = {}
         # calculate distance/time matrix
         self.disMatrix = self.cal_disMatrix()
         self.timeMatrix = self.disMatrix / self.robot_speed
@@ -250,6 +251,7 @@ class Instance:
                 "demand": 1,
                 "serviceTime": self.tasks[i]["level"] * self.lift_time,
             }
+            self.node2type[len(nodes)] = "P1"
             nodes.append(node)
         for i in range(self.taskNum):
             # P2
@@ -262,6 +264,7 @@ class Instance:
                 "demand": 1,
                 "serviceTime": self.pack_time,
             }
+            self.node2type[len(nodes)] = "P2"
             nodes.append(node)
         for i in range(self.taskNum):
             # D1
@@ -274,6 +277,7 @@ class Instance:
                 "demand": -1,
                 "serviceTime": self.pack_time,
             }
+            self.node2type[len(nodes)] = "D1"
             nodes.append(node)
         for i in range(self.taskNum):
             # D2
@@ -286,6 +290,7 @@ class Instance:
                 "demand": -1,
                 "serviceTime": self.tasks[i]["level"] * self.lift_time,
             }
+            self.node2type[len(nodes)] = "D2"
             nodes.append(node)
         for i in range(self.robotNum):
             # W
@@ -298,6 +303,7 @@ class Instance:
                 "demand": 0,
                 "serviceTime": 0,
             }
+            self.node2type[len(nodes)] = "W"
             nodes.append(node)
         return nodes
 
