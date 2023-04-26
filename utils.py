@@ -188,7 +188,7 @@ def picking_evaluate(picking_instance, x_val):
     model.setParam("OutputFlag", 0)
     model.optimize()
     if model.Status == 3:
-        return -1000
+        return 1e6
     else:
         return model.ObjVal
 
