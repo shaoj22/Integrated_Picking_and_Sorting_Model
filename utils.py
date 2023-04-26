@@ -187,7 +187,10 @@ def picking_evaluate(picking_instance, x_val):
     model = build_picking_evaluate_model(picking_instance, x_val) 
     model.setParam("OutputFlag", 0)
     model.optimize()
-    return model.ObjVal
+    if model.Status == 3:
+        return -1000
+    else:
+        return model.ObjVal
 
 def build_picking_integrated_evluate_model(integrated_instance, x_val):
     """ build gurobi model for evaluate picking solution
