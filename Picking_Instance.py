@@ -238,6 +238,7 @@ class Instance:
             demand = 1 for P1, P2; demand = -1 for D1, D2; demand = 0 for W
             serviceTime = level for P1, D1; serviceTime = 1 for P2, D2; serviceTime = 0 for W
         """
+        self.node2type = {}
         nodes = []
         for i in range(self.taskNum):
             # P1
@@ -250,6 +251,7 @@ class Instance:
                 "demand": 1,
                 "serviceTime": self.tasks[i]["level"] * self.lift_time,
             }
+            self.node2type[len(nodes)] = "P1"
             nodes.append(node)
         for i in range(self.taskNum):
             # P2
@@ -262,6 +264,7 @@ class Instance:
                 "demand": 1,
                 "serviceTime": self.pack_time,
             }
+            self.node2type[len(nodes)] = "P2"
             nodes.append(node)
         for i in range(self.taskNum):
             # D1
@@ -274,6 +277,7 @@ class Instance:
                 "demand": -1,
                 "serviceTime": self.pack_time,
             }
+            self.node2type[len(nodes)] = "D1"
             nodes.append(node)
         for i in range(self.taskNum):
             # D2
@@ -286,6 +290,7 @@ class Instance:
                 "demand": -1,
                 "serviceTime": self.tasks[i]["level"] * self.lift_time,
             }
+            self.node2type[len(nodes)] = "D2"
             nodes.append(node)
         for i in range(self.robotNum):
             # W
@@ -298,6 +303,7 @@ class Instance:
                 "demand": 0,
                 "serviceTime": 0,
             }
+            self.node2type[len(nodes)] = "W"
             nodes.append(node)
         return nodes
 
