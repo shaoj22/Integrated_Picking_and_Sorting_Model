@@ -29,7 +29,7 @@ class Picking_Gurobi_Model():
 
         Args:
             MODEL (gurobi.model): original model
-            delta_T (int, optional): picking average time, -1 means ignore this constraint. Defaults to -1.
+            delta_T (int, optional): picking average time, -1 means use default pick_time. Defaults to -1.
         """
         if delta_T == -1:
             delta_T = self.delta_T
@@ -63,7 +63,7 @@ class Picking_Gurobi_Model():
         # 7. 时间约束
         MODEL.addConstrs( (x[i, j, k] == 1) >> (T[j,k] >= T[i,k] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) for k in self.K)
         # 到达终点的时间>=起点+服务+路程时间
-        MODEL.addConstrs( T[2 * self.n + i,k] >= T[i,k] + self.timeMatrix[i, 2 * self.n + i] + self.nodes[i]["serviceTime"] for i in (self.P1 + self.P2) for k in self.K)
+        MODEL.addConstrs( T[2 * self.n + i,k] >= T[i,k] for i in (self.P1 + self.P2) for k in self.K)
 
         MODEL.addConstrs( T[i, k] >= self.nodes[i]["readyTime"] for i in self.N for k in self.K)
         MODEL.addConstrs( T[i, k] <= self.nodes[i]["dueTime"] for i in self.N for k in self.K)

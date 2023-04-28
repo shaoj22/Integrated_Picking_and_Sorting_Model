@@ -59,6 +59,9 @@ class Picking_VNS:
         return x
 
     def cal_objective(self, solution):
+        return utils.efficient_picking_evaluate(self.picking_instance, solution)
+
+    def cal_objective_with_model(self, solution):
         x_val = self.transfer(solution)
         obj = utils.picking_evaluate(self.picking_instance, x_val)
         return obj
@@ -125,12 +128,12 @@ class Picking_VNS:
         return self.best_x_val, self.best_obj
 
 if __name__ == "__main__":
-    w_num = 3
-    l_num = 3
-    task_num = 5
-    robot_num = 2
+    w_num = 5
+    l_num = 5
+    task_num = 20
+    robot_num = 10
     picking_instance = Instance(w_num, l_num, task_num, robot_num)
-    alg = Picking_VNS(picking_instance, 1000)
+    alg = Picking_VNS(picking_instance, 100000)
     start = time.time()
     alg.run()
     end = time.time()
