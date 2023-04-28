@@ -59,6 +59,50 @@ class Picking_VNS:
         return x
 
     def cal_objective(self, solution):
+        obj = 0
+        # calculate pass time of each node and check time_windows
+        timeMatrix = self.picking_instance.timeMatrix
+        passTime = np.zeros(self.picking_instance.nodeNum)
+        node2ki = {}
+        P2_list = []
+        for ri, route in enumerate(solution):
+            cur_time = 0
+            for i in range(1, len(route)):
+                cur_time += self.picking_instance.nodes[route[i-1]]["serviceTime"] + timeMatrix[route[i-1], route[i]]
+                cur_time = max(cur_time, self.picking_instance.nodes[route[i]]["readyTime"])
+                if cur_time > self.picking_instance.nodes[route[i]]["dueTime"]:
+                    obj += 10000
+                passTime[route[i]] = cur_time
+                node2ki[route[i]] = (ri, i)
+                if self.picking_instance.node2type[route[i]] == "P2":
+                    P2_list.append(route[i])
+        # check feasibility and fix passTime of P2, D2
+        # 1. D12 later than P12
+        for ni in range(2*self.picking_instance.n): # for P12 
+            if passTime[ni] > passTime[ni+2*self.picking_instance.n]:
+                obj += 10000
+        # 2. P2 later than D1, and fix pick_time
+        for ni in P2_list:
+            if passTime[ni] < passTime[ni+self.picking_instance.n]:
+                obj += 10000
+            elif passTime[ni] < passTime[ni+self.picking_instance.n] + self.picking_instance.pick_time:
+                k, start_i = node2ki[ni]
+                route = solution[k]
+                extra_time = passTime[ni+self.picking_instance.n] + self.picking_instance.pick_time - passTime[ni]
+                for i in range(start_i, len(route)):
+                    passTime[route[i]] += extra_time
+        # 3. check capacity
+        for k in range(self.picking_instance.robotNum):
+            load = 0
+            for i in range(1, len(solution[k])):
+                load += self.picking_instance.nodes[solution[k][i]]["demand"]
+                if load > self.picking_instance.capacity:
+                    obj += 10000
+        obj += np.max(passTime)
+
+        return obj
+
+    def cal_objective_with_model(self, solution):
         x_val = self.transfer(solution)
         obj = utils.picking_evaluate(self.picking_instance, x_val)
         return obj
@@ -125,15 +169,15 @@ class Picking_VNS:
         return self.best_x_val, self.best_obj
 
 if __name__ == "__main__":
-    w_num = 3
-    l_num = 3
-    task_num = 5
-    robot_num = 2
+    w_num = 5
+    l_num = 5
+    task_num = 20
+    robot_num = 10
     picking_instance = Instance(w_num, l_num, task_num, robot_num)
-    alg = Picking_VNS(picking_instance, 1000)
+    alg = Picking_VNS(picking_instance, 100000)
     start = time.time()
     alg.run()
     end = time.time()
-    print("best_obj = {}, time_cost = {}, best_solution:\n".format(alg.best_obj, end-start), alg.best_solution)
+    print("best_obj = {}, evaluate_obj = {}, time_cost = {}, best_solution:\n".format(alg.best_obj, alg.cal_objective_with_model(alg.best_solution), end-start), alg.best_solution)
     alg.show_process()
         
