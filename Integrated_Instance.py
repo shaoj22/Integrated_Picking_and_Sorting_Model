@@ -55,7 +55,7 @@ class Instance(Picking_Instance.Instance):
         IO = [[0 for _ in range(O)] for _ in range(N)]
         for i in range(N):
             # 该料箱属于几个订单,n代表最多属于几个订单
-            n = random.randint(1, 3)
+            n = random.randint(1, 2)
             for j in range(n):
                 m = random.randint(0, O - 1)
                 IO[i][m] = 1
