@@ -113,10 +113,10 @@ class Picking_Gurobi_Model():
         return result_info
 
 if __name__ == "__main__":
-    w_num = 3
-    l_num = 3
-    task_num = 5
-    robot_num = 2
+    w_num = 5
+    l_num = 5
+    task_num = 10
+    robot_num = 5
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
     result_info = alg.run_gurobi()

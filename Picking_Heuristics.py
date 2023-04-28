@@ -130,13 +130,14 @@ class Picking_VNS:
 if __name__ == "__main__":
     w_num = 5
     l_num = 5
-    task_num = 20
+    task_num = 10
     robot_num = 5
     picking_instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_VNS(picking_instance, 100000)
     start = time.time()
     alg.run()
     end = time.time()
+    print("evaluate_obj = {}".format(alg.cal_objective_with_model(alg.best_solution)))
     print("best_obj = {}, time_cost = {}, best_solution:\n".format(alg.best_obj, end-start), alg.best_solution)
     alg.show_process()
         
