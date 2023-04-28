@@ -131,7 +131,7 @@ if __name__ == "__main__":
     w_num = 5
     l_num = 5
     task_num = 20
-    robot_num = 10
+    robot_num = 5
     picking_instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_VNS(picking_instance, 100000)
     start = time.time()
