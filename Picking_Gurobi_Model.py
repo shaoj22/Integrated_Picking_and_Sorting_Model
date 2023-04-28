@@ -52,7 +52,7 @@ class Picking_Gurobi_Model():
         # 2. 流平衡约束
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i ) == gp.quicksum( x[j,i,k] for j in self.N if j !=i ) for i in self.N for k in self.K )
         # 3. 完成所有任务
-        MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N for k in self.K if j != i) >= 1 for i in self.N)
+        MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N for k in self.K if j != i) >= 1 for i in (self.P1 + self.P2 + self.D1 + self.D2))
         # 4. 同一个任务用同一个车
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i) == gp.quicksum( x[j, 2 * self.n + i,k] for j in self.N) for i in (self.P1+self.P2) for k in self.K)
         # 5. 一个车只能从自己的出发点出发一次
