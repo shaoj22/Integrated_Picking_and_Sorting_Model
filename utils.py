@@ -261,9 +261,7 @@ def efficient_picking_evaluate(picking_instance, solution):
             obj += 10000
     # 2. P2 later than D1, and fix pick_time
     for ni in P2_list:
-        if passTime[ni] < passTime[ni+picking_instance.n]:
-            obj += 10000
-        elif passTime[ni] < passTime[ni+picking_instance.n] + picking_instance.pick_time:
+        if passTime[ni] < passTime[ni+picking_instance.n] + picking_instance.pick_time:
             k, start_i = node2ki[ni]
             route = solution[k]
             extra_time = passTime[ni+picking_instance.n] + picking_instance.pick_time - passTime[ni]
