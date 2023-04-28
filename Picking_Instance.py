@@ -82,33 +82,33 @@ class Map:
         x1, y1 = self.idx2xy[idx1]
         x2, y2 = self.idx2xy[idx2]
         dist = manhattan_dis = abs(x1-x2) + abs(y1-y2)
-        if self.idx2type[idx1] == "pod" and self.idx2type[idx2] == "pod":
-            # add extra dist when pod to pod
-            # 1. same row extra dist
-            if x1 == x2:
-                # same row
-                # 计算两个idx距离两边通道的距离
-                left1 = x1 % (self.block_length+1)
-                left2 = x2 % (self.block_length+1)
-                right1 = self.block_length - left1
-                right2 = self.block_length - left2
-                dist += 2 * min(left1, left2, right1, right2)
-            # 2. aisle extra dist
-            if y1 == y2:
-                # same aisle
-                dist += 2
-            elif y1 > y2:
-                # idx1 higher than idx2
-                if self.idx2type[self.xy2idx[x1, y1+1]] == "aisle": # aisle above idx1
-                    dist += 2
-                if self.idx2type[self.xy2idx[x2, y2-1]] == "aisle": # aisle below idx2
-                    dist += 2
-            else:
-                # idx1 lower than idx2
-                if self.idx2type[self.xy2idx[x1, y1-1]] == "aisle": # aisle below idx1
-                    dist += 2
-                if self.idx2type[self.xy2idx[x2, y2+1]] == "aisle": # aisle above idx2
-                    dist += 2
+        # if self.idx2type[idx1] == "pod" and self.idx2type[idx2] == "pod":
+        #     # add extra dist when pod to pod
+        #     # 1. same row extra dist
+        #     if x1 == x2:
+        #         # same row
+        #         # 计算两个idx距离两边通道的距离
+        #         left1 = x1 % (self.block_length+1)
+        #         left2 = x2 % (self.block_length+1)
+        #         right1 = self.block_length - left1
+        #         right2 = self.block_length - left2
+        #         dist += 2 * min(left1, left2, right1, right2)
+        #     # 2. aisle extra dist
+        #     if y1 == y2:
+        #         # same aisle
+        #         dist += 2
+        #     elif y1 > y2:
+        #         # idx1 higher than idx2
+        #         if self.idx2type[self.xy2idx[x1, y1+1]] == "aisle": # aisle above idx1
+        #             dist += 2
+        #         if self.idx2type[self.xy2idx[x2, y2-1]] == "aisle": # aisle below idx2
+        #             dist += 2
+        #     else:
+        #         # idx1 lower than idx2
+        #         if self.idx2type[self.xy2idx[x1, y1-1]] == "aisle": # aisle below idx1
+        #             dist += 2
+        #         if self.idx2type[self.xy2idx[x2, y2+1]] == "aisle": # aisle above idx2
+        #             dist += 2
         return dist
 
     def render(self, routes=[]):
@@ -345,8 +345,8 @@ if __name__ == "__main__":
     # generate instance
     w_num = 3
     l_num = 3
-    task_num = 5
-    robot_num = 4
+    task_num = 20
+    robot_num = 10
     instance = Instance(w_num, l_num, task_num, robot_num)
     print("generate {} tasks".format(10))
     # show structure

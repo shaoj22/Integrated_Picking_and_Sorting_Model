@@ -130,7 +130,7 @@ class Picking_VNS:
 if __name__ == "__main__":
     w_num = 3
     l_num = 3
-    task_num = 5
+    task_num = 2
     robot_num = 2
     picking_instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_VNS(picking_instance, 100000)
