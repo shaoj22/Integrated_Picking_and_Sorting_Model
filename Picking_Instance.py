@@ -76,6 +76,8 @@ class Map:
                 self.type2idx["pod"].append(idx)
 
     def get_distance(self, idx1, idx2):
+        if idx1 == idx2:
+            return 0
         # 曼哈顿+分情况讨论额外距离 
         x1, y1 = self.idx2xy[idx1]
         x2, y2 = self.idx2xy[idx2]
@@ -86,10 +88,10 @@ class Map:
             if x1 == x2:
                 # same row
                 # 计算两个idx距离两边通道的距离
-                left1 = x1 - x1 % (self.block_length+1)
-                left2 = x2 - x2 % (self.block_length+1)
-                right1 = left1 + self.block_length
-                right2 = left2 + self.block_length
+                left1 = x1 % (self.block_length+1)
+                left2 = x2 % (self.block_length+1)
+                right1 = self.block_length - left1
+                right2 = self.block_length - left2
                 dist += 2 * min(left1, left2, right1, right2)
             # 2. aisle extra dist
             if y1 == y2:
@@ -312,7 +314,14 @@ class Instance:
         for i in range(self.nodeNum):
             for j in range(self.nodeNum):
                 disMatrix[i, j] = self.map.get_distance(self.nodes[i]["pos_idx"], self.nodes[j]["pos_idx"])
+        self.check_disMatrix(disMatrix)
         return disMatrix
+
+    def check_disMatrix(self, disMatrix):
+        # 检查距离矩阵是否满足三角不等式
+        wrong_pairs = [(i, k, j) for i in self.N for j in self.N for k in self.N if i!=j and j!=k and i!=k and disMatrix[i, j] > disMatrix[i, k] + disMatrix[k, j]]
+        if len(wrong_pairs) > 0:
+            print("disMatrix wrong")
 
     def render(self, routes=[], model=None):
         """
@@ -334,10 +343,10 @@ class Instance:
 
 if __name__ == "__main__":
     # generate instance
-    w_num = 10
-    l_num = 10
-    task_num = 3
-    robot_num = 2
+    w_num = 3
+    l_num = 3
+    task_num = 5
+    robot_num = 4
     instance = Instance(w_num, l_num, task_num, robot_num)
     print("generate {} tasks".format(10))
     # show structure
