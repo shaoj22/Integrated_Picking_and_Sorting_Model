@@ -128,10 +128,10 @@ class Picking_VNS:
         return self.best_x_val, self.best_obj
 
 if __name__ == "__main__":
-    w_num = 5
-    l_num = 5
-    task_num = 10
-    robot_num = 5
+    w_num = 3
+    l_num = 3
+    task_num = 5
+    robot_num = 2
     picking_instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_VNS(picking_instance, 100000)
     start = time.time()
