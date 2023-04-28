@@ -95,10 +95,8 @@ class NNH_heuristic_algorithm():
         print(car_chromosome)
         sum = 0
         for i in range(len(car_chromosome)):
-            print(len(car_chromosome[i]))
             sum += len(car_chromosome[i])
-        print(sum)
-        return self.transfer(car_chromosome)
+        return car_chromosome
 
 
     # 为分配了任务后的车添加任务的目的地
@@ -143,9 +141,11 @@ if __name__ == "__main__":
     orders_num = 5
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     NNH = NNH_heuristic_algorithm(instance)
-    x = NNH.NNH_main()
-    Obj = utils.picking_evaluate(instance, x)
+    solution = NNH.NNH_main()
+    Obj = utils.efficient_picking_evaluate(instance, solution)
     print(Obj)
+    Obj2 = utils.picking_evaluate(instance, NNH.transfer(solution))
+    print(Obj2)
 
     
 
