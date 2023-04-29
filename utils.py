@@ -75,6 +75,11 @@ class DrawTools:
             for edge in routes[ri]:
                 self.draw_edge(ax, map, edge, color=colors[ri])
 
+def model2paths(model, picking_instance):
+    # get picking_instance idx paths
+    # todo
+    return paths
+
 def model2instance_routes(model, picking_instance):
     # get picking_instance idx routes
     routes = [[[i, j] for i in picking_instance.N for j in picking_instance.N if model.getVarByName(f"x[{i},{j}]").X >= 0.5 and model.getVarByName(f"passX[{i},{k}]").X >= 0.5] for k in range(picking_instance.robotNum)]

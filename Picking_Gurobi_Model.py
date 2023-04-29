@@ -1,11 +1,13 @@
 import gurobipy as gp
 from gurobipy import GRB
 import time
+import utils
 from Picking_Instance import Instance
 
 class Picking_Gurobi_Model():
     def __init__(self, instance, time_limit=None):
         # time_limit
+        self.picking_instance = instance
         self.time_limit = time_limit
         self.Q = instance.capacity
         self.delta_T = instance.pick_time
@@ -41,16 +43,16 @@ class Picking_Gurobi_Model():
         T_list = [i for i in self.N]
         T = MODEL.addVars( T_list, vtype=GRB.CONTINUOUS, name="T")  # 车k在i的时间
         pass_list = [(i,k) for i in self.N for k in self.K]
-        passX = MODEL.addVars( pass_list, vtype=GRB.CONTINUOUS, name="passX")  # k是否经过i
+        passX = MODEL.addVars( pass_list, vtype=GRB.BINARY, name="passX")  # k是否经过i
         # 添加优化类型和目标函数
         MODEL.modelSense = GRB.MINIMIZE
         MODEL.setObjective( gp.quicksum(T[i] for i in self.N) )
         # MODEL.setObjective( gp.quicksum(x[i,j,k] * self.disMatrix[i,j] for i in self.N for j in self.N if i!=j for k in self.K) )
-        # MODEL.setObjective( FT + 1e-3*gp.quicksum(T[i, k] for i in self.N for k in self.K))
-        # MODEL.setObjective( FT )
         # 添加约束条件
         # 1. 路径两端属于同一个车
         MODEL.addConstrs( (x[i, j] == 1) >> (passX[i, k] == passX[j, k]) for i in self.N for j in self.N for k in self.K )
+        MODEL.addConstrs( passX[self.W[k], k] == 1 for k in self.K )
+        MODEL.addConstrs( gp.quicksum(passX[i, k] for k in self.K) == 1 for i in self.N)
         # 2. 流平衡约束
         MODEL.addConstrs( gp.quicksum( x[i,j] for j in self.N if j != i ) == gp.quicksum( x[j,i] for j in self.N if j != i ) for i in self.N)
         # 3. 完成所有任务
@@ -103,7 +105,7 @@ class Picking_Gurobi_Model():
                 T_i = MODEL.getVarByName(var_name1).X
                 SolutionT.append(T_i)
             # 有效的边
-            SolutionX = [[[i, j] for i in self.N for j in self.N if MODEL.getVarByName(f"x[{i},{j}]").X >=0.5]]
+            SolutionX = utils.model2instance_routes(MODEL, self.picking_instance)
         else:
             raise Exception("model is infeasible")
         result_info["pass_times"] = SolutionT
@@ -116,8 +118,8 @@ class Picking_Gurobi_Model():
 if __name__ == "__main__":
     w_num = 2
     l_num = 2
-    task_num = 20
-    robot_num = 20
+    task_num = 10
+    robot_num = 10
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
     result_info, SolutionT= alg.run_gurobi()
@@ -126,4 +128,3 @@ if __name__ == "__main__":
     print("上界：",result_info["upper_bound"])
     print("用时：", result_info["timecost"])
     print("有效边：", result_info["valid_edges"])
-    print(SolutionT)
