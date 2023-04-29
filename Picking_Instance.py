@@ -76,37 +76,39 @@ class Map:
                 self.type2idx["pod"].append(idx)
 
     def get_distance(self, idx1, idx2):
+        if idx1 == idx2:
+            return 0
         # 曼哈顿+分情况讨论额外距离 
         x1, y1 = self.idx2xy[idx1]
         x2, y2 = self.idx2xy[idx2]
         dist = manhattan_dis = abs(x1-x2) + abs(y1-y2)
-        if self.idx2type[idx1] == "pod" and self.idx2type[idx2] == "pod":
-            # add extra dist when pod to pod
-            # 1. same row extra dist
-            if x1 == x2:
-                # same row
-                # 计算两个idx距离两边通道的距离
-                left1 = x1 - x1 % (self.block_length+1)
-                left2 = x2 - x2 % (self.block_length+1)
-                right1 = left1 + self.block_length
-                right2 = left2 + self.block_length
-                dist += 2 * min(left1, left2, right1, right2)
-            # 2. aisle extra dist
-            if y1 == y2:
-                # same aisle
-                dist += 2
-            elif y1 > y2:
-                # idx1 higher than idx2
-                if self.idx2type[self.xy2idx[x1, y1+1]] == "aisle": # aisle above idx1
-                    dist += 2
-                if self.idx2type[self.xy2idx[x2, y2-1]] == "aisle": # aisle below idx2
-                    dist += 2
-            else:
-                # idx1 lower than idx2
-                if self.idx2type[self.xy2idx[x1, y1-1]] == "aisle": # aisle below idx1
-                    dist += 2
-                if self.idx2type[self.xy2idx[x2, y2+1]] == "aisle": # aisle above idx2
-                    dist += 2
+        # if self.idx2type[idx1] == "pod" and self.idx2type[idx2] == "pod":
+        #     # add extra dist when pod to pod
+        #     # 1. same row extra dist
+        #     if x1 == x2:
+        #         # same row
+        #         # 计算两个idx距离两边通道的距离
+        #         left1 = x1 % (self.block_length+1)
+        #         left2 = x2 % (self.block_length+1)
+        #         right1 = self.block_length - left1
+        #         right2 = self.block_length - left2
+        #         dist += 2 * min(left1, left2, right1, right2)
+        #     # 2. aisle extra dist
+        #     if y1 == y2:
+        #         # same aisle
+        #         dist += 2
+        #     elif y1 > y2:
+        #         # idx1 higher than idx2
+        #         if self.idx2type[self.xy2idx[x1, y1+1]] == "aisle": # aisle above idx1
+        #             dist += 2
+        #         if self.idx2type[self.xy2idx[x2, y2-1]] == "aisle": # aisle below idx2
+        #             dist += 2
+        #     else:
+        #         # idx1 lower than idx2
+        #         if self.idx2type[self.xy2idx[x1, y1-1]] == "aisle": # aisle below idx1
+        #             dist += 2
+        #         if self.idx2type[self.xy2idx[x2, y2+1]] == "aisle": # aisle above idx2
+        #             dist += 2
         return dist
 
     def render(self, routes=[]):
@@ -146,7 +148,7 @@ class Instance:
         # set params
         self.capacity = 8 # 机器人容量
         self.pick_time = 120 # 环形拣选台拣货时间
-        self.min_time_gap = 5000 # readyTime和dueTime的最小间隔
+        self.min_time_gap = 10 # readyTime和dueTime的最小间隔
         self.latest_ready_time = 100 # readyTime的最大值
         self.latest_due_time = 10000 # dueTime的最大值
         self.pack_time = 1 # 上下拣选台的时间
@@ -312,7 +314,14 @@ class Instance:
         for i in range(self.nodeNum):
             for j in range(self.nodeNum):
                 disMatrix[i, j] = self.map.get_distance(self.nodes[i]["pos_idx"], self.nodes[j]["pos_idx"])
+        self.check_disMatrix(disMatrix)
         return disMatrix
+
+    def check_disMatrix(self, disMatrix):
+        # 检查距离矩阵是否满足三角不等式
+        wrong_pairs = [(i, k, j) for i in self.N for j in self.N for k in self.N if i!=j and j!=k and i!=k and disMatrix[i, j] > disMatrix[i, k] + disMatrix[k, j]]
+        if len(wrong_pairs) > 0:
+            print("disMatrix wrong")
 
     def render(self, routes=[], model=None):
         """
@@ -334,10 +343,10 @@ class Instance:
 
 if __name__ == "__main__":
     # generate instance
-    w_num = 10
-    l_num = 10
-    task_num = 3
-    robot_num = 2
+    w_num = 3
+    l_num = 3
+    task_num = 20
+    robot_num = 10
     instance = Instance(w_num, l_num, task_num, robot_num)
     print("generate {} tasks".format(10))
     # show structure

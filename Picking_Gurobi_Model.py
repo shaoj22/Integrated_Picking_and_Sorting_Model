@@ -41,34 +41,42 @@ class Picking_Gurobi_Model():
         T_list = [(i,k) for i in self.N for k in self.K]
         T = MODEL.addVars( T_list, vtype=GRB.CONTINUOUS, name="T")  # 车k在i的时间
         FT = MODEL.addVar( vtype=GRB.CONTINUOUS, name="FT") # 所有任务完成的时间
-        f_list = [(i,j) for i in (self.P1 + self.P2) for j in (self.P1 + self.P2)]
-        f = MODEL.addVars( f_list, vtype=GRB.BINARY, name="f")
+        Ti_list = [i for i in self.N]
+        Ti = MODEL.addVars( Ti_list, vtype=GRB.CONTINUOUS, name="T")  # i的最大经过时间
         # 添加优化类型和目标函数
         MODEL.modelSense = GRB.MINIMIZE
+        # MODEL.setObjective( gp.quicksum(T[i,k] for i in self.N for k in self.K) )
+        # MODEL.setObjective( gp.quicksum(x[i,j,k] * self.disMatrix[i,j] for i in self.N for j in self.N if i!=j for k in self.K) )
+        # MODEL.setObjective( FT + 1e-3*gp.quicksum(T[i, k] for i in self.N for k in self.K))
         MODEL.setObjective( FT )
         # 添加约束条件
         # 1. 最大完成时间约束
         MODEL.addConstrs( FT >= T[i,k] for i in self.N for k in self.K)
         # 2. 流平衡约束
-        MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i ) == gp.quicksum( x[j,i,k] for j in self.N if j !=i ) for i in self.N for k in self.K )
+        MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j != i ) == gp.quicksum( x[j,i,k] for j in self.N if j != i ) for i in self.N for k in self.K )
         # 3. 完成所有任务
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N for k in self.K if j != i) >= 1 for i in (self.P1 + self.P2 + self.D1 + self.D2))
         # 4. 同一个任务用同一个车
-        MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j !=i) == gp.quicksum( x[j, 2 * self.n + i,k] for j in self.N) for i in (self.P1+self.P2) for k in self.K)
+        MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j != i) == gp.quicksum( x[j, 2 * self.n + i,k] for j in self.N if j!= 2*self.n+i) for i in (self.P1+self.P2) for k in self.K)
         # 5. 一个车只能从自己的出发点出发一次
         MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p == self.W[k]) <= 1 for k in self.K)
         MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p != self.W[k]) <= 0 for k in self.K)
         # 6. 载重约束
-        MODEL.addConstrs( gp.quicksum( Q[i,k] for i in self.N ) <= self.Q for k in self.K)
+        MODEL.addConstrs( (x[i, j, k] == 1) >> (Q[j,k] >= Q[i,k] + self.nodes[i]["demand"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j for k in self.K)
+        MODEL.addConstrs( Q[i, k] >= 0 for i in self.N for k in self.K)
+        MODEL.addConstrs( Q[i, k] <= self.Q for i in self.N for k in self.K)
+    
         # 7. 时间约束
-        MODEL.addConstrs( (x[i, j, k] == 1) >> (T[j,k] >= T[i,k] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) for k in self.K)
+        MODEL.addConstrs( Ti[i] >= T[i, k] for i in self.N for k in self.K)
+        MODEL.addConstrs( (x[i, j, k] == 1) >> (T[j,k] >= T[i,k] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j for k in self.K)
         # 到达终点的时间>=起点+服务+路程时间
-        MODEL.addConstrs( T[2 * self.n + i,k] >= T[i,k] for i in (self.P1 + self.P2) for k in self.K)
+        MODEL.addConstrs( T[2 * self.n + i,k] >= T[i,k] + self.timeMatrix[i][i+2*self.n] + self.nodes[i]["serviceTime"] for i in (self.P1 + self.P2) for k in self.K)
 
         MODEL.addConstrs( T[i, k] >= self.nodes[i]["readyTime"] for i in self.N for k in self.K)
         MODEL.addConstrs( T[i, k] <= self.nodes[i]["dueTime"] for i in self.N for k in self.K)
         # 到达P2的时间>=D1的时间+分拣站的服务时间
-        MODEL.addConstrs( T[i - self.n,k] >= T[i, k] + delta_T for i in self.D1 for k in self.K)
+        # MODEL.addConstrs( T[i - self.n,k] >= T[i, k] + delta_T for i in self.D1 for k in self.K)
+        MODEL.addConstrs( Ti[i - self.n] >= Ti[i] + delta_T for i in self.D1 for k in self.K)
 
         info = {
             "x" : x, 
@@ -113,10 +121,10 @@ class Picking_Gurobi_Model():
         return result_info
 
 if __name__ == "__main__":
-    w_num = 5
-    l_num = 5
+    w_num = 3
+    l_num = 3
     task_num = 10
-    robot_num = 5
+    robot_num = 2
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
     result_info = alg.run_gurobi()
