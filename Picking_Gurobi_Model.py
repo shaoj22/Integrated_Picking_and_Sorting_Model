@@ -41,17 +41,19 @@ class Picking_Gurobi_Model():
         T_list = [(i,k) for i in self.N for k in self.K]
         T = MODEL.addVars( T_list, vtype=GRB.CONTINUOUS, name="T")  # 车k在i的时间
         FT = MODEL.addVar( vtype=GRB.CONTINUOUS, name="FT") # 所有任务完成的时间
-        Ti_list = [i for i in self.N]
-        Ti = MODEL.addVars( Ti_list, vtype=GRB.CONTINUOUS, name="T")  # i的最大经过时间
+        Ti_list = [i for i in self.D1]
+        Ti = MODEL.addVars( Ti_list, vtype=GRB.CONTINUOUS, name="Ti")  # i的最大经过时间
+        pass_list = [(i,k) for i in self.N for k in self.K]
+        passX = MODEL.addVars( pass_list, vtype=GRB.CONTINUOUS, name="Ti")  # k是否经过i
         # 添加优化类型和目标函数
         MODEL.modelSense = GRB.MINIMIZE
-        # MODEL.setObjective( gp.quicksum(T[i,k] for i in self.N for k in self.K) )
+        MODEL.setObjective( gp.quicksum(T[i,k] for i in self.N for k in self.K) )
         # MODEL.setObjective( gp.quicksum(x[i,j,k] * self.disMatrix[i,j] for i in self.N for j in self.N if i!=j for k in self.K) )
         # MODEL.setObjective( FT + 1e-3*gp.quicksum(T[i, k] for i in self.N for k in self.K))
-        MODEL.setObjective( FT )
+        # MODEL.setObjective( FT )
         # 添加约束条件
         # 1. 最大完成时间约束
-        MODEL.addConstrs( FT >= T[i,k] for i in self.N for k in self.K)
+        # MODEL.addConstrs( FT >= T[i,k] for i in self.N for k in self.K)
         # 2. 流平衡约束
         MODEL.addConstrs( gp.quicksum( x[i,j,k] for j in self.N if j != i ) == gp.quicksum( x[j,i,k] for j in self.N if j != i ) for i in self.N for k in self.K )
         # 3. 完成所有任务
@@ -67,16 +69,17 @@ class Picking_Gurobi_Model():
         MODEL.addConstrs( Q[i, k] <= self.Q for i in self.N for k in self.K)
     
         # 7. 时间约束
-        MODEL.addConstrs( Ti[i] >= T[i, k] for i in self.N for k in self.K)
+        MODEL.addConstrs( Ti[i] >= T[i, k] for i in self.D1 for k in self.K)
         MODEL.addConstrs( (x[i, j, k] == 1) >> (T[j,k] >= T[i,k] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j for k in self.K)
         # 到达终点的时间>=起点+服务+路程时间
-        MODEL.addConstrs( T[2 * self.n + i,k] >= T[i,k] + self.timeMatrix[i][i+2*self.n] + self.nodes[i]["serviceTime"] for i in (self.P1 + self.P2) for k in self.K)
+        MODEL.addConstrs( passX[i, k] == gp.quicksum(x[i,j,k] for j in self.N if i!=j) for i in self.N for k in self.K)
+        MODEL.addConstrs( (passX[i, k] == 1) >> (T[2 * self.n + i,k] >= T[i,k] + self.timeMatrix[i][i+2*self.n] + self.nodes[i]["serviceTime"]) for i in (self.P1 + self.P2) for k in self.K)
 
-        MODEL.addConstrs( T[i, k] >= self.nodes[i]["readyTime"] for i in self.N for k in self.K)
-        MODEL.addConstrs( T[i, k] <= self.nodes[i]["dueTime"] for i in self.N for k in self.K)
+        MODEL.addConstrs( (passX[i, k] == 1) >> (T[i, k] >= self.nodes[i]["readyTime"]) for i in self.N for k in self.K)
+        MODEL.addConstrs( (passX[i, k] == 1) >> (T[i, k] <= self.nodes[i]["dueTime"]) for i in self.N for k in self.K)
         # 到达P2的时间>=D1的时间+分拣站的服务时间
         # MODEL.addConstrs( T[i - self.n,k] >= T[i, k] + delta_T for i in self.D1 for k in self.K)
-        MODEL.addConstrs( Ti[i - self.n] >= Ti[i] + delta_T for i in self.D1 for k in self.K)
+        MODEL.addConstrs( (passX[i, k] == 1) >> (T[i,k] >= Ti[i + self.n] + delta_T) for i in self.P2 for k in self.K)
 
         info = {
             "x" : x, 
@@ -118,18 +121,19 @@ class Picking_Gurobi_Model():
         result_info["best_obj"] = MODEL.ObjVal
         result_info["upper_bound"] = MODEL.objBound
         result_info["model"] = MODEL #? space cost
-        return result_info
+        return result_info, SolutionT
 
 if __name__ == "__main__":
     w_num = 3
     l_num = 3
-    task_num = 10
+    task_num = 3
     robot_num = 2
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
-    result_info = alg.run_gurobi()
+    result_info, SolutionT= alg.run_gurobi()
     instance.render(model=result_info["model"])
     print("最优解为：", result_info["best_obj"])
     print("上界：",result_info["upper_bound"])
     print("用时：", result_info["timecost"])
     print("有效边：", result_info["valid_edges"])
+    print(SolutionT)
