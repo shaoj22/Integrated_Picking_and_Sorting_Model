@@ -113,7 +113,7 @@ class Picking_Gurobi_Model():
                     T.append(T_i_k)
                 SolutionT.append(T)
             # 有效的边
-            SolutionX = [[[i, j] for i in self.N for j in self.N if MODEL.getVarByName(f"x[{i},{j},{k}]").X == 1] for k in self.K]
+            SolutionX = [[[i, j] for i in self.N for j in self.N if MODEL.getVarByName(f"x[{i},{j},{k}]").X >=0.5] for k in self.K]
         else:
             raise Exception("model is infeasible")
         result_info["pass_times"] = SolutionT
@@ -126,8 +126,8 @@ class Picking_Gurobi_Model():
 if __name__ == "__main__":
     w_num = 3
     l_num = 3
-    task_num = 3
-    robot_num = 2
+    task_num = 10
+    robot_num = 5
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
     result_info, SolutionT= alg.run_gurobi()
