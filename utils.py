@@ -77,7 +77,7 @@ class DrawTools:
 
 def model2instance_routes(model, picking_instance):
     # get picking_instance idx routes
-    routes = [[[i, j] for i in picking_instance.N for j in picking_instance.N if model.getVarByName(f"x[{i},{j},{k}]").X >= 0.5] for k in range(picking_instance.robotNum)]
+    routes = [[[i, j] for i in picking_instance.N for j in picking_instance.N if model.getVarByName(f"x[{i},{j}]").X >= 0.5 and model.getVarByName(f"passX[{i},{k}]").X >= 0.5] for k in range(picking_instance.robotNum)]
     return routes
 
 def instance_routes2map_routes(picking_instance, routes):
