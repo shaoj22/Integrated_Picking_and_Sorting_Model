@@ -36,18 +36,15 @@ class Picking_Gurobi_Model():
         # 添加决策变量
         x_list = [(i,j,k) for i in self.N for j in self.N for k in self.K]
         x = MODEL.addVars(x_list, vtype=GRB.BINARY, name="x")  # 车k从点i去点j
-        Q_list = [(i,k) for i in self.N for k in self.K]
+        Q_list = [i for i in self.N]
         Q = MODEL.addVars( Q_list, vtype=GRB.CONTINUOUS, name="Q")  # 车k在i的载重
-        T_list = [(i,k) for i in self.N for k in self.K]
+        T_list = [i for i in self.N]
         T = MODEL.addVars( T_list, vtype=GRB.CONTINUOUS, name="T")  # 车k在i的时间
-        FT = MODEL.addVar( vtype=GRB.CONTINUOUS, name="FT") # 所有任务完成的时间
-        Ti_list = [i for i in self.D1]
-        Ti = MODEL.addVars( Ti_list, vtype=GRB.CONTINUOUS, name="Ti")  # i的最大经过时间
         pass_list = [(i,k) for i in self.N for k in self.K]
         passX = MODEL.addVars( pass_list, vtype=GRB.CONTINUOUS, name="Ti")  # k是否经过i
         # 添加优化类型和目标函数
         MODEL.modelSense = GRB.MINIMIZE
-        MODEL.setObjective( gp.quicksum(T[i,k] for i in self.N for k in self.K) )
+        MODEL.setObjective( gp.quicksum(T[i] for i in self.N) )
         # MODEL.setObjective( gp.quicksum(x[i,j,k] * self.disMatrix[i,j] for i in self.N for j in self.N if i!=j for k in self.K) )
         # MODEL.setObjective( FT + 1e-3*gp.quicksum(T[i, k] for i in self.N for k in self.K))
         # MODEL.setObjective( FT )
@@ -64,22 +61,19 @@ class Picking_Gurobi_Model():
         MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p == self.W[k]) <= 1 for k in self.K)
         MODEL.addConstrs( gp.quicksum( x[p,j,k] for j in self.N for p in self.W if j != p and p != self.W[k]) <= 0 for k in self.K)
         # 6. 载重约束
-        MODEL.addConstrs( (x[i, j, k] == 1) >> (Q[j,k] >= Q[i,k] + self.nodes[i]["demand"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j for k in self.K)
-        MODEL.addConstrs( Q[i, k] >= 0 for i in self.N for k in self.K)
-        MODEL.addConstrs( Q[i, k] <= self.Q for i in self.N for k in self.K)
+        MODEL.addConstrs( (x[i, j, k] == 1) >> (Q[j] >= Q[i] + self.nodes[i]["demand"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j for k in self.K)
+        MODEL.addConstrs( Q[i] >= 0 for i in self.N)
+        MODEL.addConstrs( Q[i] <= self.Q for i in self.N)
     
         # 7. 时间约束
-        MODEL.addConstrs( Ti[i] >= T[i, k] for i in self.D1 for k in self.K)
-        MODEL.addConstrs( (x[i, j, k] == 1) >> (T[j,k] >= T[i,k] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j for k in self.K)
+        MODEL.addConstrs( (x[i, j, k] == 1) >> (T[j] >= T[i] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j for k in self.K)
         # 到达终点的时间>=起点+服务+路程时间
-        MODEL.addConstrs( passX[i, k] == gp.quicksum(x[i,j,k] for j in self.N if i!=j) for i in self.N for k in self.K)
-        MODEL.addConstrs( (passX[i, k] == 1) >> (T[2 * self.n + i,k] >= T[i,k] + self.timeMatrix[i][i+2*self.n] + self.nodes[i]["serviceTime"]) for i in (self.P1 + self.P2) for k in self.K)
+        MODEL.addConstrs( T[2 * self.n + i] >= T[i] + self.timeMatrix[i][i+2*self.n] + self.nodes[i]["serviceTime"] for i in (self.P1 + self.P2) )
 
-        MODEL.addConstrs( (passX[i, k] == 1) >> (T[i, k] >= self.nodes[i]["readyTime"]) for i in self.N for k in self.K)
-        MODEL.addConstrs( (passX[i, k] == 1) >> (T[i, k] <= self.nodes[i]["dueTime"]) for i in self.N for k in self.K)
+        MODEL.addConstrs( T[i] >= self.nodes[i]["readyTime"] for i in self.N )
+        MODEL.addConstrs( T[i] <= self.nodes[i]["dueTime"] for i in self.N )
         # 到达P2的时间>=D1的时间+分拣站的服务时间
-        # MODEL.addConstrs( T[i - self.n,k] >= T[i, k] + delta_T for i in self.D1 for k in self.K)
-        MODEL.addConstrs( (passX[i, k] == 1) >> (T[i,k] >= Ti[i + self.n] + delta_T) for i in self.P2 for k in self.K)
+        MODEL.addConstrs( T[i] >= T[i + self.n] + delta_T for i in self.P2 )
 
         info = {
             "x" : x, 
@@ -106,12 +100,9 @@ class Picking_Gurobi_Model():
             # 经过各点的时间（可能松弛）
             SolutionT = []
             for i in self.N:
-                T = []
-                for k in self.K:
-                    var_name1 = f"T[{i},{k}]"
-                    T_i_k = MODEL.getVarByName(var_name1).X
-                    T.append(T_i_k)
-                SolutionT.append(T)
+                var_name1 = f"T[{i}]"
+                T_i = MODEL.getVarByName(var_name1).X
+                SolutionT.append(T_i)
             # 有效的边
             SolutionX = [[[i, j] for i in self.N for j in self.N if MODEL.getVarByName(f"x[{i},{j},{k}]").X >=0.5] for k in self.K]
         else:
@@ -124,10 +115,10 @@ class Picking_Gurobi_Model():
         return result_info, SolutionT
 
 if __name__ == "__main__":
-    w_num = 3
-    l_num = 3
+    w_num = 2
+    l_num = 2
     task_num = 10
-    robot_num = 5
+    robot_num = 10
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
     result_info, SolutionT= alg.run_gurobi()
