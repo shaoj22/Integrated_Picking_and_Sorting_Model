@@ -122,12 +122,12 @@ class NNH_heuristic_algorithm():
         return next_point
 
     def transfer(self, solution):
-        x = np.zeros((self.nodeNum, self.nodeNum, self.robotNum))
+        x = np.zeros((self.nodeNum, self.nodeNum))
         for k in range(self.robotNum):
             route = solution[k]
             for i in range(1, len(route)):
-                x[route[i-1], route[i], k] = 1
-            x[route[-1], route[0], k] = 1
+                x[route[i-1], route[i]] = 1
+            x[route[-1], route[0]] = 1
         return x
     
 
@@ -135,8 +135,8 @@ if __name__ == "__main__":
     # generate instance]
     w_num = 5
     l_num = 5
-    bins_num = 5 
-    robot_num = 3
+    bins_num = 15 
+    robot_num = 5
     picking_station_num = 2
     orders_num = 5
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)

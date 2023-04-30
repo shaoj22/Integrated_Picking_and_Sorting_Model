@@ -169,8 +169,8 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
 if __name__ == "__main__":
     w_num = 5
     l_num = 5
-    bins_num = 10
-    robot_num = 10
+    bins_num = 5
+    robot_num = 3
     picking_station_num = 10
     orders_num = 2
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
