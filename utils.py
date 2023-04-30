@@ -287,7 +287,7 @@ def efficient_picking_evaluate(picking_instance, solution):
             load += picking_instance.nodes[solution[k][i]]["demand"]
             if load > picking_instance.capacity:
                 obj += 10000
-    obj += np.max(passTime)
+    obj += np.sum(passTime)
 
     return obj
 
