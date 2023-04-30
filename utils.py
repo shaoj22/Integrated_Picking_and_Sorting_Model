@@ -11,11 +11,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-
+# 绘图工具
 class DrawTools:
+    # 初始化工具
     def __init__(self, pixel_size=1):
         self.psize = pixel_size
-
+    # 绘制像素
     def draw_pixel(self, ax, row, col, facecolor, edgecolor='black'):
         rect = plt.Rectangle(
             (row * self.psize, col * self.psize),
@@ -26,7 +27,7 @@ class DrawTools:
             alpha=1
         )
         ax.add_patch(rect)
-
+    # 绘制机器人
     def draw_robot(self, ax, row, col, fill, facecolor='y', edgecolor='black'):
         circle = plt.Circle(
             ((row + 0.5) * self.psize, (col + 0.5) * self.psize),
@@ -37,7 +38,7 @@ class DrawTools:
             alpha=1
         )
         ax.add_patch(circle)
-
+    # 绘制地图
     def draw_map(self, ax, map):
         for idx in range(map.idx_num):
             x, y = map.idx2xy[idx]
@@ -56,18 +57,18 @@ class DrawTools:
         plt.xlim(0, map.map_length * self.psize)
         plt.ylim(0, map.map_width * self.psize)
         plt.axis("off")
-    
+    # 绘制算例（地图+机器人）
     def draw_instance(self, ax, instance):
         self.draw_map(ax, instance.map)
         for robot in instance.robots:
             row, col = instance.map.idx2xy[robot["pos_idx"]]
             self.draw_robot(ax, row, col, "r")
-    
+    # 绘制有向边
     def draw_edge(self, ax, map, edge, color='r'):
         x1, y1 = map.idx2xy[edge[0]]
         x2, y2 = map.idx2xy[edge[1]]
         plt.arrow(x1+self.psize/2, y1+self.psize/2, x2-x1, y2-y1, head_width=0.2, head_length=0.2, fc=color, ec=color)
-    
+    # 绘制路径
     def draw_routes(self, ax, map, routes):
         cmap = plt.get_cmap('Set1')
         colors = [cmap(i) for i in np.linspace(0, 1, len(routes))]
@@ -76,6 +77,7 @@ class DrawTools:
                 edge = [route[i-1], route[i]]
                 self.draw_edge(ax, map, edge, color=colors[ri])
 
+# picking模型转化为路径
 def model2instance_routes(model, picking_instance):
     # get picking_instance idx routes
     routes = []
@@ -93,6 +95,7 @@ def model2instance_routes(model, picking_instance):
         routes.append(route[:-1])
     return routes
 
+# instance标号的路径转化为map标号的路径
 def instance_routes2map_routes(picking_instance, routes):
     # preprocess picking_instance routes to map routes for render
     for route in routes:
@@ -100,6 +103,7 @@ def instance_routes2map_routes(picking_instance, routes):
             route[i] = picking_instance.nodes[route[i]]["pos_idx"]
     return routes
 
+# 整合模型评估函数
 def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     """ evaluate solution with gurobi model
 
@@ -149,6 +153,7 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     model.optimize()
     return model.ObjVal
 
+# 建立picking评估模型
 def build_picking_evaluate_model(picking_instance, x_val):
     """ build gurobi model for evaluate picking solution
 
@@ -178,6 +183,7 @@ def build_picking_evaluate_model(picking_instance, x_val):
     model.update()
     return model
 
+# picking模型评估函数
 def picking_evaluate(picking_instance, x_val):
     """ evaluate solution with gurobi model
 
@@ -196,6 +202,7 @@ def picking_evaluate(picking_instance, x_val):
     else:
         return model.ObjVal
 
+# 建立picking解的整合模型评估模型
 def build_picking_integrated_evluate_model(integrated_instance, x_val):
     """ build gurobi model for evaluate picking solution
 
@@ -225,6 +232,7 @@ def build_picking_integrated_evluate_model(integrated_instance, x_val):
     model.update()
     return model
 
+# picking解的整合模型评估函数
 def picking_integrated_evaluate(integrated_instance, x_val):
     """ evaluate solution with gurobi model
 
@@ -240,6 +248,7 @@ def picking_integrated_evaluate(integrated_instance, x_val):
     model.optimize()
     return model.ObjVal
 
+# 高效评估picking解
 def efficient_picking_evaluate(picking_instance, solution):
     obj = 0
     # calculate pass time of each node and check time_windows
