@@ -1,14 +1,17 @@
+import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 import time
 import utils
 from Picking_Instance import Instance
+from NNH_heuristic_algorithm import NNH_heuristic_algorithm
 
 class Picking_Gurobi_Model():
-    def __init__(self, instance, time_limit=None):
+    def __init__(self, instance, time_limit=None, init_flag=False):
         # time_limit
         self.picking_instance = instance
         self.time_limit = time_limit
+        self.init_flag = init_flag
         self.Q = instance.capacity
         self.delta_T = instance.pick_time
         # point
@@ -26,6 +29,26 @@ class Picking_Gurobi_Model():
         self.disMatrix = instance.disMatrix
         self.timeMatrix = instance.timeMatrix
     
+    def set_init_solution(self, MODEL, strategy = 0):
+        """
+        set init solution for model
+        """
+        x_val = np.zeros((self.picking_instance.nodeNum, self.picking_instance.nodeNum))
+        # init strategy 1
+        init_alg = NNH_heuristic_algorithm(self.picking_instance)
+        routes = init_alg.NNH_main()
+        # init strategy 2
+        for route in routes:
+            for i in range(1, len(route)):
+                pi = route[i-1]
+                pj = route[i]
+                x_val[pi, pj] = 1
+            x_val[route[-1], route[0]] = 1
+        for i in range(self.picking_instance.nodeNum):
+            for j in range(self.picking_instance.nodeNum):
+                MODEL.getVarByName("x[{},{}]".format(i,j)).start = x_val[i,j]
+        MODEL.update()
+
     def build_model(self, MODEL, delta_T=-1):
         """build objective, variables and constraints in picking problem    
 
@@ -78,6 +101,7 @@ class Picking_Gurobi_Model():
         ## 到达P2的时间>=D1的时间+分拣站的服务时间
         MODEL.addConstrs( T[i] >= T[i + self.n] + delta_T for i in self.P2 )
 
+        MODEL.update()
         info = {
             "x" : x, 
             "T" : T, 
@@ -88,6 +112,8 @@ class Picking_Gurobi_Model():
         start_Time = time.time() # 记录模型开始计算时间
         MODEL = gp.Model('Picking_Gurobi_Model') # 创建Gurobi模型
         self.build_model(MODEL, delta_T=self.delta_T) # 创建模型
+        if self.init_flag:
+            self.set_init_solution(MODEL) # 设置初始解
         # 求解模型
         if self.time_limit is not None:
             MODEL.setParam("TimeLimit", self.time_limit)
@@ -111,10 +137,10 @@ class Picking_Gurobi_Model():
 if __name__ == "__main__":
     w_num = 2
     l_num = 2
-    task_num = 5
-    robot_num = 1
+    task_num = 20
+    robot_num = 10
     instance = Instance(w_num, l_num, task_num, robot_num)
-    alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
+    alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600, init_flag = True)
     result_info, SolutionT= alg.run_gurobi()
     instance.render(model=result_info["model"])
     print("最优解为：", result_info["best_obj"])

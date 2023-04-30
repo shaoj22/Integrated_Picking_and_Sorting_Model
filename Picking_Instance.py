@@ -140,7 +140,7 @@ class Instance:
         disMatrix (np.ndarray[nodeNum, nodeNum])
         timeMatrix (np.ndarray[nodeNum, nodeNum])
     """
-    def __init__(self, w_num, l_num, task_num, robot_num, seed=1):
+    def __init__(self, w_num, l_num, task_num, robot_num, seed=1, real_dist=True):
         """__init__ generate instance
 
         Args:
@@ -148,6 +148,7 @@ class Instance:
             l_num (int): 长度方向上块的个数 (x方向)
             task_num (int): 任务的个数
             seed (int, optional): 随机种子. Defaults to 1.
+            real_dist (bool, optional): 是否使用真实距离. Defaults to False.
         """
         # set params
         self.capacity = 8 # 机器人容量
@@ -158,6 +159,7 @@ class Instance:
         self.pack_time = 1 # 上下拣选台的时间
         self.lift_time = 1 # 升降货架的时间
         self.robot_speed = 1 # 机器人的速度
+        self.real_dist = real_dist # 是否使用真实距离
         # set map
         self.map = Map(w_num, l_num)
         # set tasks
@@ -317,7 +319,7 @@ class Instance:
         disMatrix = np.zeros((self.nodeNum, self.nodeNum))
         for i in range(self.nodeNum):
             for j in range(self.nodeNum):
-                disMatrix[i, j] = self.map.get_distance(self.nodes[i]["pos_idx"], self.nodes[j]["pos_idx"])
+                disMatrix[i, j] = self.map.get_distance(self.nodes[i]["pos_idx"], self.nodes[j]["pos_idx"], extra=self.real_dist)
         self.check_disMatrix(disMatrix)
         return disMatrix
 
