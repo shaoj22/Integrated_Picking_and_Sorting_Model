@@ -11,11 +11,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-
+# 绘图工具
 class DrawTools:
+    # 初始化工具
     def __init__(self, pixel_size=1):
         self.psize = pixel_size
-
+    # 绘制像素
     def draw_pixel(self, ax, row, col, facecolor, edgecolor='black'):
         rect = plt.Rectangle(
             (row * self.psize, col * self.psize),
@@ -26,7 +27,7 @@ class DrawTools:
             alpha=1
         )
         ax.add_patch(rect)
-
+    # 绘制机器人
     def draw_robot(self, ax, row, col, fill, facecolor='y', edgecolor='black'):
         circle = plt.Circle(
             ((row + 0.5) * self.psize, (col + 0.5) * self.psize),
@@ -37,7 +38,7 @@ class DrawTools:
             alpha=1
         )
         ax.add_patch(circle)
-
+    # 绘制地图
     def draw_map(self, ax, map):
         for idx in range(map.idx_num):
             x, y = map.idx2xy[idx]
@@ -56,46 +57,53 @@ class DrawTools:
         plt.xlim(0, map.map_length * self.psize)
         plt.ylim(0, map.map_width * self.psize)
         plt.axis("off")
-    
+    # 绘制算例（地图+机器人）
     def draw_instance(self, ax, instance):
         self.draw_map(ax, instance.map)
         for robot in instance.robots:
             row, col = instance.map.idx2xy[robot["pos_idx"]]
             self.draw_robot(ax, row, col, "r")
-    
+    # 绘制有向边
     def draw_edge(self, ax, map, edge, color='r'):
         x1, y1 = map.idx2xy[edge[0]]
         x2, y2 = map.idx2xy[edge[1]]
         plt.arrow(x1+self.psize/2, y1+self.psize/2, x2-x1, y2-y1, head_width=0.2, head_length=0.2, fc=color, ec=color)
-    
+    # 绘制路径
     def draw_routes(self, ax, map, routes):
         cmap = plt.get_cmap('Set1')
         colors = [cmap(i) for i in np.linspace(0, 1, len(routes))]
-        for ri in range(len(routes)):
-            for edge in routes[ri]:
+        for ri, route in enumerate(routes):
+            for i in range(1, len(route)):
+                edge = [route[i-1], route[i]]
                 self.draw_edge(ax, map, edge, color=colors[ri])
 
+# picking模型转化为路径
 def model2instance_routes(model, picking_instance):
     # get picking_instance idx routes
-    routes = [[[i, j] for i in picking_instance.N for j in picking_instance.N if model.getVarByName(f"x[{i},{j}]").X >= 0.5 and model.getVarByName(f"passX[{i},{k}]").X >= 0.5] for k in range(picking_instance.robotNum)]
+    routes = []
+    for w in picking_instance.W:
+        route = [w]
+        cur_i = w
+        while True:
+            for j in picking_instance.N:
+                if model.getVarByName(f"x[{cur_i},{j}]").X >= 0.5:
+                    route.append(j)
+                    cur_i = j
+                    break
+            if cur_i in picking_instance.W:
+                break
+        routes.append(route[:-1])
     return routes
 
+# instance标号的路径转化为map标号的路径
 def instance_routes2map_routes(picking_instance, routes):
     # preprocess picking_instance routes to map routes for render
     for route in routes:
-        i = 0
-        while i < len(route):
-            edge = route[i]
-            # delete edge from node to robot start
-            if edge[1] in picking_instance.W: 
-                route.pop(i)
-                continue
-            # transfer to map idx routes
-            for j in range(2):
-                edge[j] = picking_instance.nodes[edge[j]]["pos_idx"]
-            i += 1
+        for i in range(len(route)):
+            route[i] = picking_instance.nodes[route[i]]["pos_idx"]
     return routes
 
+# 整合模型评估函数
 def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     """ evaluate solution with gurobi model
 
@@ -123,11 +131,10 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     z = info["z"]
     for i in integrated_instance.N:
         for j in integrated_instance.N:
-            for k in integrated_instance.K:
-                if x_val[i, j, k] == 1:
-                    x[i, j, k].setAttr("LB", 1)
-                elif x_val[i, j, k] == 0:
-                    x[i, j, k].setAttr("UB", 0)
+            if x_val[i, j] == 1:
+                x[i, j].setAttr("LB", 1)
+            elif x_val[i, j] == 0:
+                x[i, j].setAttr("UB", 0)
     for i in range(integrated_instance.n):
         for p in range(integrated_instance.P):
             if y_val[i, p] == 1:
@@ -145,6 +152,7 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     model.optimize()
     return model.ObjVal
 
+# 建立picking评估模型
 def build_picking_evaluate_model(picking_instance, x_val):
     """ build gurobi model for evaluate picking solution
 
@@ -165,15 +173,15 @@ def build_picking_evaluate_model(picking_instance, x_val):
     x = info["x"]
     for i in picking_instance.N:
         for j in picking_instance.N:
-            for k in picking_instance.K:
-                if x_val[i, j, k] == 1:
-                    x[i, j, k].setAttr("LB", 1)
-                elif x_val[i, j, k] == 0:
-                    x[i, j, k].setAttr("UB", 0)
+            if x_val[i, j] == 1:
+                x[i, j].setAttr("LB", 1)
+            elif x_val[i, j] == 0:
+                x[i, j].setAttr("UB", 0)
     # 3. update model
     model.update()
     return model
 
+# picking模型评估函数
 def picking_evaluate(picking_instance, x_val):
     """ evaluate solution with gurobi model
 
@@ -192,6 +200,7 @@ def picking_evaluate(picking_instance, x_val):
     else:
         return model.ObjVal
 
+# 建立picking解的整合模型评估模型
 def build_picking_integrated_evluate_model(integrated_instance, x_val):
     """ build gurobi model for evaluate picking solution
 
@@ -212,15 +221,15 @@ def build_picking_integrated_evluate_model(integrated_instance, x_val):
     x = info["x"]
     for i in integrated_instance.N:
         for j in integrated_instance.N:
-            for k in integrated_instance.K:
-                if x_val[i, j, k] == 1:
-                    x[i, j, k].setAttr("LB", 1)
-                elif x_val[i, j, k] == 0:
-                    x[i, j, k].setAttr("UB", 0)
+            if x_val[i, j] == 1:
+                x[i, j].setAttr("LB", 1)
+            elif x_val[i, j] == 0:
+                x[i, j].setAttr("UB", 0)
     # 3. update model
     model.update()
     return model
 
+# picking解的整合模型评估函数
 def picking_integrated_evaluate(integrated_instance, x_val):
     """ evaluate solution with gurobi model
 
@@ -236,6 +245,7 @@ def picking_integrated_evaluate(integrated_instance, x_val):
     model.optimize()
     return model.ObjVal
 
+# 高效评估picking解
 def efficient_picking_evaluate(picking_instance, solution):
     obj = 0
     # calculate pass time of each node and check time_windows

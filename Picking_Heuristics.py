@@ -50,12 +50,12 @@ class Picking_VNS:
         return solution
 
     def transfer(self, solution):
-        x = np.zeros((self.picking_instance.nodeNum, self.picking_instance.nodeNum, self.picking_instance.robotNum))
+        x = np.zeros((self.picking_instance.nodeNum, self.picking_instance.nodeNum))
         for k in range(self.picking_instance.robotNum):
             route = solution[k]
             for i in range(1, len(route)):
-                x[route[i-1], route[i], k] = 1
-            x[route[-1], route[0], k] = 1
+                x[route[i-1], route[i]] = 1
+            x[route[-1], route[0]] = 1
         return x
 
     def cal_objective(self, solution):
@@ -128,10 +128,10 @@ class Picking_VNS:
         return self.best_x_val, self.best_obj
 
 if __name__ == "__main__":
-    w_num = 3
-    l_num = 3
-    task_num = 2
-    robot_num = 2
+    w_num = 2
+    l_num = 2
+    task_num = 10
+    robot_num = 10
     picking_instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_VNS(picking_instance, 100000)
     start = time.time()
