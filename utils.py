@@ -131,11 +131,10 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     z = info["z"]
     for i in integrated_instance.N:
         for j in integrated_instance.N:
-            for k in integrated_instance.K:
-                if x_val[i, j, k] == 1:
-                    x[i, j, k].setAttr("LB", 1)
-                elif x_val[i, j, k] == 0:
-                    x[i, j, k].setAttr("UB", 0)
+            if x_val[i, j] == 1:
+                x[i, j].setAttr("LB", 1)
+            elif x_val[i, j] == 0:
+                x[i, j].setAttr("UB", 0)
     for i in range(integrated_instance.n):
         for p in range(integrated_instance.P):
             if y_val[i, p] == 1:
@@ -174,11 +173,10 @@ def build_picking_evaluate_model(picking_instance, x_val):
     x = info["x"]
     for i in picking_instance.N:
         for j in picking_instance.N:
-            for k in picking_instance.K:
-                if x_val[i, j, k] == 1:
-                    x[i, j, k].setAttr("LB", 1)
-                elif x_val[i, j, k] == 0:
-                    x[i, j, k].setAttr("UB", 0)
+            if x_val[i, j] == 1:
+                x[i, j].setAttr("LB", 1)
+            elif x_val[i, j] == 0:
+                x[i, j].setAttr("UB", 0)
     # 3. update model
     model.update()
     return model
@@ -223,11 +221,10 @@ def build_picking_integrated_evluate_model(integrated_instance, x_val):
     x = info["x"]
     for i in integrated_instance.N:
         for j in integrated_instance.N:
-            for k in integrated_instance.K:
-                if x_val[i, j, k] == 1:
-                    x[i, j, k].setAttr("LB", 1)
-                elif x_val[i, j, k] == 0:
-                    x[i, j, k].setAttr("UB", 0)
+            if x_val[i, j] == 1:
+                x[i, j].setAttr("LB", 1)
+            elif x_val[i, j] == 0:
+                x[i, j].setAttr("UB", 0)
     # 3. update model
     model.update()
     return model
