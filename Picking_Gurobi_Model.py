@@ -42,13 +42,18 @@ class Picking_Gurobi_Model():
         Q = MODEL.addVars( Q_list, vtype=GRB.CONTINUOUS, name="Q")  # 车k在i的载重
         T_list = [i for i in self.N]
         T = MODEL.addVars( T_list, vtype=GRB.CONTINUOUS, name="T")  # 车k在i的时间
+        FT = MODEL.addVar( vtype=GRB.CONTINUOUS, name="FT") # 所有任务完成的时间
         pass_list = [(i,k) for i in self.N for k in self.K]
         passX = MODEL.addVars( pass_list, vtype=GRB.BINARY, name="passX")  # k是否经过i
         # 添加优化类型和目标函数
         MODEL.modelSense = GRB.MINIMIZE
-        MODEL.setObjective( gp.quicksum(T[i] for i in self.N) )
-        # MODEL.setObjective( gp.quicksum(x[i,j,k] * self.disMatrix[i,j] for i in self.N for j in self.N if i!=j for k in self.K) )
+        MODEL.setObjective( FT ) # 最大完成时间目标
+        # MODEL.setObjective( FT + 1e-3*gp.quicksum(T[i] for i in self.N) ) # 最大完成时间 + 总完成时间目标
+        # MODEL.setObjective( gp.quicksum(T[i] for i in self.N) ) # 总完成时间目标
+        # MODEL.setObjective( gp.quicksum(x[i,j,k] * self.disMatrix[i,j] for i in self.N for j in self.N if i!=j for k in self.K) ) # 总距离目标
         # 添加约束条件
+        # 0. 最大完成时间约束
+        MODEL.addConstrs( FT >= T[i] for i in self.N)
         # 1. 流平衡约束
         MODEL.addConstrs( gp.quicksum( x[i,j] for j in self.N if j != i ) == gp.quicksum( x[j,i] for j in self.N if j != i ) for i in self.N)
         # 2. 完成所有任务
@@ -106,8 +111,8 @@ class Picking_Gurobi_Model():
 if __name__ == "__main__":
     w_num = 2
     l_num = 2
-    task_num = 10
-    robot_num = 10
+    task_num = 5
+    robot_num = 1
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600)
     result_info, SolutionT= alg.run_gurobi()
