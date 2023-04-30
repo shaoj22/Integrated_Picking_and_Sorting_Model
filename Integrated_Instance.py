@@ -72,12 +72,12 @@ class Instance(Picking_Instance.Instance):
 
 if __name__ == "__main__":
     # generate instance
-    w_num = 2
-    l_num = 2
-    bins_num = 5
-    robot_num = 3
-    picking_station_num = 3
-    orders_num = 5
+    w_num = 5
+    l_num = 5
+    bins_num = 10
+    robot_num = 10
+    picking_station_num = 5
+    orders_num = 2
     instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     print(instance.n)
     # print("generate {} tasks".format(5))

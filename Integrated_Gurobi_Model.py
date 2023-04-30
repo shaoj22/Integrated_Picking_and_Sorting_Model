@@ -43,9 +43,9 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # 添加约束条件
         # ______________________________________________________________________________________________________________
         # 到达P2的时间>=到达环形输送机出口的时间
-        MODEL.addConstrs( T[i - self.n, k] >= Te[i - 2 * self.n, self.P-1] + (self.Dpi[i - 2 * self.n][self.P-1]/self.v) for i in self.D1 for k in self.K)
+        MODEL.addConstrs( T[i - self.n] >= Te[i - 2 * self.n, self.P-1] + (self.Dpi[i - 2 * self.n][self.P-1]/self.v) for i in self.D1 )
         # 到达输送机的时间要>=到达D1的时间
-        MODEL.addConstrs( I[i] >= T[i + 2 * self.n,k] for i in range(self.n) for k in self.K)
+        MODEL.addConstrs( I[i] >= T[i + 2 * self.n] for i in range(self.n) )
         # ______________________________________________________________________________________________________________
 
 
@@ -103,84 +103,82 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # 输出并记录解的情况
         if MODEL.status == 2:
             Obj = MODEL.ObjVal
-            # 记录下表是IP的解
-            SolutionT = []
-            # SolutionTS = []
-            SolutionTo = []
-            # SolutionZ = []
-            # SolutionTe = []
-            # SolutionTa = []
-            for i in self.N:
-                T = []
-            #     TS = []
+            # # 记录下表是IP的解
+            # SolutionT = []
+            # # SolutionTS = []
+            # SolutionTo = []
+            # # SolutionZ = []
+            # # SolutionTe = []
+            # # SolutionTa = []
+            # for i in self.N:
+            #     T = []
+            # #     TS = []
 
-            #     TE = []
-            #     TA = []
-                for k in self.K:
-                    var_name1 = f"T[{i},{k}]"
-            #         var_name2 = f"Ts[{i},{j}]"
-            #         var_nameTe = f"Te[{i},{j}]"
-            #         var_nameTa = f"Ta[{i},{j}]"
-                    T_i_j = MODEL.getVarByName(var_name1).X
-            #         Ts_i_j = MODEL.getVarByName(var_name2).X
-            #         Te_i_j = MODEL.getVarByName(var_nameTe).X
-            #         Ta_i_j = MODEL.getVarByName(var_nameTa).X
-                    T.append(T_i_j)
-            #         TS.append(Ts_i_j)
-            #         To.append(Te_i_j+self.Dpi[i][j]/self.v)
-            #         TE.append(Te_i_j)
-            #         TA.append(Ta_i_j)
-                SolutionT.append(T)
-            #     SolutionTS.append(TS)
+            # #     TE = []
+            # #     TA = []
+            #     for k in self.K:
+            #         var_name1 = f"T[{i},{k}]"
+            # #         var_name2 = f"Ts[{i},{j}]"
+            # #         var_nameTe = f"Te[{i},{j}]"
+            # #         var_nameTa = f"Ta[{i},{j}]"
+            #         T_i_j = MODEL.getVarByName(var_name1).X
+            # #         Ts_i_j = MODEL.getVarByName(var_name2).X
+            # #         Te_i_j = MODEL.getVarByName(var_nameTe).X
+            # #         Ta_i_j = MODEL.getVarByName(var_nameTa).X
+            #         T.append(T_i_j)
+            # #         TS.append(Ts_i_j)
+            # #         To.append(Te_i_j+self.Dpi[i][j]/self.v)
+            # #         TE.append(Te_i_j)
+            # #         TA.append(Ta_i_j)
+            #     SolutionT.append(T)
+            # #     SolutionTS.append(TS)
+            # #     SolutionTo.append(To)
+            # #     SolutionTe.append(TE)
+            # #     SolutionTa.append(TA)
+            # # # 记录下表是OP的解
+            # # SolutionZ = []
+            # # for i in range(self.O):
+            # #     Z = []
+            # #     for j in range(self.P):
+            # #         var_name3 = f"z[{i},{j}]"
+            # #         z_i_j = MODEL.getVarByName(var_name3).X
+            # #         Z.append(z_i_j)
+            # #     SolutionZ.append(Z)
+            # # # 记录I的解
+            # SolutionI = []
+            # for i in range(self.n):
+            #     var_name4 = f"I[{i}]"
+            #     I_i =MODEL.getVarByName(var_name4).X
+            #     SolutionI.append(I_i)
+            # for i in range(self.n):
+            #     To =[]
+            #     for p in range(self.P):
+            #         var_nameTe = f"Te[{i},{p}]"
+            #         Te_i_p = MODEL.getVarByName(var_nameTe).X
+            #         To.append(Te_i_p+self.Dpi[i][p]/self.v)
             #     SolutionTo.append(To)
-            #     SolutionTe.append(TE)
-            #     SolutionTa.append(TA)
-            # # 记录下表是OP的解
-            # SolutionZ = []
-            # for i in range(self.O):
-            #     Z = []
-            #     for j in range(self.P):
-            #         var_name3 = f"z[{i},{j}]"
-            #         z_i_j = MODEL.getVarByName(var_name3).X
-            #         Z.append(z_i_j)
-            #     SolutionZ.append(Z)
-            # # 记录I的解
-            SolutionI = []
-            for i in range(self.n):
-                var_name4 = f"I[{i}]"
-                I_i =MODEL.getVarByName(var_name4).X
-                SolutionI.append(I_i)
-            for i in range(self.n):
-                To =[]
-                for p in range(self.P):
-                    var_nameTe = f"Te[{i},{p}]"
-                    Te_i_p = MODEL.getVarByName(var_nameTe).X
-                    To.append(Te_i_p+self.Dpi[i][p]/self.v)
-                SolutionTo.append(To)
         else:
             Obj = 0
+        objval = MODEL.objval
         objBound = MODEL.objBound
+        Gap = MODEL.MIPGap
         end_Time = time.time()
         Time =  end_Time - start_Time
-        return MODEL, Obj, Time, objBound, SolutionT, SolutionI, SolutionTo
+        return MODEL, Obj, Time, objval, objBound, Gap
 
 if __name__ == "__main__":
-    w_num = 3
-    l_num = 3
-    bins_num = 5
-    robot_num = 4
-    picking_station_num = 2
+    w_num = 5
+    l_num = 5
+    bins_num = 10
+    robot_num = 10
+    picking_station_num = 10
     orders_num = 2
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
-    alg = Integrated_Gurobi_Model(instance = problem, time_limit = 3600)
-    model, Obj, Time, objBound, SolutionT, SolutionI, SolutionTo = alg.run_gurobi()
+    alg = Integrated_Gurobi_Model(instance = problem, time_limit = 1800)
+    model, Obj, Time, objval, objBound, Gap = alg.run_gurobi()
     problem.render(model=model)
     print("最优解为：", Obj)
     print("上界：",objBound)
+    print("下界：",objval)
+    print("Gap:",Gap)
     print(Time)
-    print("到达每个节点的时间：")
-    print(SolutionT)
-    print("到达形输送机的时间：")
-    print(SolutionI)
-    print("出环形输送机的时间：")
-    print(SolutionTo)
