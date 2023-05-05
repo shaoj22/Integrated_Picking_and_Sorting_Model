@@ -72,11 +72,10 @@ def test_picking_integrated_evluate():
     result_info = alg.run_gurobi()
     model = result_info["model"]
     # get solution
-    x_val = np.zeros((picking_instance.nodeNum, picking_instance.nodeNum, picking_instance.robotNum))
+    x_val = np.zeros((picking_instance.nodeNum, picking_instance.nodeNum))
     for i in picking_instance.N:
         for j in picking_instance.N:
-            for k in picking_instance.K:
-                x_val[i][j][k] = model.getVarByName(f'x[{i},{j},{k}]').x
+            x_val[i][j] = model.getVarByName(f'x[{i},{j}]').x
     # evaluate solution
     pickers_num = 10
     orders_num = 5
