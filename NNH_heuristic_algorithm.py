@@ -91,7 +91,6 @@ class NNH_heuristic_algorithm():
                     r = 0
                 else:
                     r = self.R//2 
-        print(car_chromosome)
         sum = 0
         for i in range(len(car_chromosome)):
             sum += len(car_chromosome[i])
