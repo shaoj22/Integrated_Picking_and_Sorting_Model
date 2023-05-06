@@ -38,6 +38,7 @@ class Picking_Gurobi_Model():
         init_alg = NNH_heuristic_algorithm(self.picking_instance)
         routes = init_alg.NNH_main()
         # init strategy 2
+        # set init solution
         for route in routes:
             for i in range(1, len(route)):
                 pi = route[i-1]
