@@ -132,7 +132,7 @@ class Picking_Gurobi_Model():
         result_info["best_obj"] = MODEL.ObjVal
         result_info["upper_bound"] = MODEL.objBound
         result_info["model"] = MODEL #? space cost
-        return result_info, SolutionT
+        return result_info
 
 if __name__ == "__main__":
     w_num = 2
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     robot_num = 10
     instance = Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600, init_flag = True)
-    result_info, SolutionT= alg.run_gurobi()
+    result_info = alg.run_gurobi()
     instance.render(model=result_info["model"])
     print("最优解为：", result_info["best_obj"])
     print("上界：",result_info["upper_bound"])
