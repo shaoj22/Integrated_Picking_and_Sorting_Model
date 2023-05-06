@@ -1,0 +1,183 @@
+'''
+File: Integrated_ALNS.py
+Project: Integrated_Picking---Sorting_Model
+Description: Solving integrated model with Adaptive Large Neighbourhood Search algorithm
+File Created: Saturday, 6th May 2023 10:11:26 am
+Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
+'''
+
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+import Integrated_Instance
+import utils
+import time
+import tqdm
+from Picking_Operators import *
+from NNH_heuristic_algorithm import NNH_heuristic_algorithm
+
+
+class ALNS_base:
+    """
+    Base class of ALNS algorithm
+        ALNS算法的通用框架，实际使用时，需要继承该类，并实现以下方法：
+            1. get_operators_list: 返回一个operator的list，每个operator都是一个类，实现了get方法 
+            2. solution_init: 返回一个初始解
+            3. cal_objective: 计算解的目标函数值
+    """
+    def __init__(self, iter_num):
+        self.iter_num = iter_num
+        
+        # set params
+        ## 1. ALNS params
+        self.adaptive_period = 10000
+        self.sigma1 = 2
+        self.sigma2 = 1
+        self.sigma3 = 0.1
+        ## 2. SA params
+        self.max_temp = 1
+        self.min_temp = 0
+        self.cooling_rate = 0.98
+        self.cooling_period = 10000
+    
+    # to be implemented in subclass
+    def set_operators_list(self):
+        self.operators_list = []
+        raise NotImplementedError
+
+    # to be implemented in subclass
+    def solution_init(self):
+        raise NotImplementedError
+    
+    # to be implemented in subclass
+    def cal_objective(self):
+        raise NotImplementedError 
+
+    def reset(self):
+        self.operators_scores = np.ones(len(self.operators_list))
+        self.operators_steps = np.ones(len(self.operators_list))
+        self.obj_iter_process = []
+    
+    def SA_accept(self, detaC, temperature):
+        return math.exp(-detaC / temperature)
+
+    def temperature_update(self, temperature, step):
+        if step % self.cooling_period == 0: # update temperature by static steps
+            temperature *= self.cooling_rate
+        temperature = max(self.min_temp, temperature)
+        return temperature
+
+    def choose_operator(self):
+        weights = self.operators_scores / self.operators_steps
+        prob = weights / sum(weights)
+        return np.random.choice(range(len(self.operators_list)), p=prob)
+    
+    def get_neighbour(self, solution, operator):
+        return operator.get(solution)
+
+    def show_process(self):
+        y = self.process
+        x = np.arange(len(y))
+        plt.plot(x, y)
+        plt.title("Iteration Process of ALNS")
+        plt.xlabel("Iteration")
+        plt.ylabel("Objective")
+        plt.show()
+
+    def run(self):
+        cur_solution = self.solution_init() 
+        cur_obj = self.cal_objective(cur_solution)
+        self.best_solution = cur_solution
+        self.best_obj = cur_obj
+        temperature = self.max_temp
+        for step in tqdm.trange(self.iter_num, desc="ALNS Iteration"):
+            opt_i = self.choose_operator()
+            new_solution = self.get_neighbour(cur_solution, self.operators_list[opt_i])
+            new_obj = self.cal_objective(new_solution)
+            # obj: minimize the total distance 
+            if new_obj < self.best_obj:
+                self.best_solution = new_solution
+                self.best_obj = new_obj
+                cur_solution = new_solution
+                cur_obj = new_obj
+                self.operators_scores[opt_i] += self.sigma1
+                self.operators_steps[opt_i] += 1
+            elif new_obj < cur_obj: 
+                cur_solution = new_solution
+                cur_obj = new_obj
+                self.operators_scores[opt_i] += self.sigma2
+                self.operators_steps[opt_i] += 1
+            elif np.random.random() < self.SA_accept((new_obj-cur_obj)/cur_obj, temperature):
+                cur_solution = new_solution
+                cur_obj = new_obj
+                self.operators_scores[opt_i] += self.sigma3
+                self.operators_steps[opt_i] += 1
+            # reset operators weights
+            if step % self.adaptive_period == 0: 
+                self.operators_scores = np.ones(len(self.operators_list))
+                self.operators_steps = np.ones(len(self.operators_list))
+            # update SA temperature
+            temperature = self.temperature_update(temperature, step)
+            # record
+            self.obj_iter_process.append(cur_obj)
+            tqdm.set_postfix({
+                "best_obj" : self.best_obj, 
+                "cur_obj" : cur_obj, 
+                "temperature" : temperature
+            })
+        return self.best_solution, self.best_obj
+
+
+class ALNS(ALNS_base):
+    """
+    ALNS algorithm for integrated picking and sorting problem 
+    """
+    def __init__(self, instance, iter_num):
+        super().__init__(iter_num)
+        self.instance = instance
+        self.set_operators_list()
+    
+    def set_operators_list(self):
+        self.operators_list = [RellocatePD(self.instance), RellocateD(self.instance)]
+    
+    def solution_init(self):
+        picking_alg = NNH_heuristic_algorithm(self.instance)
+        picking_solution = picking_alg.NNH_main()
+        sorting_solution = [np.random.randint(self.instance.P) for _ in range(self.instance.n)]
+        solution = {
+            "picking" : picking_solution,
+            "sorting" : sorting_solution
+        }
+        return solution
+    
+    def cal_objective(self, solution):
+        picking_solution = solution["picking"]
+        sorting_solution = solution["sorting"]
+        integrated_instance = self.instance
+        return utils.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
+        
+    def test_run(self):
+        cur_solution = self.solution_init() 
+        cur_obj = self.cal_objective(cur_solution)
+        return cur_solution, cur_obj
+
+if __name__ == "__main__":
+    # create instance
+    w_num = 5
+    l_num = 5
+    bins_num = 10
+    robot_num = 10
+    picking_station_num = 5
+    orders_num = 2
+    instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    # run algorithm
+    alg = ALNS(instance, iter_num=100000)
+    start = time.time()
+    solution, obj = alg.test_run()
+    end = time.time()
+    print("best_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, end-start, solution))
+
+
+
+ 
+    

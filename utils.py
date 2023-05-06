@@ -288,5 +288,87 @@ def efficient_picking_evaluate(picking_instance, solution):
 
     return obj
 
+# 高效评估整体解
+def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution):
+    obj = 0
+    instance = integrated_instance
+    # calculate pass time of each node and check time_windows
+    timeMatrix = instance.timeMatrix
+    passTime = np.zeros(instance.nodeNum)
+    node2ki = {}
+    P2_list = []
+    for ri, route in enumerate(picking_solution):
+        cur_time = 0
+        for i in range(1, len(route)):
+            cur_time += instance.nodes[route[i-1]]["serviceTime"] + timeMatrix[route[i-1], route[i]]
+            cur_time = max(cur_time, instance.nodes[route[i]]["readyTime"])
+            if cur_time > instance.nodes[route[i]]["dueTime"]:
+                obj += 10000
+            passTime[route[i]] = cur_time
+            node2ki[route[i]] = (ri, i)
+            if instance.node2type[route[i]] == "P2":
+                P2_list.append(route[i])
 
+    # calculate pick_time of each task 
+    Tip_arrive = np.zeros((instance.n, instance.P))
+    Tip_leave = np.zeros((instance.n, instance.P))
+    ## 计算进入环形输送机的时间
+    enter_time = np.zeros(instance.n)
+    for ni in range(instance.n):
+        d1 = ni + 2 * instance.n
+        enter_time[ni] = passTime[d1] + instance.pack_time
+    ## 计算到达第一个拣选站的时间
+    Tip_arrive[:, 0] = enter_time + np.array(instance.Dip)[:, 0] / instance.v 
+    ## 函数：根据拣选站p的到达时间更新料箱ni的离开时间
+    def update_leave_time_of_p(p):
+        ni_list = [ni for ni in range(instance.n)]
+        sorted_ni_list = sorted(ni_list, key=lambda x: Tip_arrive[x, p])
+        cur_time = 0
+        for ni in sorted_ni_list:
+            # 检查料箱ni是否属于拣选站p
+            belong_flag = False
+            for o in range(instance.O):
+                if instance.IO[ni][o] and sorting_solution[o] == p:
+                    # 如果料箱ni属于订单o且订单o被分配给第一个拣选站
+                    belong_flag = True
+                    break
+            if belong_flag:
+                Tip_leave[ni, p] = max(cur_time, Tip_arrive[ni, p]) + instance.picking_time
+                cur_time = Tip_leave[ni, p]
+                # 检查队列长度
+                if Tip_leave[ni, p] - Tip_arrive[ni, p] > (instance.queue_length-1) * instance.picking_time:
+                    obj += 10000
+            else:
+                Tip_leave[ni, p] = Tip_arrive[ni, p]
+    update_leave_time_of_p(0)
+    ## 计算到达后续拣选站的时间
+    for p in range(1, instance.P):
+        Tip_arrive[:, p] = Tip_leave[:, p-1] + instance.distance_between_pickers / instance.v
+        update_leave_time_of_p(p)
+    ## 计算出唤醒输送机的时间
+    out_time = Tip_leave[:, instance.P-1] + np.array(instance.Dpi)[:, instance.P-1] + instance.pack_time
+    delta_T_list = out_time - enter_time
+    
+    # check feasibility and fix passTime of P2, D2
+    # 1. D12 later than P12
+    for ni in range(2*instance.n): # for P12 
+        if passTime[ni] > passTime[ni+2*instance.n]:
+            obj += 10000
+    # 2. P2 later than D1, and fix pick_time
+    for ni in P2_list:
+        if passTime[ni] < passTime[ni+instance.n] + delta_T_list[ni-instance.n]:
+            k, start_i = node2ki[ni]
+            route = picking_solution[k]
+            extra_time = passTime[ni+instance.n] + delta_T_list[ni-instance.n] - passTime[ni]
+            for i in range(start_i, len(route)):
+                passTime[route[i]] += extra_time
+    # 3. check capacity
+    for k in range(instance.robotNum):
+        load = 0
+        for i in range(1, len(picking_solution[k])):
+            load += instance.nodes[picking_solution[k][i]]["demand"]
+            if load > instance.capacity:
+                obj += 10000
+    obj += np.max(passTime)
+    return obj
 
