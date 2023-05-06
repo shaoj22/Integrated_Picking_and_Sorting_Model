@@ -85,9 +85,36 @@ def test_picking_integrated_evluate():
     end = time.time()
     print("evaluate obj = {}, time_cost = {}".format(obj, end - start))
 
+def test_picking_integrated_gap():
+    w_num = 3
+    l_num = 3
+    task_num = 20
+    robot_num = 10
+    picking_instance = Picking_Gurobi_Model.Instance(w_num, l_num, task_num, robot_num)
+    alg = Picking_Gurobi_Model.Picking_Gurobi_Model(instance = picking_instance, time_limit = 3600)
+    result_info = alg.run_gurobi()
+    model = result_info["model"]
+    # get solution
+    x_val = np.zeros((picking_instance.nodeNum, picking_instance.nodeNum))
+    for i in picking_instance.N:
+        for j in picking_instance.N:
+            x_val[i][j] = model.getVarByName(f'x[{i},{j}]').x
+    # evaluate picking solution
+    pickers_num = 10
+    orders_num = 5
+    integrated_instance = Integrated_Gurobi_Model.Instance(w_num, l_num, task_num, robot_num, pickers_num, orders_num)
+    obj1 = utils.picking_integrated_evaluate(integrated_instance, x_val)
+    # get integrated solution
+    alg = Integrated_Gurobi_Model.Integrated_Gurobi_Model(instance = integrated_instance, time_limit = 3600)
+    result_list = alg.run_gurobi()
+    obj2 = result_list[1]
+    print("picking result = {}, integrated result = {}, picking integrated gap = {}".format(obj1, obj2, (obj1 - obj2) / obj1))
+
+
 if __name__ == "__main__":
     # test_integrated_evaluate()
     # test_picking_evaluate()
-    test_picking_integrated_evluate()
+    # test_picking_integrated_evluate()
+    test_picking_integrated_gap()
 
 
