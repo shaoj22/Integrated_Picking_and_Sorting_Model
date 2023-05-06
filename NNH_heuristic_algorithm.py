@@ -3,7 +3,6 @@ File: NNH_heuristic_algorithm for init solution generate
 Created Date: April 27th 2023
 '''
 import Integrated_Instance
-import small_instances
 import numpy as np
 import utils
 
@@ -144,7 +143,7 @@ if __name__ == "__main__":
     solution = NNH.NNH_main()
     Obj = utils.efficient_picking_evaluate(instance, solution)
     print(Obj)
-    Obj2 = utils.picking_evaluate(instance, NNH.transfer(solution))
+    Obj2 = utils.picking_integrated_evaluate(instance, NNH.transfer(solution))
     print(Obj2)
 
     
