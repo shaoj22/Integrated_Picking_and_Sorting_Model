@@ -150,6 +150,12 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     # 3. solve model
     model.setParam("OutputFlag", 0)
     model.optimize()
+    # Ta = np.array([[model.getVarByName(f"Ta[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    # print("true Ta: {}".format(Ta))
+    # Ts = np.array([[model.getVarByName(f"Ts[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    # print("true Ts: {}".format(Ts))
+    # Te = np.array([[model.getVarByName(f"Te[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    # print("true Te: {}".format(Te))
     return model.ObjVal
 
 # 建立picking评估模型
@@ -308,7 +314,6 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
             node2ki[route[i]] = (ri, i)
             if instance.node2type[route[i]] == "P2":
                 P2_list.append(route[i])
-
     # calculate pick_time of each task 
     Tip_arrive = np.zeros((instance.n, instance.P))
     Tip_leave = np.zeros((instance.n, instance.P))
@@ -316,7 +321,7 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
     enter_time = np.zeros(instance.n)
     for ni in range(instance.n):
         d1 = ni + 2 * instance.n
-        enter_time[ni] = passTime[d1] + instance.pack_time
+        enter_time[ni] = passTime[d1]
     ## 计算到达第一个拣选站的时间
     Tip_arrive[:, 0] = enter_time + np.array(instance.Dip)[:, 0] / instance.v 
     ## 函数：根据拣选站p的到达时间更新料箱ni的离开时间
@@ -346,7 +351,7 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
         Tip_arrive[:, p] = Tip_leave[:, p-1] + instance.distance_between_pickers / instance.v
         update_leave_time_of_p(p)
     ## 计算出唤醒输送机的时间
-    out_time = Tip_leave[:, instance.P-1] + np.array(instance.Dpi)[:, instance.P-1] + instance.pack_time
+    out_time = Tip_leave[:, instance.P-1] + np.array(instance.Dpi)[:, instance.P-1]
     delta_T_list = out_time - enter_time
     
     # check feasibility and fix passTime of P2, D2
@@ -370,6 +375,7 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
             if load > instance.capacity:
                 obj += 10000
     obj += np.max(passTime)
+    # print("Tip_arrive: ", Tip_arrive)
     return obj
 
 # 转换picking_solution, sorting_solution为x_val, y_val, z_val
@@ -380,7 +386,7 @@ def solution_transfer(integrated_instance, picking_solution, sorting_solution):
             x_val[route[i], route[i+1]] = 1
         x_val[route[-1], route[0]] = 1
     y_val = np.zeros((integrated_instance.n, integrated_instance.P))
-    for i in range(len(sorting_solution)):
+    for i in range(integrated_instance.n):
         for p in range(integrated_instance.P):
             for o in range(integrated_instance.O):
                 if integrated_instance.IO[i][o] and sorting_solution[o] == p:
@@ -391,6 +397,7 @@ def solution_transfer(integrated_instance, picking_solution, sorting_solution):
         for p in range(integrated_instance.P):
             if round(sorting_solution[o]) == p:
                 z_val[o, p] = 1
+    # print("y=",y_val)
     return x_val, y_val, z_val
 
 

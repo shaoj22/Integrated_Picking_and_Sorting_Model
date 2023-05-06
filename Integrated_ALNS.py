@@ -143,7 +143,7 @@ class ALNS(ALNS_base):
     def solution_init(self):
         picking_alg = NNH_heuristic_algorithm(self.instance)
         picking_solution = picking_alg.NNH_main()
-        sorting_solution = [np.random.randint(self.instance.P) for _ in range(self.instance.n)]
+        sorting_solution = [np.random.randint(self.instance.P) for _ in range(self.instance.O)]
         solution = {
             "picking" : picking_solution,
             "sorting" : sorting_solution
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     start = time.time()
     solution, obj = alg.test_run()
     end = time.time()
-    print("best_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, end-start, solution))
+    print("\nbest_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, end-start, solution))
 
     # test
     x_val, y_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
