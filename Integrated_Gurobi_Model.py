@@ -15,6 +15,7 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         self.O = instance.O
         self.IO = instance.IO
         self.picking_time = instance.picking_time
+        self.queue_length = instance.queue_length
         self.sumIO = instance.sumIO
 
         self.bigM = 1000

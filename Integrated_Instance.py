@@ -33,6 +33,7 @@ class Instance(Picking_Instance.Instance):
         self.queue_length = 8
         self.v = 0.25
         self.bins_num = bins_num
+        self.seed = seed
         self.Dip, self.Dpi, self.IO, self.sumIO = self.generate_conveyors()
 
     def generate_conveyors(self):
@@ -51,6 +52,8 @@ class Instance(Picking_Instance.Instance):
             dpi.append(x2)
         Dip = [dip for _ in range(N)]
         # 生成出口至拣选站的距离矩阵
+        np.random.seed(self.seed)
+        random.seed(self.seed)
         Dpi = [dpi for _ in range(N)]
         # 初始化料箱i与订单o直接的关系（随机初始化）
         IO = [[0 for _ in range(O)] for _ in range(N)]
