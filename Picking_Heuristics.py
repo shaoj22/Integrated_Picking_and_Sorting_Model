@@ -20,7 +20,7 @@ class Picking_VNS:
 
         self.choose_neighbour_strategy = "last"
         # set VNS paraments
-        self.operators_list = [RelocateD(picking_instance), RellocatePD(picking_instance)]
+        self.operators_list = [RellocateD(picking_instance), RellocatePD(picking_instance)]
         self.process = []
 
     def solution_init(self):

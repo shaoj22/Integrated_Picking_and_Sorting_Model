@@ -30,6 +30,7 @@ class Instance(Picking_Instance.Instance):
         self.P = picking_station_num
         self.O = orders_num
         self.picking_time = 10
+        self.queue_length = 8
         self.v = 0.25
         self.bins_num = bins_num
         self.Dip, self.Dpi, self.IO, self.sumIO = self.generate_conveyors()

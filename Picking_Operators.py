@@ -21,7 +21,7 @@ class Operator:
         raise NotImplementedError 
 
 
-class RelocateD(Operator):
+class RellocateD(Operator):
     """
     将终点插入同车的另一位置
     """
