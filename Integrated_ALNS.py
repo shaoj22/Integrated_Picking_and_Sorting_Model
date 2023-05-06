@@ -177,6 +177,11 @@ if __name__ == "__main__":
     end = time.time()
     print("best_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, end-start, solution))
 
+    # test
+    x_val, y_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
+    true_obj = utils.integrated_evaluate(instance, x_val, y_val, z_val)
+    print("true_obj = {}".format(true_obj))
+
 
 
  
