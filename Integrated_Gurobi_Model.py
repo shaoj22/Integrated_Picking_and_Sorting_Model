@@ -80,7 +80,7 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # MODEL.addConstrs( Ts[i,p] - Te[i,p-1] -(self.Dip[i][p] - self.Dip[i][p-1])/self.v >= 0 for i in range(self.N) for p in range(1,self.P))
         # --------------------------------------------------------------------------------------------------------------
         # 拣选站处的缓存区大小约束
-        MODEL.addConstrs( Ts[i,p] - Ta[i,p] <= (8-1) * self.picking_time for i in range(self.n) for p in range(self.P))
+        MODEL.addConstrs( Ts[i,p] - Ta[i,p] <= (self.queue_length-1) * self.picking_time for i in range(self.n) for p in range(self.P))
 
         info["y"] = y
         info["z"] = z
