@@ -150,12 +150,13 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     # 3. solve model
     model.setParam("OutputFlag", 0)
     model.optimize()
-    # Ta = np.array([[model.getVarByName(f"Ta[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
-    # print("true Ta: {}".format(Ta))
-    # Ts = np.array([[model.getVarByName(f"Ts[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
-    # print("true Ts: {}".format(Ts))
-    # Te = np.array([[model.getVarByName(f"Te[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
-    # print("true Te: {}".format(Te))
+    print("y : \n{}".format(y_val))
+    Ta = np.array([[model.getVarByName(f"Ta[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    print("true Ta: \n{}".format(Ta))
+    Ts = np.array([[model.getVarByName(f"Ts[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    print("true Ts: \n{}".format(Ts))
+    Te = np.array([[model.getVarByName(f"Te[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    print("true Te: \n{}".format(Te))
     return model.ObjVal
 
 # 建立picking评估模型
@@ -375,7 +376,7 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
             if load > instance.capacity:
                 obj += 10000
     obj += np.max(passTime)
-    # print("Tip_arrive: ", Tip_arrive)
+    print("Tip_arrive: \n", Tip_arrive)
     return obj
 
 # 转换picking_solution, sorting_solution为x_val, y_val, z_val

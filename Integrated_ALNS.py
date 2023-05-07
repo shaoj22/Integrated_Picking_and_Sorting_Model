@@ -175,11 +175,11 @@ if __name__ == "__main__":
     start = time.time()
     solution, obj = alg.test_run()
     end = time.time()
-    print("\nbest_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, end-start, solution))
 
     # test
     x_val, y_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
     true_obj = utils.integrated_evaluate(instance, x_val, y_val, z_val)
+    print("\nbest_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, end-start, solution))
     print("true_obj = {}".format(true_obj))
 
 
