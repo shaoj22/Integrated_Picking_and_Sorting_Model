@@ -165,7 +165,7 @@ if __name__ == "__main__":
     # create instance
     w_num = 5
     l_num = 5
-    bins_num = 10
+    bins_num = 3
     robot_num = 10
     picking_station_num = 5
     orders_num = 2
