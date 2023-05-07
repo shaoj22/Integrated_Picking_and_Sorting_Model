@@ -150,13 +150,13 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     # 3. solve model
     model.setParam("OutputFlag", 0)
     model.optimize()
-    print("y : \n{}".format(y_val))
-    Ta = np.array([[model.getVarByName(f"Ta[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
-    print("true Ta: \n{}".format(Ta))
-    Ts = np.array([[model.getVarByName(f"Ts[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
-    print("true Ts: \n{}".format(Ts))
-    Te = np.array([[model.getVarByName(f"Te[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
-    print("true Te: \n{}".format(Te))
+    # print("y : \n{}".format(y_val))
+    # Ta = np.array([[model.getVarByName(f"Ta[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    # print("true Ta: \n{}".format(Ta))
+    # Ts = np.array([[model.getVarByName(f"Ts[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    # print("true Ts: \n{}".format(Ts))
+    # Te = np.array([[model.getVarByName(f"Te[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
+    # print("true Te: \n{}".format(Te))
     return model.ObjVal
 
 # 建立picking评估模型
@@ -352,7 +352,7 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
         Tip_arrive[:, p] = Tip_leave[:, p-1] + instance.distance_between_pickers / instance.v
         update_leave_time_of_p(p)
     ## 计算出唤醒输送机的时间
-    out_time = Tip_leave[:, instance.P-1] + np.array(instance.Dpi)[:, instance.P-1]
+    out_time = Tip_leave[:, instance.P-1] + np.array(instance.Dpi)[:, instance.P-1] / instance.v
     delta_T_list = out_time - enter_time
     
     # check feasibility and fix passTime of P2, D2
@@ -376,7 +376,6 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
             if load > instance.capacity:
                 obj += 10000
     obj += np.max(passTime)
-    print("Tip_arrive: \n", Tip_arrive)
     return obj
 
 # 转换picking_solution, sorting_solution为x_val, y_val, z_val
