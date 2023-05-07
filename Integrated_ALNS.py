@@ -85,6 +85,7 @@ class ALNS_base:
         plt.show()
 
     def run(self):
+        self.reset()
         cur_solution = self.solution_init() 
         cur_obj = self.cal_objective(cur_solution)
         self.best_solution = cur_solution
@@ -173,7 +174,7 @@ if __name__ == "__main__":
     # run algorithm
     alg = ALNS(instance, iter_num=100000)
     start = time.time()
-    solution, obj = alg.test_run()
+    solution, obj = alg.run()
     end = time.time()
 
     # test
