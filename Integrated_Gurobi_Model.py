@@ -24,6 +24,7 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         M = self.bigM # 大M
         info = super().build_model(MODEL, delta_T=0) # 构建picking模型
         T = info["T"] # 获取T变量
+        FT = info["FT"] # 获取FT变量
         # 添加决策变量
         I_list = [ i for i in range(self.n)]
         I = MODEL.addVars( I_list, vtype=GRB.INTEGER, name="I")  # 料箱i的初始到达输送机的时间
@@ -44,9 +45,9 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # 添加约束条件
         # ______________________________________________________________________________________________________________
         # 到达P2的时间>=到达环形输送机出口的时间
-        MODEL.addConstrs( T[i - self.n] >= Te[i - 2 * self.n, self.P-1] + (self.Dpi[i - 2 * self.n][self.P-1]/self.v) for i in self.D1 )
+        MODEL.addConstrs( T[i - self.n] == Te[i - 2 * self.n, self.P-1] + (self.Dpi[i - 2 * self.n][self.P-1]/self.v) for i in self.D1 )
         # 到达输送机的时间要>=到达D1的时间
-        MODEL.addConstrs( I[i] >= T[i + 2 * self.n] for i in range(self.n) )
+        MODEL.addConstrs( I[i] == T[i + 2 * self.n] for i in range(self.n) )
         # ______________________________________________________________________________________________________________
 
 
@@ -67,8 +68,9 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # 关于料箱i在拣选站p的结束拣选时间
         # 约束条件1：料箱i的结束拣选时间一定大于等于它的开始拣选时间（当yip=0时）
         MODEL.addConstrs( Te[i,p] == Ts[i,p] + self.picking_time * y[i,p] for i in range(self.n) for p in range(self.P))
-        # 约束条件3：当料箱i去拣选站p时，Te=Ts+S
-        # MODEL.addConstrs( Te[i,p] - self.picking_time - Ts[i,p] >= (y[i,p] - 1) * M for i in range(self.n) for p in range(self.P))
+        # 约束条件3：当料箱i不去拣选站p时，Ts=Ta
+        MODEL.addConstrs( Ts[i,p] <= Ta[i,p] + M * y[i,p] for i in range(self.n) for p in range(self.P))
+        
         # --------------------------------------------------------------------------------------------------------------
         # 关于料箱i到达拣选站p的时间
         # 约束条件1：料箱i到达第一个拣选站p=0时的时间（初始化）：

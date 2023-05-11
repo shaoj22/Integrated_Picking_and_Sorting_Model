@@ -106,6 +106,7 @@ class Picking_Gurobi_Model():
         info = {
             "x" : x, 
             "T" : T, 
+            "FT" : FT, 
         }
         return info
 
