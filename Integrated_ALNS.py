@@ -13,7 +13,7 @@ import Integrated_Instance
 import utils
 import time
 import tqdm
-from Picking_Operators import *
+from integrated_Operators import *
 from NNH_heuristic_algorithm import NNH_heuristic_algorithm
 
 
@@ -42,7 +42,8 @@ class ALNS_base:
     
     # to be implemented in subclass
     def set_operators_list(self):
-        self.operators_list = []
+        self.break_operators_list = []
+        self.repair_operators_list = []
         raise NotImplementedError
 
     # to be implemented in subclass
@@ -54,8 +55,10 @@ class ALNS_base:
         raise NotImplementedError 
 
     def reset(self):
-        self.operators_scores = np.ones(len(self.operators_list))
-        self.operators_steps = np.ones(len(self.operators_list))
+        self.break_operators_scores = np.ones(len(self.break_operators_list))
+        self.repair_operators_scores = np.ones(len(self.repair_operators_list))
+        self.break_operators_steps = np.ones(len(self.break_operators_list))
+        self.repair_operators_steps = np.ones(len(self.repair_operators_list))
         self.obj_iter_process = []
     
     def SA_accept(self, detaC, temperature):
@@ -68,12 +71,18 @@ class ALNS_base:
         return temperature
 
     def choose_operator(self):
-        weights = self.operators_scores / self.operators_steps
-        prob = weights / sum(weights)
-        return np.random.choice(range(len(self.operators_list)), p=prob)
+        break_weights = self.break_operators_scores / self.break_operators_steps
+        repair_weights = self.repair_operators_scores / self.repair_operators_steps
+        break_prob = break_weights / sum(break_weights)
+        repair_prob = repair_weights / sum(repair_weights)
+        break_opt_i = np.random.choice(range(len(self.break_operators_list)), p=break_prob)
+        repair_opt_i = np.random.choice(range(len(self.repair_operators_list)), p=repair_prob)
+        return break_opt_i, repair_opt_i
     
-    def get_neighbour(self, solution, operator):
-        return operator.get(solution)
+    def get_neighbour(self, solution, break_opt_i, repair_opt_i):
+        break_p_list, break_d_list = self.break_operators_list[break_opt_i].set(solution)
+        self.repair_operators_list[repair_opt_i].set(solution, break_p_list, break_d_list)
+        return solution
 
     def show_process(self):
         y = self.process
@@ -92,8 +101,8 @@ class ALNS_base:
         self.best_obj = cur_obj
         temperature = self.max_temp
         for step in tqdm.trange(self.iter_num, desc="ALNS Iteration"):
-            opt_i = self.choose_operator()
-            new_solution = self.get_neighbour(cur_solution, self.operators_list[opt_i])
+            break_opt_i, repair_opt_i = self.choose_operator()
+            new_solution = self.get_neighbour(cur_solution, break_opt_i, repair_opt_i) 
             new_obj = self.cal_objective(new_solution)
             # obj: minimize the total distance 
             if new_obj < self.best_obj:
@@ -139,7 +148,13 @@ class ALNS(ALNS_base):
         self.set_operators_list()
     
     def set_operators_list(self):
-        self.operators_list = [RellocatePD(self.instance), RellocateD(self.instance)]
+        self.break_operators_list = [
+            PickingRandomBreak(instance),
+            ]
+        self.repair_operators_list = [
+            PickingRandomRepair(instance), 
+            PickingGreedyRepair(instance), 
+        ]
     
     def solution_init(self):
         picking_alg = NNH_heuristic_algorithm(self.instance)
