@@ -157,7 +157,10 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     # print("true Ts: \n{}".format(Ts))
     # Te = np.array([[model.getVarByName(f"Te[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
     # print("true Te: \n{}".format(Te))
-    return model.ObjVal
+    T = np.array([model.getVarByName(f"T[{i}]").X for i in integrated_instance.N])
+    print("true T: \n{}".format(T))
+    info = {"T" : T}
+    return model.ObjVal, info
 
 # 建立picking评估模型
 def build_picking_evaluate_model(picking_instance, x_val):
@@ -249,6 +252,8 @@ def picking_integrated_evaluate(integrated_instance, x_val):
     """
     model = build_picking_integrated_evluate_model(integrated_instance, x_val) 
     model.setParam("OutputFlag", 0)
+    # model.addConstr(model.getVarByName("z[0,3]") == 1)
+    # model.addConstr(model.getVarByName("z[1,4]") == 1)
     model.optimize()
     return model.ObjVal
 
@@ -374,7 +379,11 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
             if load > instance.capacity:
                 obj += 10000
     obj += np.max(passTime)
-    return obj
+    print("passTime :\n", passTime)
+    # print("Tip_arrive (Ta) :\n", Tip_arrive)
+    # print("Tip_leave (Te) :\n", Tip_leave)
+    info = {"passTime" : passTime, "Tip_arrive" : Tip_arrive, "Tip_leave" : Tip_leave}
+    return obj, info
 
 # 转换picking_solution, sorting_solution为x_val, y_val, z_val
 def solution_transfer(integrated_instance, picking_solution, sorting_solution):
@@ -390,12 +399,11 @@ def solution_transfer(integrated_instance, picking_solution, sorting_solution):
                 if integrated_instance.IO[i][o] and sorting_solution[o] == p:
                     y_val[i, p] = 1
                     break
-    z_val = np.zeros((integrated_instance.n, integrated_instance.P))
+    z_val = np.zeros((integrated_instance.O, integrated_instance.P))
     for o in range(integrated_instance.O):
         for p in range(integrated_instance.P):
             if round(sorting_solution[o]) == p:
                 z_val[o, p] = 1
-    # print("y=",y_val)
     return x_val, y_val, z_val
 
 

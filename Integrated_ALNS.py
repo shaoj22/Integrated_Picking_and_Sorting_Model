@@ -179,7 +179,9 @@ class ALNS(ALNS_base):
         picking_solution = solution["picking"]
         sorting_solution = solution["sorting"]
         integrated_instance = self.instance
-        return utils.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
+        obj, info = utils.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
+        self.obj_info = info
+        return obj
         
     def test_run(self):
         cur_solution = self.solution_init() 
@@ -190,8 +192,8 @@ if __name__ == "__main__":
     # create instance
     w_num = 5
     l_num = 5
-    bins_num = 20
-    robot_num = 10
+    bins_num = 10
+    robot_num = 4
     picking_station_num = 5
     orders_num = 2
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
@@ -199,15 +201,18 @@ if __name__ == "__main__":
     alg = ALNS(instance, iter_num=10000)
     start = time.time()
     solution, obj = alg.test_run()
-    end = time.time()
+    time_cost1 = time.time() - start
 
     # test
     start = time.time()
     x_val, y_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
-    true_obj = utils.integrated_evaluate(instance, x_val, y_val, z_val)
-    end = time.time()
-    print("\nbest_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, end-start, solution))
-    print("true_obj = {}, time_cost = {}".format(true_obj, end-start))
+    true_obj1 = utils.picking_integrated_evaluate(instance, x_val)
+    true_obj2, info = utils.integrated_evaluate(instance, x_val, y_val, z_val)
+    time_cost2 = time.time() - start
+    print("\nbest_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, time_cost1, solution))
+    print("true_obj1 = {}".format(true_obj1))
+    print("true_obj2 = {}, time_cost = {}".format(true_obj2, time_cost2))
+    print()
 
 
 
