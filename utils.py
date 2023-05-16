@@ -323,10 +323,13 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
     for ni in range(instance.n):
         d1 = ni + 2 * instance.n
         enter_time[ni] = passTime[d1]
-    ## 计算到达第一个拣选站的时间
-    Tip_arrive[:, 0] = enter_time + np.array(instance.Dip)[:, 0] / instance.v 
-    ## 函数：根据拣选站p的到达时间更新料箱ni的离开时间
-    def update_leave_time_of_p(p):
+    ## 计算到达各个拣选站的时间
+    for p in range(instance.P):
+        if p == 0: # 拣选站1的到达时间
+            Tip_arrive[:, 0] = enter_time + np.array(instance.Dip)[:, 0] / instance.v 
+        else: # 根据拣选站p-1的离开时间更新拣选站p的到达时间
+            Tip_arrive[:, p] = Tip_leave[:, p-1] + instance.distance_between_pickers / instance.v
+        # 根据拣选站p的到达时间更新料箱ni的离开时间
         ni_list = [ni for ni in range(instance.n)]
         sorted_ni_list = sorted(ni_list, key=lambda x: Tip_arrive[x, p])
         cur_time = 0
@@ -346,11 +349,6 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
                     obj += 10000
             else:
                 Tip_leave[ni, p] = Tip_arrive[ni, p]
-    update_leave_time_of_p(0)
-    ## 计算到达后续拣选站的时间
-    for p in range(1, instance.P):
-        Tip_arrive[:, p] = Tip_leave[:, p-1] + instance.distance_between_pickers / instance.v
-        update_leave_time_of_p(p)
     ## 计算出唤醒输送机的时间
     out_time = Tip_leave[:, instance.P-1] + np.array(instance.Dpi)[:, instance.P-1] / instance.v
     delta_T_list = out_time - enter_time

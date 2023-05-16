@@ -41,7 +41,7 @@ class PickingRandomBreak(Operator):
             # 随机选择一辆车
             k = np.random.randint(0, self.instance.robotNum)
             # 随机选择一个起点
-            p_list = [p for p in solution[k] if self.node2type[p] in ["P1", "P2"]]
+            p_list = [p for p in routes[k] if self.node2type[p] in ["P1", "P2"]]
             if len(p_list) == 0:
                 continue
             p_break = np.random.choice(p_list)
