@@ -85,8 +85,8 @@ class ALNS_base:
     
     def get_neighbour(self, solution, break_opt_i, repair_opt_i):
         solution = copy.deepcopy(solution)
-        break_p_list, break_d_list = self.break_operators_list[break_opt_i].set(solution)
-        self.repair_operators_list[repair_opt_i].set(solution, break_p_list, break_d_list)
+        break_info = self.break_operators_list[break_opt_i].set(solution)
+        self.repair_operators_list[repair_opt_i].set(solution, break_info)
         return solution
 
     def show_process(self):
@@ -159,10 +159,13 @@ class ALNS(ALNS_base):
     def set_operators_list(self):
         self.break_operators_list = [
             PickingRandomBreak(instance),
+            SortingRandomBreak(instance),
         ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), 
             PickingGreedyRepair(instance), 
+            SortingRandomRepair(instance),
+            SortingGreedyRepair(instance),
         ]
     
     def solution_init(self):
@@ -182,7 +185,21 @@ class ALNS(ALNS_base):
         obj, info = utils.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
         self.obj_info = info
         return obj
-        
+
+    def choose_operator(self):
+        # choose break operator
+        break_weights = self.break_operators_scores / self.break_operators_steps
+        break_prob = break_weights / sum(break_weights)
+        break_opt_i = np.random.choice(range(len(self.break_operators_list)), p=break_prob)
+        # filter repair operators with the same type
+        type = self.break_operators_list[break_opt_i].type
+        availabel_repair_list = [i for i in range(len(self.repair_operators_list)) if self.repair_operators_list[i].type == type]
+        # choose repair operator
+        repair_weights = (self.repair_operators_scores / self.repair_operators_steps)[availabel_repair_list]
+        repair_prob = repair_weights / sum(repair_weights)
+        repair_opt_i = np.random.choice(availabel_repair_list, p=repair_prob)
+        return break_opt_i, repair_opt_i
+  
     def test_run(self):
         cur_solution = self.solution_init() 
         cur_obj = self.cal_objective(cur_solution)

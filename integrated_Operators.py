@@ -8,6 +8,7 @@ Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 import numpy as np
 import utils
 
+# base classes
 class Operator:
     def __init__(self, instance):
         # 获取算例信息
@@ -30,6 +31,7 @@ class PickingRandomBreak(Operator):
     def __init__(self, instance, break_num=1):
         super().__init__(instance)
         self.break_num = break_num # 破坏任务数
+        self.type = "picking"
 
     def set(self, solution):
         """ 随机破坏 break_num 个任务（选择起点，取出其起点和终点） """
@@ -55,11 +57,20 @@ class PickingRandomBreak(Operator):
             break_d_list.append(d_break)
             cur_break_num += 1
         # 返回删除的起终点
-        return break_p_list, break_d_list
+        break_info = {
+            "break_p_list": break_p_list,
+            "break_d_list": break_d_list
+        }
+        return break_info
 
 class PickingRandomRepair(Operator):
-    def set(self, solution, break_p_list, break_d_list):
+    def __init__(self, instance):
+        super().__init__(instance)
+        self.type = "picking"
+
+    def set(self, solution, break_info):
         """ 随机修复 """
+        break_p_list, break_d_list = break_info["break_p_list"], break_info["break_d_list"]
         routes = solution["picking"]
         break_num = len(break_p_list)
         for i in range(break_num):
@@ -74,8 +85,13 @@ class PickingRandomRepair(Operator):
             self.safe_insert(routes[k], pos, p_break)
 
 class PickingGreedyRepair(Operator):
-    def set(self, solution, break_p_list, break_d_list):
+    def __init__(self, instance):
+        super().__init__(instance)
+        self.type = "picking"
+
+    def set(self, solution, break_info):
         """ 贪婪修复 """
+        break_p_list, break_d_list = break_info["break_p_list"], break_info["break_d_list"]
         routes = solution["picking"]
         break_num = len(break_p_list)
         for i in range(break_num):
@@ -91,7 +107,7 @@ class PickingGreedyRepair(Operator):
                     for d_pos in range(p_pos+1, len(routes[k])+1):
                         self.safe_insert(routes[k], d_pos, d_break)
                         # 计算插入该位置的成本
-                        cur_cost = utils.efficient_integrated_evaluate(self.instance, routes, solution['sorting'])
+                        cur_cost, _ = utils.efficient_integrated_evaluate(self.instance, routes, solution['sorting'])
                         if cur_cost < min_cost:
                             min_cost = cur_cost
                             min_k = k
@@ -104,5 +120,52 @@ class PickingGreedyRepair(Operator):
             # 插入最优位置
             self.safe_insert(routes[min_k], min_p_pos, p_break)
             self.safe_insert(routes[min_k], min_d_pos, d_break)
-            assert utils.efficient_integrated_evaluate(self.instance, routes, solution['sorting']) == min_cost
                     
+
+class SortingRandomBreak(Operator):
+    def __init__(self, instance, break_num=1):
+        super().__init__(instance)
+        self.break_num = break_num
+        self.type = "sorting"
+    
+    def set(self, solution):
+        sorting = solution["sorting"] # order2picker
+        break_o_list = np.random.choice(range(len(sorting)), self.break_num, replace=False)
+        for o in break_o_list:
+            sorting[o] = 0 #! default picker 0
+        break_info = {
+            "break_o_list": break_o_list.tolist()
+        }
+        return break_info
+
+class SortingRandomRepair(Operator):
+    def __init__(self, instance):
+        super().__init__(instance)
+        self.type = "sorting"
+
+    def set(self, solution, break_info):
+        break_o_list = break_info["break_o_list"]
+        sorting = solution["sorting"] # order2picker        
+        for o in break_o_list:
+            p = np.random.randint(0, self.instance.P)
+            sorting[o] = p
+        
+class SortingGreedyRepair(Operator):
+    def __init__(self, instance):
+        super().__init__(instance)
+        self.type = "sorting"
+
+    def set(self, solution, break_info):
+        break_o_list = break_info["break_o_list"]
+        sorting = solution["sorting"] # order2picker
+        for o in break_o_list:
+            min_cost = np.inf
+            for p in range(self.instance.P):
+                sorting[o] = p
+                cur_cost, _ = utils.efficient_integrated_evaluate(self.instance, solution['picking'], sorting)
+                if cur_cost < min_cost:
+                    min_cost = cur_cost
+                    min_p = p
+            sorting[o] = min_p
+
+
