@@ -158,7 +158,7 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     # Te = np.array([[model.getVarByName(f"Te[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
     # print("true Te: \n{}".format(Te))
     T = np.array([model.getVarByName(f"T[{i}]").X for i in integrated_instance.N])
-    print("true T: \n{}".format(T))
+    # print("true T: \n{}".format(T))
     info = {"T" : T}
     return model.ObjVal, info
 
@@ -379,7 +379,7 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
             if load > instance.capacity:
                 obj += 10000
     obj += np.max(passTime)
-    print("passTime :\n", passTime)
+    # print("passTime :\n", passTime)
     # print("Tip_arrive (Ta) :\n", Tip_arrive)
     # print("Tip_leave (Te) :\n", Tip_leave)
     info = {"passTime" : passTime, "Tip_arrive" : Tip_arrive, "Tip_leave" : Tip_leave}

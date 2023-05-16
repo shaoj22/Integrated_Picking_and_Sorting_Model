@@ -163,9 +163,9 @@ class ALNS(ALNS_base):
         ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), 
-            PickingGreedyRepair(instance), 
+            # PickingGreedyRepair(instance), 
             SortingRandomRepair(instance),
-            SortingGreedyRepair(instance),
+            # SortingGreedyRepair(instance),
         ]
     
     def solution_init(self):
@@ -209,15 +209,15 @@ if __name__ == "__main__":
     # create instance
     w_num = 5
     l_num = 5
-    bins_num = 10
-    robot_num = 4
+    bins_num = 30
+    robot_num = 20
     picking_station_num = 5
     orders_num = 2
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
     alg = ALNS(instance, iter_num=10000)
     start = time.time()
-    solution, obj = alg.test_run()
+    solution, obj = alg.run()
     time_cost1 = time.time() - start
 
     # test
