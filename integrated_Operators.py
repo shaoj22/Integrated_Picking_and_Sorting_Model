@@ -91,9 +91,9 @@ class PickingGreedyRepair(Operator):
                     for d_pos in range(p_pos+1, len(routes[k])+1):
                         self.safe_insert(routes[k], d_pos, d_break)
                         # 计算插入该位置的成本
-                        cur_cost = utils.efficient_integrated_insert_cost(self.instance, routes, solution['sorting'])
-                        if cost < min_cost:
-                            min_cost = cost
+                        cur_cost = utils.efficient_integrated_evaluate(self.instance, routes, solution['sorting'])
+                        if cur_cost < min_cost:
+                            min_cost = cur_cost
                             min_k = k
                             min_p_pos = p_pos
                             min_d_pos = d_pos
@@ -104,5 +104,5 @@ class PickingGreedyRepair(Operator):
             # 插入最优位置
             self.safe_insert(routes[min_k], min_p_pos, p_break)
             self.safe_insert(routes[min_k], min_d_pos, d_break)
-            assert utils.efficient_integrated_insert_cost(self.instance, routes, solution['sorting']) == min_cost
+            assert utils.efficient_integrated_evaluate(self.instance, routes, solution['sorting']) == min_cost
                     

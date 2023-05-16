@@ -162,7 +162,7 @@ class ALNS(ALNS_base):
         ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), 
-            # PickingGreedyRepair(instance), 
+            PickingGreedyRepair(instance), 
         ]
     
     def solution_init(self):
