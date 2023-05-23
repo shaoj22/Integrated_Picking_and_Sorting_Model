@@ -149,6 +149,7 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
                 z[o, p].setAttr("UB", 0)
     # 3. solve model
     model.setParam("OutputFlag", 0)
+    model.setParam("TimeLimit", 10)
     model.optimize()
     # print("y : \n{}".format(y_val))
     # Ta = np.array([[model.getVarByName(f"Ta[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
@@ -204,6 +205,7 @@ def picking_evaluate(picking_instance, x_val):
     """
     model = build_picking_evaluate_model(picking_instance, x_val) 
     model.setParam("OutputFlag", 0)
+    model.setParam("TimeLimit", 10)
     model.optimize()
     if model.Status == 3:
         return 1e6
