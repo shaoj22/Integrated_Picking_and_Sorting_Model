@@ -104,13 +104,12 @@ def instance_routes2map_routes(picking_instance, routes):
     return routes
 
 # 整合模型评估函数
-def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
+def integrated_evaluate(integrated_instance, x_val, z_val):
     """ evaluate solution with gurobi model
 
     Args:
         integrated_instance (Integrated_Gurobi_Model): integrated instance to build model
         x_val (list/ndarray[i,j,k]): values of variables x
-        y_val (list/ndarray[i,p]): values of variables y
         z_val (list/ndarray[o,p]): values of variables z
 
     Returns:
@@ -119,7 +118,6 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     from Integrated_Gurobi_Model import Integrated_Gurobi_Model
     import gurobipy as gp
     x_val = np.array(x_val)
-    y_val = np.array(y_val)
     z_val = np.array(z_val)
     # 1. build model
     model_builder = Integrated_Gurobi_Model(integrated_instance)
@@ -127,7 +125,6 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     # 2. set variables value
     info = model_builder.build_model(model)
     x = info["x"]
-    y = info["y"]
     z = info["z"]
     for i in integrated_instance.N:
         for j in integrated_instance.N:
@@ -135,12 +132,6 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
                 x[i, j].setAttr("LB", 1)
             elif x_val[i, j] == 0:
                 x[i, j].setAttr("UB", 0)
-    for i in range(integrated_instance.n):
-        for p in range(integrated_instance.P):
-            if y_val[i, p] == 1:
-                y[i, p].setAttr("LB", 1)
-            elif y_val[i, p] == 0:
-                y[i, p].setAttr("UB", 0)
     for o in range(integrated_instance.O):
         for p in range(integrated_instance.P):
             if z_val[o, p] == 1:
@@ -395,18 +386,11 @@ def solution_transfer(integrated_instance, picking_solution, sorting_solution):
         for i in range(len(route)-1):
             x_val[route[i], route[i+1]] = 1
         x_val[route[-1], route[0]] = 1
-    y_val = np.zeros((integrated_instance.n, integrated_instance.P))
-    for i in range(integrated_instance.n):
-        for p in range(integrated_instance.P):
-            for o in range(integrated_instance.O):
-                if integrated_instance.IO[i][o] and sorting_solution[o] == p:
-                    y_val[i, p] = 1
-                    break
     z_val = np.zeros((integrated_instance.O, integrated_instance.P))
     for o in range(integrated_instance.O):
         for p in range(integrated_instance.P):
             if round(sorting_solution[o]) == p:
                 z_val[o, p] = 1
-    return x_val, y_val, z_val
+    return x_val, z_val
 
 
