@@ -254,6 +254,7 @@ def picking_integrated_evaluate(integrated_instance, x_val):
     """
     model = build_picking_integrated_evluate_model(integrated_instance, x_val) 
     model.setParam("OutputFlag", 0)
+    model.setParam("TimeLimit", 10)
     # model.addConstr(model.getVarByName("z[0,3]") == 1)
     # model.addConstr(model.getVarByName("z[1,4]") == 1)
     model.optimize()
