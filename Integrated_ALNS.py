@@ -6,6 +6,8 @@ File Created: Saturday, 6th May 2023 10:11:26 am
 Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 '''
 
+import sys
+sys.path.append("111")
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -209,27 +211,27 @@ if __name__ == "__main__":
     # create instance
     w_num = 5
     l_num = 5
-    bins_num = 30
+    bins_num = 100
     robot_num = 20
-    picking_station_num = 5
-    orders_num = 2
+    picking_station_num = 10
+    orders_num = 10
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=10000)
+    alg = ALNS(instance, iter_num=1000)
     start = time.time()
-    solution, obj = alg.run()
+    solution, obj = alg.test_run()
     time_cost1 = time.time() - start
-
-    # test
-    start = time.time()
-    x_val, y_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
-    true_obj1 = utils.picking_integrated_evaluate(instance, x_val)
-    true_obj2, info = utils.integrated_evaluate(instance, x_val, y_val, z_val)
-    time_cost2 = time.time() - start
     print("\nbest_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, time_cost1, solution))
+
+    # test evaluation
+    # start = time.time()
+    x_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
+    true_obj1 = utils.picking_integrated_evaluate(instance, x_val)
     print("true_obj1 = {}".format(true_obj1))
-    print("true_obj2 = {}, time_cost = {}".format(true_obj2, time_cost2))
-    print()
+    # true_obj2, info = utils.integrated_evaluate(instance, x_val, z_val)
+    # time_cost2 = time.time() - start
+    # print("true_obj2 = {}, time_cost = {}".format(true_obj2, time_cost2))
+    # print()
 
 
 

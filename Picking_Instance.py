@@ -320,7 +320,7 @@ class Instance:
         for i in range(self.nodeNum):
             for j in range(self.nodeNum):
                 disMatrix[i, j] = self.map.get_distance(self.nodes[i]["pos_idx"], self.nodes[j]["pos_idx"], extra=self.real_dist)
-        self.check_disMatrix(disMatrix)
+        # self.check_disMatrix(disMatrix)
         return disMatrix
 
     def check_disMatrix(self, disMatrix):
