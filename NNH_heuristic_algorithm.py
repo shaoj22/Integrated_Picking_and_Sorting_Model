@@ -5,6 +5,7 @@ Created Date: April 27th 2023
 import Integrated_Instance
 import numpy as np
 import utils
+import tqdm
 
 class NNH_heuristic_algorithm():
 
@@ -133,10 +134,10 @@ if __name__ == "__main__":
     # generate instance]
     w_num = 5
     l_num = 5
-    bins_num = 15 
-    robot_num = 5
-    picking_station_num = 2
-    orders_num = 5
+    bins_num = 30
+    robot_num = 20
+    picking_station_num = 5
+    orders_num = 2
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     NNH = NNH_heuristic_algorithm(instance)
     solution = NNH.NNH_main()
@@ -144,7 +145,6 @@ if __name__ == "__main__":
     print(Obj)
     Obj2 = utils.picking_integrated_evaluate(instance, NNH.transfer(solution))
     print(Obj2)
-
-    
+  
 
 
