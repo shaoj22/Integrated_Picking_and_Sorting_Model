@@ -153,9 +153,9 @@ class Instance:
         # set params
         self.capacity = 8 # 机器人容量
         self.pick_time = 120 # 环形拣选台拣货时间
-        self.min_time_gap = 1000 # readyTime和dueTime的最小间隔
+        self.min_time_gap = 10000 # readyTime和dueTime的最小间隔
         self.latest_ready_time = 100 # readyTime的最大值
-        self.latest_due_time = 10000 # dueTime的最大值
+        self.latest_due_time = 100000 # dueTime的最大值
         self.pack_time = 1 # 上下拣选台的时间
         self.lift_time = 1 # 升降货架的时间
         self.robot_speed = 1 # 机器人的速度
@@ -320,7 +320,7 @@ class Instance:
         for i in range(self.nodeNum):
             for j in range(self.nodeNum):
                 disMatrix[i, j] = self.map.get_distance(self.nodes[i]["pos_idx"], self.nodes[j]["pos_idx"], extra=self.real_dist)
-        self.check_disMatrix(disMatrix)
+        # self.check_disMatrix(disMatrix)
         return disMatrix
 
     def check_disMatrix(self, disMatrix):

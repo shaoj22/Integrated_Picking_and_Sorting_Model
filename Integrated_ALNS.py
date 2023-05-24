@@ -6,6 +6,8 @@ File Created: Saturday, 6th May 2023 10:11:26 am
 Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 '''
 
+import sys
+sys.path.append("111")
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -13,6 +15,7 @@ import Integrated_Instance
 import utils
 import time
 import tqdm
+import copy
 from integrated_Operators import *
 from NNH_heuristic_algorithm import NNH_heuristic_algorithm
 
@@ -30,15 +33,15 @@ class ALNS_base:
         
         # set params
         ## 1. ALNS params
-        self.adaptive_period = 10000
+        self.adaptive_period = 1000
         self.sigma1 = 2
         self.sigma2 = 1
         self.sigma3 = 0.1
         ## 2. SA params
-        self.max_temp = 1
-        self.min_temp = 0
-        self.cooling_rate = 0.98
-        self.cooling_period = 10000
+        self.max_temp = 0.01
+        self.min_temp = 1e-10
+        self.cooling_rate = 0.97
+        self.cooling_period = 30
     
     # to be implemented in subclass
     def set_operators_list(self):
@@ -55,11 +58,14 @@ class ALNS_base:
         raise NotImplementedError 
 
     def reset(self):
+        self.reset_operators_scores()
+        self.obj_iter_process = []
+    
+    def reset_operators_scores(self):
         self.break_operators_scores = np.ones(len(self.break_operators_list))
         self.repair_operators_scores = np.ones(len(self.repair_operators_list))
         self.break_operators_steps = np.ones(len(self.break_operators_list))
         self.repair_operators_steps = np.ones(len(self.repair_operators_list))
-        self.obj_iter_process = []
     
     def SA_accept(self, detaC, temperature):
         return math.exp(-detaC / temperature)
@@ -80,12 +86,13 @@ class ALNS_base:
         return break_opt_i, repair_opt_i
     
     def get_neighbour(self, solution, break_opt_i, repair_opt_i):
-        break_p_list, break_d_list = self.break_operators_list[break_opt_i].set(solution)
-        self.repair_operators_list[repair_opt_i].set(solution, break_p_list, break_d_list)
+        solution = copy.deepcopy(solution)
+        break_info = self.break_operators_list[break_opt_i].set(solution)
+        self.repair_operators_list[repair_opt_i].set(solution, break_info)
         return solution
 
     def show_process(self):
-        y = self.process
+        y = self.obj_iter_process
         x = np.arange(len(y))
         plt.plot(x, y)
         plt.title("Iteration Process of ALNS")
@@ -100,7 +107,8 @@ class ALNS_base:
         self.best_solution = cur_solution
         self.best_obj = cur_obj
         temperature = self.max_temp
-        for step in tqdm.trange(self.iter_num, desc="ALNS Iteration"):
+        pbar = tqdm.tqdm(range(self.iter_num), desc="ALNS Iteration")
+        for step in pbar:
             break_opt_i, repair_opt_i = self.choose_operator()
             new_solution = self.get_neighbour(cur_solution, break_opt_i, repair_opt_i) 
             new_obj = self.cal_objective(new_solution)
@@ -110,27 +118,32 @@ class ALNS_base:
                 self.best_obj = new_obj
                 cur_solution = new_solution
                 cur_obj = new_obj
-                self.operators_scores[opt_i] += self.sigma1
-                self.operators_steps[opt_i] += 1
+                self.break_operators_scores[break_opt_i] += self.sigma1
+                self.break_operators_steps[break_opt_i] += 1
+                self.repair_operators_scores[repair_opt_i] += self.sigma1
+                self.repair_operators_steps[repair_opt_i] += 1
             elif new_obj < cur_obj: 
                 cur_solution = new_solution
                 cur_obj = new_obj
-                self.operators_scores[opt_i] += self.sigma2
-                self.operators_steps[opt_i] += 1
-            elif np.random.random() < self.SA_accept((new_obj-cur_obj)/cur_obj, temperature):
+                self.break_operators_scores[break_opt_i] += self.sigma2
+                self.break_operators_steps[break_opt_i] += 1
+                self.repair_operators_scores[repair_opt_i] += self.sigma2
+                self.repair_operators_steps[repair_opt_i] += 1
+            elif np.random.random() < self.SA_accept((new_obj-cur_obj)/(cur_obj+1e-10), temperature): # percentage detaC
                 cur_solution = new_solution
                 cur_obj = new_obj
-                self.operators_scores[opt_i] += self.sigma3
-                self.operators_steps[opt_i] += 1
+                self.break_operators_scores[break_opt_i] += self.sigma3
+                self.break_operators_steps[break_opt_i] += 1
+                self.repair_operators_scores[repair_opt_i] += self.sigma3
+                self.repair_operators_steps[repair_opt_i] += 1
             # reset operators weights
             if step % self.adaptive_period == 0: 
-                self.operators_scores = np.ones(len(self.operators_list))
-                self.operators_steps = np.ones(len(self.operators_list))
+                self.reset_operators_scores()
             # update SA temperature
             temperature = self.temperature_update(temperature, step)
             # record
             self.obj_iter_process.append(cur_obj)
-            tqdm.set_postfix({
+            pbar.set_postfix({
                 "best_obj" : self.best_obj, 
                 "cur_obj" : cur_obj, 
                 "temperature" : temperature
@@ -150,10 +163,15 @@ class ALNS(ALNS_base):
     def set_operators_list(self):
         self.break_operators_list = [
             PickingRandomBreak(instance),
-            ]
+            SortingRandomBreak(instance),
+            PickingRandomBreak(instance, break_num=2),
+            SortingRandomBreak(instance, break_num=2),
+        ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), 
-            PickingGreedyRepair(instance), 
+            # PickingGreedyRepair(instance), 
+            SortingRandomRepair(instance),
+            # SortingGreedyRepair(instance),
         ]
     
     def solution_init(self):
@@ -170,33 +188,57 @@ class ALNS(ALNS_base):
         picking_solution = solution["picking"]
         sorting_solution = solution["sorting"]
         integrated_instance = self.instance
-        return utils.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
-        
+        obj, info = utils.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
+        self.obj_info = info
+        return obj
+
+    def choose_operator(self):
+        # choose break operator
+        break_weights = self.break_operators_scores / self.break_operators_steps
+        break_prob = break_weights / sum(break_weights)
+        break_opt_i = np.random.choice(range(len(self.break_operators_list)), p=break_prob)
+        # filter repair operators with the same type
+        type = self.break_operators_list[break_opt_i].type
+        availabel_repair_list = [i for i in range(len(self.repair_operators_list)) if self.repair_operators_list[i].type == type]
+        # choose repair operator
+        repair_weights = (self.repair_operators_scores / self.repair_operators_steps)[availabel_repair_list]
+        repair_prob = repair_weights / sum(repair_weights)
+        repair_opt_i = np.random.choice(availabel_repair_list, p=repair_prob)
+        return break_opt_i, repair_opt_i
+  
     def test_run(self):
         cur_solution = self.solution_init() 
         cur_obj = self.cal_objective(cur_solution)
         return cur_solution, cur_obj
 
+
 if __name__ == "__main__":
     # create instance
-    w_num = 5
-    l_num = 5
-    bins_num = 3
-    robot_num = 10
-    picking_station_num = 5
-    orders_num = 2
+    w_num = 10
+    l_num = 10
+    bins_num = 200
+    robot_num = 50
+    picking_station_num = 10
+    orders_num = 10
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=100000)
+    alg = ALNS(instance, iter_num=10000)
     start = time.time()
     solution, obj = alg.run()
-    end = time.time()
+    time_cost1 = time.time() - start
+    alg.show_process()
+    print(alg.repair_operators_scores / alg.repair_operators_steps)
+    print("\nbest_obj = {}, time_cost = {}\n\nbest_solution: {}".format(obj, time_cost1, solution))
 
-    # test
-    x_val, y_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
-    true_obj = utils.integrated_evaluate(instance, x_val, y_val, z_val)
-    print("\nbest_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, end-start, solution))
-    print("true_obj = {}".format(true_obj))
+    # test evaluation
+    # start = time.time()
+    # x_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
+    # true_obj1 = utils.picking_integrated_evaluate(instance, x_val)
+    # print("true_obj1 = {}".format(true_obj1))
+    # true_obj2, info = utils.integrated_evaluate(instance, x_val, z_val)
+    # time_cost2 = time.time() - start
+    # print("true_obj2 = {}, time_cost = {}".format(true_obj2, time_cost2))
+    # print()
 
 
 

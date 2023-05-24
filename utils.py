@@ -104,13 +104,12 @@ def instance_routes2map_routes(picking_instance, routes):
     return routes
 
 # 整合模型评估函数
-def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
+def integrated_evaluate(integrated_instance, x_val, z_val):
     """ evaluate solution with gurobi model
 
     Args:
         integrated_instance (Integrated_Gurobi_Model): integrated instance to build model
         x_val (list/ndarray[i,j,k]): values of variables x
-        y_val (list/ndarray[i,p]): values of variables y
         z_val (list/ndarray[o,p]): values of variables z
 
     Returns:
@@ -119,7 +118,6 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     from Integrated_Gurobi_Model import Integrated_Gurobi_Model
     import gurobipy as gp
     x_val = np.array(x_val)
-    y_val = np.array(y_val)
     z_val = np.array(z_val)
     # 1. build model
     model_builder = Integrated_Gurobi_Model(integrated_instance)
@@ -127,7 +125,6 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     # 2. set variables value
     info = model_builder.build_model(model)
     x = info["x"]
-    y = info["y"]
     z = info["z"]
     for i in integrated_instance.N:
         for j in integrated_instance.N:
@@ -135,12 +132,6 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
                 x[i, j].setAttr("LB", 1)
             elif x_val[i, j] == 0:
                 x[i, j].setAttr("UB", 0)
-    for i in range(integrated_instance.n):
-        for p in range(integrated_instance.P):
-            if y_val[i, p] == 1:
-                y[i, p].setAttr("LB", 1)
-            elif y_val[i, p] == 0:
-                y[i, p].setAttr("UB", 0)
     for o in range(integrated_instance.O):
         for p in range(integrated_instance.P):
             if z_val[o, p] == 1:
@@ -149,6 +140,7 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
                 z[o, p].setAttr("UB", 0)
     # 3. solve model
     model.setParam("OutputFlag", 0)
+    model.setParam("TimeLimit", 10)
     model.optimize()
     # print("y : \n{}".format(y_val))
     # Ta = np.array([[model.getVarByName(f"Ta[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
@@ -157,7 +149,10 @@ def integrated_evaluate(integrated_instance, x_val, y_val, z_val):
     # print("true Ts: \n{}".format(Ts))
     # Te = np.array([[model.getVarByName(f"Te[{i},{p}]").X for p in range(integrated_instance.P)] for i in range(integrated_instance.n)])
     # print("true Te: \n{}".format(Te))
-    return model.ObjVal
+    T = np.array([model.getVarByName(f"T[{i}]").X for i in integrated_instance.N])
+    # print("true T: \n{}".format(T))
+    info = {"T" : T}
+    return model.ObjVal, info
 
 # 建立picking评估模型
 def build_picking_evaluate_model(picking_instance, x_val):
@@ -201,6 +196,7 @@ def picking_evaluate(picking_instance, x_val):
     """
     model = build_picking_evaluate_model(picking_instance, x_val) 
     model.setParam("OutputFlag", 0)
+    model.setParam("TimeLimit", 10)
     model.optimize()
     if model.Status == 3:
         return 1e6
@@ -249,6 +245,9 @@ def picking_integrated_evaluate(integrated_instance, x_val):
     """
     model = build_picking_integrated_evluate_model(integrated_instance, x_val) 
     model.setParam("OutputFlag", 0)
+    model.setParam("TimeLimit", 10)
+    # model.addConstr(model.getVarByName("z[0,3]") == 1)
+    # model.addConstr(model.getVarByName("z[1,4]") == 1)
     model.optimize()
     return model.ObjVal
 
@@ -323,10 +322,13 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
     for ni in range(instance.n):
         d1 = ni + 2 * instance.n
         enter_time[ni] = passTime[d1]
-    ## 计算到达第一个拣选站的时间
-    Tip_arrive[:, 0] = enter_time + np.array(instance.Dip)[:, 0] / instance.v 
-    ## 函数：根据拣选站p的到达时间更新料箱ni的离开时间
-    def update_leave_time_of_p(p):
+    ## 计算到达各个拣选站的时间
+    for p in range(instance.P):
+        if p == 0: # 拣选站1的到达时间
+            Tip_arrive[:, 0] = enter_time + np.array(instance.Dip)[:, 0] / instance.v 
+        else: # 根据拣选站p-1的离开时间更新拣选站p的到达时间
+            Tip_arrive[:, p] = Tip_leave[:, p-1] + instance.distance_between_pickers / instance.v
+        # 根据拣选站p的到达时间更新料箱ni的离开时间
         ni_list = [ni for ni in range(instance.n)]
         sorted_ni_list = sorted(ni_list, key=lambda x: Tip_arrive[x, p])
         cur_time = 0
@@ -346,11 +348,6 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
                     obj += 10000
             else:
                 Tip_leave[ni, p] = Tip_arrive[ni, p]
-    update_leave_time_of_p(0)
-    ## 计算到达后续拣选站的时间
-    for p in range(1, instance.P):
-        Tip_arrive[:, p] = Tip_leave[:, p-1] + instance.distance_between_pickers / instance.v
-        update_leave_time_of_p(p)
     ## 计算出唤醒输送机的时间
     out_time = Tip_leave[:, instance.P-1] + np.array(instance.Dpi)[:, instance.P-1] / instance.v
     delta_T_list = out_time - enter_time
@@ -376,7 +373,11 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
             if load > instance.capacity:
                 obj += 10000
     obj += np.max(passTime)
-    return obj
+    # print("passTime :\n", passTime)
+    # print("Tip_arrive (Ta) :\n", Tip_arrive)
+    # print("Tip_leave (Te) :\n", Tip_leave)
+    info = {"passTime" : passTime, "Tip_arrive" : Tip_arrive, "Tip_leave" : Tip_leave}
+    return obj, info
 
 # 转换picking_solution, sorting_solution为x_val, y_val, z_val
 def solution_transfer(integrated_instance, picking_solution, sorting_solution):
@@ -385,19 +386,11 @@ def solution_transfer(integrated_instance, picking_solution, sorting_solution):
         for i in range(len(route)-1):
             x_val[route[i], route[i+1]] = 1
         x_val[route[-1], route[0]] = 1
-    y_val = np.zeros((integrated_instance.n, integrated_instance.P))
-    for i in range(integrated_instance.n):
-        for p in range(integrated_instance.P):
-            for o in range(integrated_instance.O):
-                if integrated_instance.IO[i][o] and sorting_solution[o] == p:
-                    y_val[i, p] = 1
-                    break
-    z_val = np.zeros((integrated_instance.n, integrated_instance.P))
+    z_val = np.zeros((integrated_instance.O, integrated_instance.P))
     for o in range(integrated_instance.O):
         for p in range(integrated_instance.P):
             if round(sorting_solution[o]) == p:
                 z_val[o, p] = 1
-    # print("y=",y_val)
-    return x_val, y_val, z_val
+    return x_val, z_val
 
 

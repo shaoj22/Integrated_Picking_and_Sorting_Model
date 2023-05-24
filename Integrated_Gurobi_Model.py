@@ -45,7 +45,7 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # 添加约束条件
         # ______________________________________________________________________________________________________________
         # 到达P2的时间>=到达环形输送机出口的时间
-        MODEL.addConstrs( T[i - self.n] == Te[i - 2 * self.n, self.P-1] + (self.Dpi[i - 2 * self.n][self.P-1]/self.v) for i in self.D1 )
+        MODEL.addConstrs( T[i - self.n] >= Te[i - 2 * self.n, self.P-1] + (self.Dpi[i - 2 * self.n][self.P-1]/self.v) for i in self.D1 )
         # 到达输送机的时间要>=到达D1的时间
         MODEL.addConstrs( I[i] == T[i + 2 * self.n] for i in range(self.n) )
         # ______________________________________________________________________________________________________________
