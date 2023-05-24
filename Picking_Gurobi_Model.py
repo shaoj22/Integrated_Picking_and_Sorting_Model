@@ -7,7 +7,7 @@ from Picking_Instance import Instance
 from NNH_heuristic_algorithm import NNH_heuristic_algorithm
 
 class Picking_Gurobi_Model():
-    def __init__(self, instance, time_limit=None, init_flag=False):
+    def __init__(self, instance, time_limit=None, init_flag=True):
         # time_limit
         self.picking_instance = instance
         self.time_limit = time_limit

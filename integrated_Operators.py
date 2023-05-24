@@ -172,18 +172,27 @@ class SortingGreedyRepair(Operator):
     def __init__(self, instance):
         super().__init__(instance)
         self.type = "sorting"
+    
+    def backupon(self, best_solution, best_obj, cur_solution, break_o_list, cur_p):
+        if cur_p >= len(break_o_list):
+            cur_obj, _ = utils.efficient_integrated_evaluate(self.instance, cur_solution['picking'], cur_solution['sorting'])
+            if cur_obj < best_obj:
+                best_obj = cur_obj
+                best_solution['sorting'] = cur_solution['sorting'].copy()
+            return
+        o = break_o_list[cur_p]
+        for p in range(self.instance.P):
+            cur_solution['sorting'][o] = p
+            self.backupon(best_solution, best_obj, cur_solution, break_o_list, cur_p+1)
 
     def set(self, solution, break_info):
+        best_solution = solution.copy()
+        best_obj, _ = utils.efficient_integrated_evaluate(self.instance, best_solution['picking'], best_solution['sorting']) 
+        cur_solution = solution.copy()
         break_o_list = break_info["break_o_list"]
-        sorting = solution["sorting"] # order2picker
-        for o in break_o_list:
-            min_cost = np.inf
-            for p in range(self.instance.P):
-                sorting[o] = p
-                cur_cost, _ = utils.efficient_integrated_evaluate(self.instance, solution['picking'], sorting)
-                if cur_cost < min_cost:
-                    min_cost = cur_cost
-                    min_p = p
-            sorting[o] = min_p
+        cur_p = 0
+        self.backupon(best_solution, best_obj, cur_solution, break_o_list, cur_p)
+        solution['sorting'] = best_solution['sorting'].copy()
+        
 
 

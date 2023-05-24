@@ -33,7 +33,7 @@ class ALNS_base:
         
         # set params
         ## 1. ALNS params
-        self.adaptive_period = 500
+        self.adaptive_period = 1000
         self.sigma1 = 2
         self.sigma2 = 1
         self.sigma3 = 0.1
@@ -164,12 +164,14 @@ class ALNS(ALNS_base):
         self.break_operators_list = [
             PickingRandomBreak(instance),
             SortingRandomBreak(instance),
+            PickingRandomBreak(instance, break_num=2),
+            SortingRandomBreak(instance, break_num=2),
         ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), 
             # PickingGreedyRepair(instance), 
             SortingRandomRepair(instance),
-            SortingGreedyRepair(instance),
+            # SortingGreedyRepair(instance),
         ]
     
     def solution_init(self):
@@ -214,8 +216,8 @@ if __name__ == "__main__":
     # create instance
     w_num = 10
     l_num = 10
-    bins_num = 1000
-    robot_num = 100
+    bins_num = 200
+    robot_num = 50
     picking_station_num = 10
     orders_num = 10
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
@@ -224,6 +226,8 @@ if __name__ == "__main__":
     start = time.time()
     solution, obj = alg.run()
     time_cost1 = time.time() - start
+    alg.show_process()
+    print(alg.repair_operators_scores / alg.repair_operators_steps)
     print("\nbest_obj = {}, time_cost = {}\n\nbest_solution: {}".format(obj, time_cost1, solution))
 
     # test evaluation
