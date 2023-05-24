@@ -33,15 +33,15 @@ class ALNS_base:
         
         # set params
         ## 1. ALNS params
-        self.adaptive_period = 10000
+        self.adaptive_period = 500
         self.sigma1 = 2
         self.sigma2 = 1
         self.sigma3 = 0.1
         ## 2. SA params
-        self.max_temp = 1
-        self.min_temp = 0
-        self.cooling_rate = 0.98
-        self.cooling_period = 10000
+        self.max_temp = 0.01
+        self.min_temp = 1e-10
+        self.cooling_rate = 0.97
+        self.cooling_period = 30
     
     # to be implemented in subclass
     def set_operators_list(self):
@@ -92,7 +92,7 @@ class ALNS_base:
         return solution
 
     def show_process(self):
-        y = self.process
+        y = self.obj_iter_process
         x = np.arange(len(y))
         plt.plot(x, y)
         plt.title("Iteration Process of ALNS")
@@ -107,11 +107,8 @@ class ALNS_base:
         self.best_solution = cur_solution
         self.best_obj = cur_obj
         temperature = self.max_temp
-        for step in tqdm.trange(self.iter_num, desc="ALNS Iteration", postfix={
-                "best_obj" : self.best_obj, 
-                "cur_obj" : cur_obj, 
-                "temperature" : temperature
-            }):
+        pbar = tqdm.tqdm(range(self.iter_num), desc="ALNS Iteration")
+        for step in pbar:
             break_opt_i, repair_opt_i = self.choose_operator()
             new_solution = self.get_neighbour(cur_solution, break_opt_i, repair_opt_i) 
             new_obj = self.cal_objective(new_solution)
@@ -132,7 +129,7 @@ class ALNS_base:
                 self.break_operators_steps[break_opt_i] += 1
                 self.repair_operators_scores[repair_opt_i] += self.sigma2
                 self.repair_operators_steps[repair_opt_i] += 1
-            elif np.random.random() < self.SA_accept((new_obj-cur_obj)/cur_obj, temperature):
+            elif np.random.random() < self.SA_accept((new_obj-cur_obj)/(cur_obj+1e-10), temperature): # percentage detaC
                 cur_solution = new_solution
                 cur_obj = new_obj
                 self.break_operators_scores[break_opt_i] += self.sigma3
@@ -146,6 +143,11 @@ class ALNS_base:
             temperature = self.temperature_update(temperature, step)
             # record
             self.obj_iter_process.append(cur_obj)
+            pbar.set_postfix({
+                "best_obj" : self.best_obj, 
+                "cur_obj" : cur_obj, 
+                "temperature" : temperature
+            })
         return self.best_solution, self.best_obj
 
 
@@ -167,7 +169,7 @@ class ALNS(ALNS_base):
             PickingRandomRepair(instance), 
             # PickingGreedyRepair(instance), 
             SortingRandomRepair(instance),
-            # SortingGreedyRepair(instance),
+            SortingGreedyRepair(instance),
         ]
     
     def solution_init(self):
@@ -207,27 +209,28 @@ class ALNS(ALNS_base):
         cur_obj = self.cal_objective(cur_solution)
         return cur_solution, cur_obj
 
+
 if __name__ == "__main__":
     # create instance
-    w_num = 5
-    l_num = 5
-    bins_num = 100
-    robot_num = 20
+    w_num = 10
+    l_num = 10
+    bins_num = 1000
+    robot_num = 100
     picking_station_num = 10
     orders_num = 10
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=1000)
+    alg = ALNS(instance, iter_num=10000)
     start = time.time()
-    solution, obj = alg.test_run()
+    solution, obj = alg.run()
     time_cost1 = time.time() - start
-    print("\nbest_obj = {}, time_cost = {}\nbest_solution: {}".format(obj, time_cost1, solution))
+    print("\nbest_obj = {}, time_cost = {}\n\nbest_solution: {}".format(obj, time_cost1, solution))
 
     # test evaluation
     # start = time.time()
-    x_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
-    true_obj1 = utils.picking_integrated_evaluate(instance, x_val)
-    print("true_obj1 = {}".format(true_obj1))
+    # x_val, z_val = utils.solution_transfer(instance, solution["picking"], solution["sorting"])
+    # true_obj1 = utils.picking_integrated_evaluate(instance, x_val)
+    # print("true_obj1 = {}".format(true_obj1))
     # true_obj2, info = utils.integrated_evaluate(instance, x_val, z_val)
     # time_cost2 = time.time() - start
     # print("true_obj2 = {}, time_cost = {}".format(true_obj2, time_cost2))

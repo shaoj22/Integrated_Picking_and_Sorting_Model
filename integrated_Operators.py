@@ -22,6 +22,20 @@ class Operator:
             sequence.append(item)
         else:
             sequence.insert(pos, item)
+    
+    def cal_insert_cost(self, sequence, pos, item):
+        """ 计算在序列 sequence 的 pos 位置插入 item 的成本 """
+        if pos == len(sequence):
+            return self.instance.disMatrix[sequence[-1], item]
+        else:
+            return self.instance.disMatrix[sequence[pos-1], item] + self.instance.disMatrix[item, sequence[pos]] - self.instance.disMatrix[sequence[pos-1], sequence[pos]]
+    
+    def cal_remove_cost(self, sequence, pos):
+        """ 计算删除序列 sequence 的 pos 位置减少的成本 """
+        if pos == len(sequence) - 1:
+            return self.instance.disMatrix[sequence[pos-1], sequence[pos]]
+        else:
+            return self.instance.disMatrix[sequence[pos-1], sequence[pos]] + self.instance.disMatrix[sequence[pos], sequence[pos+1]] - self.instance.disMatrix[sequence[pos-1], sequence[pos+1]]
 
     def set(self, solution):
         # 获取邻域解
@@ -102,12 +116,16 @@ class PickingGreedyRepair(Operator):
             for k in range(self.instance.robotNum):
                 # 对于所有起点插入位置
                 for p_pos in range(1, len(routes[k])+1):
+                    cost1 = self.cal_insert_cost(routes[k], p_pos, p_break)
                     self.safe_insert(routes[k], p_pos, p_break)
                     # 对于所有终点插入位置
                     for d_pos in range(p_pos+1, len(routes[k])+1):
+                        cost2 = self.cal_insert_cost(routes[k], d_pos, d_break)
                         self.safe_insert(routes[k], d_pos, d_break)
                         # 计算插入该位置的成本
-                        cur_cost, _ = utils.efficient_integrated_evaluate(self.instance, routes, solution['sorting'])
+                        # cur_cost, _ = utils.efficient_integrated_evaluate(self.instance, routes, solution['sorting'])
+                        # 简单计算成本
+                        cur_cost = cost1 + cost2
                         if cur_cost < min_cost:
                             min_cost = cur_cost
                             min_k = k
