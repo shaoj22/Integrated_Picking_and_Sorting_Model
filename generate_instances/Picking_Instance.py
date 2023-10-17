@@ -4,7 +4,8 @@ Project: Integrated_Picking---Sorting_Model
 File Created: Saturday, 22nd April 2023 9:23:46 pm
 Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 '''
-
+import sys
+sys.path.append('..')
 import numpy as np
 import matplotlib.pyplot as plt
 import utils

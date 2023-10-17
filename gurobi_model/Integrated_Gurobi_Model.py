@@ -1,8 +1,11 @@
+import sys
+sys.path.append('..')
 import gurobipy as gp
 from gurobipy import GRB
 import time
-from Integrated_Instance import Instance
+from generate_instances import Integrated_Instance
 from Picking_Gurobi_Model import Picking_Gurobi_Model
+import numpy as np
 
 class Integrated_Gurobi_Model(Picking_Gurobi_Model):
     def __init__(self, instance, time_limit=None):
@@ -17,8 +20,8 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         self.picking_time = instance.picking_time
         self.queue_length = instance.queue_length
         self.sumIO = instance.sumIO
-
         self.bigM = 1000
+        self.y_fixed, self.z_fixed = self.set_order_batching_fixed_solution()
 
     def build_model(self, MODEL):
         M = self.bigM # 大M
@@ -40,6 +43,11 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         Te = MODEL.addVars(Te_list, vtype=GRB.INTEGER, name="Te" ) # 料箱i在拣选站p的结束拣选时间
         f2_list = [(i,j,p) for i in range(self.n) for j in range(self.n) for p in range(self.P)]
         f2 = MODEL.addVars( f2_list, vtype=GRB.BINARY, name="f2") # 料箱i是否先于料箱j到达拣选站p
+
+
+        # # fixed 约束
+        # MODEL.addConstrs( y[i,p] >= self.y_fixed[i][p] for i in range(self.n) for p in range(self.P))
+        # MODEL.addConstrs( z[o,p] >= self.z_fixed[o][p] for o in range(self.O) for p in range(self.P))
 
 
         # 添加约束条件
@@ -89,6 +97,28 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         info["z"] = z
         return info
 
+
+    def set_order_batching_fixed_solution(self):
+        """
+        set fixed solution for model
+        """
+        y_val = np.zeros((self.picking_instance.nodeNum, self.P))
+        z_val = np.zeros((self.O, self.P))
+        p = 0
+        for o in range(self.O):
+            z_val[o, p] = 1
+            p += 1
+            if p == self.P:
+                p = 0
+        for o in range(self.O):
+            for p in range(self.P):
+                if z_val[o,p] == 1:
+                    for i in range(self.n):
+                        if self.IO[o][i] == 1:
+                            y_val[i,p] = 1
+        return y_val, z_val
+
+
     def run_gurobi(self):
         start_Time = time.time() # 记录模型开始计算时间
         MODEL = gp.Model('Picking_and_Sorting_Gurobi_Model') # 创建Gurobi模型
@@ -98,7 +128,9 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         if self.time_limit is not None:
             MODEL.setParam("TimeLimit", self.time_limit)
         MODEL.setParam("OutputFlag", 1)
-        # 非线性优化参数
+        # 设置初始解
+        if self.init_flag:
+            self.set_init_solution(MODEL) # 设置初始解
         MODEL.optimize()
         end_Time = time.time()
         Time = end_Time - start_Time
@@ -174,9 +206,9 @@ if __name__ == "__main__":
     l_num = 5
     bins_num = 5
     robot_num = 3
-    picking_station_num = 10
-    orders_num = 2
-    problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    picking_station_num = 4
+    orders_num = 5
+    problem = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     alg = Integrated_Gurobi_Model(instance = problem, time_limit = 1800)
     model, Obj, Time, objval, objBound, Gap = alg.run_gurobi()
     problem.render(model=model)
@@ -185,3 +217,4 @@ if __name__ == "__main__":
     print("下界：",objval)
     print("Gap:",Gap)
     print(Time)
+

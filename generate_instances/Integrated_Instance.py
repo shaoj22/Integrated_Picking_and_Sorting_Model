@@ -6,12 +6,13 @@ Description:
 Author: Stitch
 Created Date: April 21th 2023
 '''
-
+import sys
+sys.path.append('..')
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import DrawTools
 import random
-import Picking_Instance
+from generate_instances import Picking_Instance
 
 class Instance(Picking_Instance.Instance):
     def __init__(self, w_num, l_num, bins_num, robot_num, picking_station_num, orders_num, seed=1):

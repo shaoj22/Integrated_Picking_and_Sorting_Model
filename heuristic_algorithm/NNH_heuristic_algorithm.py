@@ -2,7 +2,7 @@
 File: NNH_heuristic_algorithm for init solution generate
 Created Date: April 27th 2023
 '''
-import Integrated_Instance
+from generate_instances import Integrated_Instance
 import numpy as np
 import utils
 import tqdm

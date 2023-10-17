@@ -26,7 +26,7 @@ sheet.write(0, 11, "Time")
 # get small instances
 instance = generate_instances.generate_small_instances()
 # 求解并输出每个算例
-for i in range(35,len(instance)):
+for i in range(45,len(instance)):
     gurobi_experiment_instance = Integrated_Instance.Instance(instance[i][0],instance[i][1],instance[i][2],instance[i][3],instance[i][4],instance[i][5])
     gurobi_alg = Integrated_Gurobi_Model.Integrated_Gurobi_Model(gurobi_experiment_instance, time_limit = 360)
     model, obj, Time, objval, objBound, Gap = gurobi_alg.run_gurobi()
@@ -44,5 +44,5 @@ for i in range(35,len(instance)):
     sheet.write(i + 1, 10, Gap)
     sheet.write(i + 1, 11, Time)
     # 保存excel文件
-    save_path = "D:\PythonProjet\SF-learning\HaiSystem_Integrated_Model\Integrated_Picking & Sorting_Model\re_gurobi_solution.xls"
+    save_path = "C:\\Users\\93561\\Desktop\\code\\Integrated_Picking & Sorting_Model\\output\\gurobi_small_solution.xls"
     book.save(save_path)

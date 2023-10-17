@@ -3,8 +3,9 @@ import gurobipy as gp
 from gurobipy import GRB
 import time
 import utils
-from Picking_Instance import Instance
-from NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from generate_instances import Picking_Instance
+from heuristic_algorithm import NNH_heuristic_algorithm
+
 
 class Picking_Gurobi_Model():
     def __init__(self, instance, time_limit=None, init_flag=True):
@@ -35,7 +36,7 @@ class Picking_Gurobi_Model():
         """
         x_val = np.zeros((self.picking_instance.nodeNum, self.picking_instance.nodeNum))
         # init strategy 1
-        init_alg = NNH_heuristic_algorithm(self.picking_instance)
+        init_alg = NNH_heuristic_algorithm.NNH_heuristic_algorithm(self.picking_instance)
         routes = init_alg.NNH_main()
         # init strategy 2
         # set init solution
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     l_num = 2
     task_num = 20
     robot_num = 10
-    instance = Instance(w_num, l_num, task_num, robot_num)
+    instance = Picking_Instance.Instance(w_num, l_num, task_num, robot_num)
     alg = Picking_Gurobi_Model(instance = instance, time_limit = 3600, init_flag = True)
     result_info = alg.run_gurobi()
     instance.render(model=result_info["model"])

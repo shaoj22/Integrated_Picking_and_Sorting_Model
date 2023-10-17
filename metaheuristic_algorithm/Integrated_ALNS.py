@@ -158,9 +158,9 @@ class ALNS(ALNS_base):
     def __init__(self, instance, iter_num):
         super().__init__(iter_num)
         self.instance = instance
-        self.set_operators_list()
+        self.set_operators_list(self.instance)
     
-    def set_operators_list(self):
+    def set_operators_list(self, instance):
         self.break_operators_list = [
             PickingRandomBreak(instance),
             SortingRandomBreak(instance),
@@ -227,8 +227,8 @@ if __name__ == "__main__":
     solution, obj = alg.run()
     time_cost1 = time.time() - start
     alg.show_process()
-    print(alg.repair_operators_scores / alg.repair_operators_steps)
-    print("\nbest_obj = {}, time_cost = {}\n\nbest_solution: {}".format(obj, time_cost1, solution))
+    # print(alg.repair_operators_scores / alg.repair_operators_steps)
+    # print("\nbest_obj = {}, time_cost = {}\n\nbest_solution: {}".format(obj, time_cost1, solution))
 
     # test evaluation
     # start = time.time()
