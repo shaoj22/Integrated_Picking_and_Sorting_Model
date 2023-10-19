@@ -1,6 +1,6 @@
 '''
 File: clustering_algorithm.py
-Project: Integrated_Picking & Sorting_Model
+Project: Integrated_Picking_and_Sorting_Model
 Description: Implementing a clustering algorithm for order group batches
 File Created: 2023.10.16
 Author: 626

@@ -7,17 +7,17 @@ Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 '''
 
 import sys
-sys.path.append("111")
+sys.path.append("..")
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-import Integrated_Instance
+from generate_instances import Integrated_Instance
 import utils
 import time
 import tqdm
 import copy
 from integrated_Operators import *
-from NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from heuristic_algorithm import NNH_heuristic_algorithm
 
 
 class ALNS_base:
@@ -175,7 +175,7 @@ class ALNS(ALNS_base):
         ]
     
     def solution_init(self):
-        picking_alg = NNH_heuristic_algorithm(self.instance)
+        picking_alg = NNH_heuristic_algorithm.NNH_heuristic_algorithm(self.instance)
         picking_solution = picking_alg.NNH_main()
         sorting_solution = [np.random.randint(self.instance.P) for _ in range(self.instance.O)]
         solution = {
