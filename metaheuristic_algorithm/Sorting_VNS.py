@@ -1,3 +1,11 @@
+'''
+Author: shaoj22 935619774@qq.com
+Date: 2023-10-07 18:46:30
+LastEditors: shaoj22 935619774@qq.com
+LastEditTime: 2023-10-20 10:17:39
+FilePath: \Integrated_Picking_and_Sorting_Model\metaheuristic_algorithm\Sorting_VNS.py
+Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+'''
 import time
 from Sorting_Instance import Instance
 import numpy as np
@@ -5,7 +13,6 @@ import generate_instances
 import xlwt
 import WBA_heuristic_algorithm
 import Integrated_Instance
-
 
 
 if __name__ == "__main__":

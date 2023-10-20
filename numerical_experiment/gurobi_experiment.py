@@ -1,7 +1,15 @@
 '''
 File: gurobi_experiment.py
-Created Date: April 25th 2023
+Project: Integrated_Picking_and_Sorting_Model
+Description: 
+----------
+do some experiment for the gurobi model.
+----------
+Author: 626
+Created Date: 2023.10.19
 '''
+
+
 import Integrated_Gurobi_Model
 import Integrated_Instance
 import xlwt

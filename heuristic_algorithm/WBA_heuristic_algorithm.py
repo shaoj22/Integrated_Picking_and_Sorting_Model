@@ -1,8 +1,21 @@
+'''
+File: WBA_heuristic_algorithm.py
+Project: Integrated_Picking_and_Sorting_Model
+Description: 
+----------
+a heuristic algorithm for the init solution of the sorting model.
+----------
+Author: 626
+Created Date: 2023.10.19
+'''
+
+
 import Integrated_Instance
 import numpy as np
 import utils
 from tqdm import tqdm
 from Sorting_Instance import Instance
+
 
 class WBA_heuristic_algorithm():
 

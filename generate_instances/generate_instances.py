@@ -1,7 +1,14 @@
 '''
 File: generate_instances.py
-Created Date: April 27th 2023
+Project: Integrated_Picking_and_Sorting_Model
+Description:
+----------
+generate standardized instances, including small/medium/large instances.
+----------
+Author: 626
+Created Date: 2023.10.20
 '''
+
 
 def generate_small_instances():
     wl_list = [[2,4],[3,4],[4,4],[5,4],[6,4]]

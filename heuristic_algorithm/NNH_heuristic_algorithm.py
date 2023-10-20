@@ -1,11 +1,19 @@
 '''
-File: NNH_heuristic_algorithm for init solution generate
-Created Date: April 27th 2023
+File: NNH_heuristic_algorithm.py
+Project: Integrated_Picking_and_Sorting_Model
+Description: 
+----------
+a heuristic algorithm for the init solution of the Picking model.
+----------
+Author: 626
+Created Date: 2023.10.19
 '''
+
+
 from generate_instances import Integrated_Instance
 import numpy as np
 import utils
-import tqdm
+
 
 class NNH_heuristic_algorithm():
 
@@ -69,7 +77,6 @@ class NNH_heuristic_algorithm():
                     r += 1
                 else:
                     r = 0
-
         # 添加所有的P2_tasks
         r = self.R//2
         l = 0

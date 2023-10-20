@@ -1,3 +1,15 @@
+'''
+File: integrated_gurobi_model.py
+Project: Integrated_Picking_and_Sorting_Model
+Description: 
+----------
+complete gurobi model of the Integrated problem.
+----------
+Author: 626
+Created Date: 2023.10.19
+'''
+
+
 import sys
 sys.path.append('..')
 import gurobipy as gp
@@ -5,7 +17,7 @@ from gurobipy import GRB
 import time
 from generate_instances import Integrated_Instance
 from Picking_Gurobi_Model import Picking_Gurobi_Model
-import numpy as np
+
 
 class Integrated_Gurobi_Model(Picking_Gurobi_Model):
     def __init__(self, instance, time_limit=None):
@@ -42,13 +54,6 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         Te = MODEL.addVars(Te_list, vtype=GRB.INTEGER, name="Te" ) # 料箱i在拣选站p的结束拣选时间
         f2_list = [(i,j,p) for i in range(self.n) for j in range(self.n) for p in range(self.P)]
         f2 = MODEL.addVars( f2_list, vtype=GRB.BINARY, name="f2") # 料箱i是否先于料箱j到达拣选站p
-
-
-        # # fixed 约束
-        # MODEL.addConstrs( y[i,p] >= self.y_fixed[i][p] for i in range(self.n) for p in range(self.P))
-        # MODEL.addConstrs( z[o,p] >= self.z_fixed[o][p] for o in range(self.O) for p in range(self.P))
-
-
         # 添加约束条件
         # ______________________________________________________________________________________________________________
         # 到达P2的时间>=到达环形输送机出口的时间
@@ -56,8 +61,6 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # 到达输送机的时间要>=到达D1的时间
         MODEL.addConstrs( I[i] == T[i + 2 * self.n] for i in range(self.n) )
         # ______________________________________________________________________________________________________________
-
-
         # 添加约束条件
         # 约束条件3：控制决策变量f的两条约束
         MODEL.addConstrs( Ta[i,p] - Ta[j,p] <= (1 - f2[i,j,p]) * M for i in range(self.n) for j in range(i+1,self.n) for p in range(self.P))
@@ -77,7 +80,6 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         MODEL.addConstrs( Te[i,p] == Ts[i,p] + self.picking_time * y[i,p] for i in range(self.n) for p in range(self.P))
         # 约束条件3：当料箱i不去拣选站p时，Ts=Ta
         MODEL.addConstrs( Ts[i,p] <= Ta[i,p] + M * y[i,p] for i in range(self.n) for p in range(self.P))
-        
         # --------------------------------------------------------------------------------------------------------------
         # 关于料箱i到达拣选站p的时间
         # 约束条件1：料箱i到达第一个拣选站p=0时的时间（初始化）：
@@ -91,7 +93,6 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         # --------------------------------------------------------------------------------------------------------------
         # 拣选站处的缓存区大小约束
         MODEL.addConstrs( Ts[i,p] - Ta[i,p] <= (self.queue_length-1) * self.picking_time for i in range(self.n) for p in range(self.P))
-
         info["y"] = y
         info["z"] = z
         return info
@@ -111,64 +112,9 @@ class Integrated_Gurobi_Model(Picking_Gurobi_Model):
         MODEL.optimize()
         end_Time = time.time()
         Time = end_Time - start_Time
-
         # 输出并记录解的情况
         if MODEL.status == 2:
             Obj = MODEL.ObjVal
-            # # 记录下表是IP的解
-            # SolutionT = []
-            # # SolutionTS = []
-            # SolutionTo = []
-            # # SolutionZ = []
-            # # SolutionTe = []
-            # # SolutionTa = []
-            # for i in self.N:
-            #     T = []
-            # #     TS = []
-
-            # #     TE = []
-            # #     TA = []
-            #     for k in self.K:
-            #         var_name1 = f"T[{i},{k}]"
-            # #         var_name2 = f"Ts[{i},{j}]"
-            # #         var_nameTe = f"Te[{i},{j}]"
-            # #         var_nameTa = f"Ta[{i},{j}]"
-            #         T_i_j = MODEL.getVarByName(var_name1).X
-            # #         Ts_i_j = MODEL.getVarByName(var_name2).X
-            # #         Te_i_j = MODEL.getVarByName(var_nameTe).X
-            # #         Ta_i_j = MODEL.getVarByName(var_nameTa).X
-            #         T.append(T_i_j)
-            # #         TS.append(Ts_i_j)
-            # #         To.append(Te_i_j+self.Dpi[i][j]/self.v)
-            # #         TE.append(Te_i_j)
-            # #         TA.append(Ta_i_j)
-            #     SolutionT.append(T)
-            # #     SolutionTS.append(TS)
-            # #     SolutionTo.append(To)
-            # #     SolutionTe.append(TE)
-            # #     SolutionTa.append(TA)
-            # # # 记录下表是OP的解
-            # # SolutionZ = []
-            # # for i in range(self.O):
-            # #     Z = []
-            # #     for j in range(self.P):
-            # #         var_name3 = f"z[{i},{j}]"
-            # #         z_i_j = MODEL.getVarByName(var_name3).X
-            # #         Z.append(z_i_j)
-            # #     SolutionZ.append(Z)
-            # # # 记录I的解
-            # SolutionI = []
-            # for i in range(self.n):
-            #     var_name4 = f"I[{i}]"
-            #     I_i =MODEL.getVarByName(var_name4).X
-            #     SolutionI.append(I_i)
-            # for i in range(self.n):
-            #     To =[]
-            #     for p in range(self.P):
-            #         var_nameTe = f"Te[{i},{p}]"
-            #         Te_i_p = MODEL.getVarByName(var_nameTe).X
-            #         To.append(Te_i_p+self.Dpi[i][p]/self.v)
-            #     SolutionTo.append(To)
         else:
             Obj = 0
         objval = MODEL.objval

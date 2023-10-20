@@ -1,3 +1,15 @@
+'''
+File: integrated_gurobi_model.py
+Project: Integrated_Picking_and_Sorting_Model
+Description: 
+----------
+complete gurobi model of the Sorting problem.
+----------
+Author: 626
+Created Date: 2023.10.19
+'''
+
+
 import gurobipy as gp
 from gurobipy import GRB
 import time
@@ -5,6 +17,7 @@ from Sorting_Instance import Instance
 import numpy as np
 import generate_instances
 import xlwt
+
 
 class Sorting_Gurobi():
     '''

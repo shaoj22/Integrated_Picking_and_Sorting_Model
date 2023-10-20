@@ -1,13 +1,22 @@
 '''
-File: gurobi_experiment.py
-Created Date: 2023.05.24
+File: ALNS_experiment.py
+Project: Integrated_Picking_and_Sorting_Model
+Description: 
+----------
+do some experiment for the ALNS algorithm.
+----------
+Author: 626
+Created Date: 2023.10.19
 '''
+
+
 import Integrated_Gurobi_Model
 import Integrated_Instance
 import xlwt
 import generate_instances
 import time 
 import Integrated_ALNS
+
 
 # 产生每个算例
 book = xlwt.Workbook(encoding='utf-8')

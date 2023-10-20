@@ -1,11 +1,15 @@
 '''
-File: instance.py
-Project: HaiSystem_picking_and_sorting_integrated
+File: Integrated_instance.py
+Project: Integrated_Picking_and_Sorting_Model
 Description:
------
-Author: Stitch
-Created Date: April 21th 2023
+----------
+Instance class
+----------
+Author: 626
+Created Date: 2023.10.20
 '''
+
+
 import sys
 sys.path.append('..')
 import numpy as np
@@ -16,12 +20,16 @@ from generate_instances import Picking_Instance
 
 class Instance(Picking_Instance.Instance):
     def __init__(self, w_num, l_num, bins_num, robot_num, picking_station_num, orders_num, seed=1):
-        """__init__ generate instance
+        """
+        __init__ generate instance
 
         Args:
             w_num (int): 宽度方向上块的个数 (y方向)
             l_num (int): 长度方向上块的个数 (x方向)
-            task_num (int): 任务的个数
+            bins_num (int): number of the tote
+            robot_num (int): number of AMRs
+            picking_station_num (int): number of picking station
+            orders_num (int): number of the orders
             seed (int, optional): 随机种子. Defaults to 1.
         """
         super().__init__(w_num, l_num, bins_num, robot_num)
@@ -38,6 +46,7 @@ class Instance(Picking_Instance.Instance):
         self.Dip, self.Dpi, self.IO, self.sumIO = self.generate_conveyors()
 
     def generate_conveyors(self):
+        """ 产生输送机相关的基本信息 """
         N = self.bins_num
         P = self.P
         O = self.O
@@ -71,8 +80,6 @@ class Instance(Picking_Instance.Instance):
         sumIO = sum1
 
         return Dip, Dpi, IO, sumIO
-
-
 
 
 if __name__ == "__main__":

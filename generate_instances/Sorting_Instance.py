@@ -1,5 +1,18 @@
+'''
+File: Integrated_instance.py
+Project: Integrated_Picking_and_Sorting_Model
+Description:
+----------
+Instance class
+----------
+Author: 626
+Created Date: 2023.10.20
+'''
+
+
 import numpy as np
 import random
+
 
 class Instance():
     def __init__(self, T = 0, N = 5, P = 5,  O = 2 ):

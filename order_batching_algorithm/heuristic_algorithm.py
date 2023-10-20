@@ -1,3 +1,13 @@
+'''
+File: heuristic_algorithm.py
+Project: Integrated_Picking_and_Sorting_Model
+Description: 
+----------
+a order batching heuristic algorithm.
+----------
+Author: 626
+Created Date: 2023.10.19
+'''
 
 import sys
 sys.path.append("..")
