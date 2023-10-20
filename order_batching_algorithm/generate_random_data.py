@@ -8,6 +8,7 @@ Author: 626
 
 
 import random
+import numpy as np
 
 
 # 生成随机数据，max_sku_types为订单最大sku类型数，max_sku_quantity为最大sku数量，num_orders为订单数，num_sku_types为sku类型数
