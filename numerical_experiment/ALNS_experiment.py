@@ -9,7 +9,8 @@ Author: 626
 Created Date: 2023.10.19
 '''
 
-
+import sys
+sys.path.append('..')
 import Integrated_Gurobi_Model
 import Integrated_Instance
 import xlwt

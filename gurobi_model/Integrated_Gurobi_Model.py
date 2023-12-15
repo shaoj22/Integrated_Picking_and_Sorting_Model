@@ -134,7 +134,7 @@ if __name__ == "__main__":
     problem = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     alg = Integrated_Gurobi_Model(instance = problem, time_limit = 1800)
     model, Obj, Time, objval, objBound, Gap = alg.run_gurobi()
-    # problem.render(model=model)
+    problem.render(model=model)
     print("最优解为：", Obj)
     print("上界：",objBound)
     print("下界：",objval)

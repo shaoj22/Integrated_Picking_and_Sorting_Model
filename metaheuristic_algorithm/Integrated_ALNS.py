@@ -108,6 +108,7 @@ class ALNS_base:
         self.best_solution = cur_solution
         self.best_obj = cur_obj
         temperature = self.max_temp
+        print(temperature)
         pbar = tqdm.tqdm(range(self.iter_num), desc="ALNS Iteration")
         for step in pbar:
             break_opt_i, repair_opt_i = self.choose_operator()
@@ -217,15 +218,17 @@ if __name__ == "__main__":
     # create instance
     w_num = 10
     l_num = 10
-    bins_num = 200
-    robot_num = 50
+    bins_num = 50
+    robot_num = 30
     picking_station_num = 10
-    orders_num = 10
+    orders_num = 20
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=10000)
+    alg = ALNS(instance, iter_num=5000)
     start = time.time()
     solution, obj = alg.run()
+    print(solution)
+    instance.render(routes=solution['picking'])
     time_cost1 = time.time() - start
     alg.show_process()
     # print(alg.repair_operators_scores / alg.repair_operators_steps)
