@@ -14,7 +14,6 @@ import sys
 sys.path.append('..')
 import numpy as np
 import gurobipy as gp
-import utils
 from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 from generate_instances.Integrated_Instance import Instance
 from gurobipy import GRB
@@ -119,7 +118,9 @@ class IntegratedGurobiModel:
         # 2. 车辆要完成所有任务
         model.addConstrs( gp.quicksum( x[i,j] for j in self.N if j != i) >= 1 for i in (self.P1 + self.P2 + self.D1 + self.D2))
         # 3. 同一个任务用同一个车
-        model.addConstrs( (x[i, j] == 1) >> (passX[i, k] == passX[j, k]) for i in self.N for j in self.N for k in self.K )
+        model.addConstrs( passX[i,k] - passX[j,k] >= M * (x[i,j] - 1) for i in self.N for j in self.N for k in self.K)
+        model.addConstrs( passX[i,k] - passX[j,k] <= M * (1 - x[i,j]) for i in self.N for j in self.N for k in self.K)
+        # model.addConstrs( (x[i, j] == 1) >> (passX[i, k] == passX[j, k]) for i in self.N for j in self.N for k in self.K )
         model.addConstrs( passX[self.W[k], k] == 1 for k in self.K )
         model.addConstrs( gp.quicksum(passX[i, k] for k in self.K) == 1 for i in self.N)
         model.addConstrs( passX[i, k] == passX[i+2*self.n, k] for i in self.P1+self.P2 for k in self.K)
@@ -131,7 +132,8 @@ class IntegratedGurobiModel:
         model.addConstrs( Q[i] >= 0 for i in self.N)
         model.addConstrs( Q[i] <= self.Q for i in self.N)
         # 6. 时间约束
-        model.addConstrs( (x[i, j] == 1) >> (T[j] >= T[i] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j)
+        model.addConstrs( T[j] >= T[i] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"] - M * (1 - x[i, j]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j)
+        # model.addConstrs( (x[i, j] == 1) >> (T[j] >= T[i] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j)
         model.addConstrs( T[i] >= self.nodes[i]["readyTime"] for i in self.N )
         model.addConstrs( T[i] <= self.nodes[i]["dueTime"] for i in self.N )
         # 7. 到达终点的时间>=起点+服务+路程时间
@@ -208,7 +210,7 @@ class IntegratedGurobiModel:
 if __name__ == "__main__":
     w_num = 5
     l_num = 5
-    bins_num = 10
+    bins_num = 5
     robot_num = 5
     picking_station_num = 5
     orders_num = 5

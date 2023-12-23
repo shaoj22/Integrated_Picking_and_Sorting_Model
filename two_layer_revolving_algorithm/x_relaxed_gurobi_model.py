@@ -19,6 +19,7 @@ from generate_instances.Integrated_Instance import Instance
 from gurobipy import GRB
 from Variable import Variable
 
+
 class xRelaxedGurobiModel:
     def __init__(self, integrated_instance, Variable, time_limit=None, init_flag=False):
         """
@@ -133,7 +134,9 @@ class xRelaxedGurobiModel:
         # 2. 车辆要完成所有任务
         model.addConstrs( gp.quicksum( x[i,j] for j in self.N if j != i) >= 1 for i in (self.P1 + self.P2 + self.D1 + self.D2))
         # 3. 同一个任务用同一个车
-        # model.addConstrs( (x[i, j] == 1) >> (self.Variable.passX[i, k] == self.Variable.passX[j, k]) for i in self.N for j in self.N for k in self.K )
+        model.addConstrs( M * (x[i,j] - 1) <= self.Variable.passX[i,k] - self.Variable.passX[j,k]  for i in self.N for j in self.N for k in self.K)
+        model.addConstrs( M * (1 - x[i,j]) >= self.Variable.passX[i,k] - self.Variable.passX[j,k]  for i in self.N for j in self.N for k in self.K)
+        # model.addConstrs( (x[i, j] == 1) >> (passX[i, k] == passX[j, k]) for i in self.N for j in self.N for k in self.K )
         # model.addConstrs( passX[self.W[k], k] == 1 for k in self.K )
         # model.addConstrs( gp.quicksum(passX[i, k] for k in self.K) == 1 for i in self.N)
         # model.addConstrs( passX[i, k] == passX[i+2*self.n, k] for i in self.P1+self.P2 for k in self.K)
@@ -210,15 +213,6 @@ class xRelaxedGurobiModel:
                 model.getVarByName("x[{},{}]".format(i,j)).start = x_val[i,j]
         model.update()
 
-    def get_model_solution(self, model):
-        """ get model solution """
-        # 将松弛模型的求解结果赋值给Variable
-        x_val = np.zeros((self.integrated_instance.nodeNum, self.integrated_instance.nodeNum))
-        for i in range(self.integrated_instance.nodeNum):
-            for j in range(self.integrated_instance.nodeNum):
-                x_val[i,j] = model.getVarByName("x[{},{}]".format(i,j)).x
-        return x_val
-
     def run_gurobi_model(self):
         model = gp.Model("IntegratedGurobiModel") # 创建gurobi模型
         self.build_gurobi_model(model) # 构建gurobi模型
@@ -228,6 +222,8 @@ class xRelaxedGurobiModel:
         if self.init_flag: # 设置gurobi模型初始解
             self.set_init_solution(model)
         model.optimize() # 求解模型
+
+        return model
 
 
 if __name__ == "__main__":
@@ -240,5 +236,5 @@ if __name__ == "__main__":
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     variable = Variable(problem)
     solver = xRelaxedGurobiModel(problem, variable)
-    solver.run_gurobi_model()
+    model = solver.run_gurobi_model()
 

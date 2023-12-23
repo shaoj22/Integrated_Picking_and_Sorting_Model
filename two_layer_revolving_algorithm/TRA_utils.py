@@ -19,7 +19,7 @@ def get_variable_from_solved_model(Variable, update_variable_list, model):
         Variable (class): model all variable value
         update_variable_list (list): the variable need to update in this model
         model (gurobi): gurobi model class
-    Return:
+    Returns:
         Variable: updated Variable
         is_solved: if there has solved variable
     """
@@ -151,3 +151,19 @@ def get_variable_from_solved_model(Variable, update_variable_list, model):
 
     return variable_dict, is_solved
 
+def get_init_variable_from_ALNS(Variable, ALNS_solution):
+    """ 
+    Args:
+
+    Returns:
+    
+    """
+
+def get_solution_from_ALNS():
+    """
+    Args:
+    
+    Returns:
+
+    """
+    pass
