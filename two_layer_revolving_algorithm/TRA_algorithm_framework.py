@@ -12,7 +12,7 @@ Created Date: 2023.12.08
 from x_relaxed_gurobi_model import xRelaxedGurobiModel
 from y_relaxed_gurobi_model import yRelaxedGurobiModel
 from z_relaxed_gurobi_model import zRelaxedGurobiModel
-from x_y_z_relaxed_gurobi_model import xyzRelaxedGurobiModel
+from two_layer_revolving_algorithm.common_algorithm_by_gurobi import xyzRelaxedGurobiModel
 from TRA_algorithm_framework import Variable
 from TRA_utils import *
 

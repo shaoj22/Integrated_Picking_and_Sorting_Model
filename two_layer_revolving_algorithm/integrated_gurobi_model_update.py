@@ -207,6 +207,8 @@ class IntegratedGurobiModel:
             self.set_init_solution(model)
         model.optimize() # 求解模型
 
+        return model
+
 if __name__ == "__main__":
     w_num = 5
     l_num = 5
@@ -216,7 +218,7 @@ if __name__ == "__main__":
     orders_num = 5
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     solver = IntegratedGurobiModel(problem)
-    solver.run_gurobi_model()
+    model = solver.run_gurobi_model()
 
 
 

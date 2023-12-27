@@ -13,12 +13,25 @@ Created Date: 2023.12.14
 import numpy as np
 
 
+
+def get_objective_from_solved_model(model):
+    """ get the objective value from the input gurobi model 
+
+    Returns:
+        objective_value (float): the objective value of the solved model
+    """
+    objective_value = model.objval
+
+    return objective_value
+
 def get_variable_from_solved_model(Variable, update_variable_list, model):
     """ get the variable value from the input gurobi model 
+
     Args:
         Variable (class): model all variable value
         update_variable_list (list): the variable need to update in this model
         model (gurobi): gurobi model class
+
     Returns:
         Variable: updated Variable
         is_solved: if there has solved variable
@@ -167,3 +180,4 @@ def get_solution_from_ALNS():
 
     """
     pass
+

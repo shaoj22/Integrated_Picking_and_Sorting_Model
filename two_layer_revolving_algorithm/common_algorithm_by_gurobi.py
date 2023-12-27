@@ -14,13 +14,16 @@ import sys
 sys.path.append('..')
 import numpy as np
 import gurobipy as gp
+import time 
 from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 from generate_instances.Integrated_Instance import Instance
+from integrated_gurobi_model_update import IntegratedGurobiModel
+from TRA_utils import *
 from gurobipy import GRB
 from Variable import Variable
 
 
-class xyzRelaxedGurobiModel:
+class commonAlgorithmByGurobi:
     def __init__(self, integrated_instance, Variable, time_limit=None, init_flag=False):
         """
         init the xyzRelaxedGurobiModel with inputting instance and Variable.
@@ -226,11 +229,23 @@ class xyzRelaxedGurobiModel:
 if __name__ == "__main__":
     w_num = 5
     l_num = 5
-    bins_num = 10
-    robot_num = 5
+    bins_num = 15
+    robot_num = 10
     picking_station_num = 5
     orders_num = 5
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    solver1 = IntegratedGurobiModel(problem)
+    time1 = time.time()
+    model1 = solver1.run_gurobi_model()
+    time2 = time.time()
     variable = Variable(problem)
-    solver = xyzRelaxedGurobiModel(problem, variable)
-    model = solver.run_gurobi_model()
+    update_variable_list = ['x', 'y', 'z']
+    variable_dict, is_solved = get_variable_from_solved_model(Variable=variable, update_variable_list=update_variable_list, model=model1)
+    variable.set_x_variable(variable_dict)
+    variable.set_y_variable(variable_dict)
+    variable.set_z_variable(variable_dict)
+    solver2 = commonAlgorithmByGurobi(problem, variable)
+    time3 = time.time()
+    model2 = solver2.run_gurobi_model()
+    time4 = time.time()
+    print(time2-time1, time4-time3)
