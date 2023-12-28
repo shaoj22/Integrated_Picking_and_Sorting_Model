@@ -218,7 +218,7 @@ class commonAlgorithmByGurobi:
         self.build_gurobi_model(model) # 构建gurobi模型
         if self.time_limit is not None: # 求解时间限制
             model.setParam("TimeLimit", self.time_limit)
-        model.setParam("OutputFlag", 1)  # 求解过程展示
+        model.setParam("OutputFlag", 0)  # 求解过程展示
         if self.init_flag: # 设置gurobi模型初始解
             self.set_init_solution(model)
         model.optimize() # 求解模型

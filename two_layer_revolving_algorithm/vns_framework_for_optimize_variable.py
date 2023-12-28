@@ -15,29 +15,58 @@ sys.path.append("..")
 import numpy as np
 from tqdm import trange, tqdm
 from common_algorithm_by_gurobi import commonAlgorithmByGurobi
+from Variable import Variable
 from TRA_utils import *
 
+
 class VNS:
-    def __init__(self, input_variable=None, iter_num=1000, operators_list=None):
+    def __init__(self, problem=None, input_variable=None, iter_num=1000, non_improve_count=100, operators_list=None):
         """ input model's variable and use vns framework to optimize the variable.
 
         Args:
+            problem (class): the instance of the input problem.
             input_variable (class): variable optimized.
             iter_num (int): iter num for the vns to run.
+            non_improve_count (int): more than this count, the process will be closed.
             operators_list ([]): list include the operators for optimize the variable.
 
         Returns:
-            best_variable (class): the best variable after this optimize by vns.
+            self.best_variable (class): the best variable after this optimize by vns.
         """
 
         # input parameters
+        self.problem = problem
         self.input_variable = input_variable
         self.iter_num = iter_num
         self.operators_list = operators_list
+        # vns parameters
+        self.non_improve_count = non_improve_count
+        # solution parameters
+        self.best_variable = None
 
     def solution_init(self):
         """ use the current variable and the common algorithm to get init solution for the problem """
-        pass
+        solver = commonAlgorithmByGurobi(self.problem, self.input_variable) # 构建common algorithm的solver
+        init_model = solver.run_gurobi_model() # run common algorithm
+        init_variable = Variable(self.problem) # 构建init variable
+        update_variable_list = ['x', 'y', 'z', 'a1', 'b1', 'c1', 'd1', 'Q', 'passX', 'f', 'tos', 'toe', 'I', 'Ta', 'Ts', 'Te', 'T', 'FT'] # choose update's variable
+        variable_dict, is_solved = get_variable_from_solved_model(Variable=init_variable, update_variable_list=update_variable_list, model=init_model)
+        # if init variable is infeasible, change the key variable(x\y\z) to get feasible variable
+        if is_solved:
+            pass
+        
+        
+        
+        # update each variable value
+        init_variable.set_x_variable(variable_dict)
+        init_variable.set_y_variable(variable_dict)
+        init_variable.set_z_variable(variable_dict)
+        init_variable.set_auxiliary_variable(variable_dict)
+        init_variable.set_time_variable(variable_dict)
+
+        return init_variable
+
+
                 
     def cal_objective_and_variable(self, problem, variable):
         """ calculate the objective of the variable 
@@ -48,14 +77,12 @@ class VNS:
         
         Returns:
             variable_update (class): the update variable after solving by common algorithm;
-            objective_value (double): the objective of the problem with the variable.
         """
         solver = commonAlgorithmByGurobi(problem, variable) # init the solver
         model = solver.run_gurobi_model() # run the solver
         variable_update = get_variable_from_solved_model() # get the update variable
-        objective_value = get_objective_from_solved_model(model) # get the update objective value
 
-        return variable_update, objective_value
+        return variable_update
 
     def get_neighborhood(self, solution, operator):
         neighborhood = operator.run(solution)
@@ -66,48 +93,46 @@ class VNS:
         return chosen_ni
 
     def run(self):
-        self.solution_init() # solution in form of routes
-        neighbours = self.get_neighbours(self.best_solution, operator=self.operators_list[0])
-        operator_k = 0
-        for step in trange(self.iter_num):
-            ni = self.choose_neighbour(neighbours)
-            cur_solution = neighbours[ni]
-            cur_solution = self.remove_empty_vehicle(cur_solution)
-            cur_obj = self.cal_objective(cur_solution)
-            # obj: minimize the total distance 
-            if cur_obj < self.best_obj: 
-                self.operators_list.insert(0, self.operators_list.pop(operator_k))
-                operator_k = 0
-                self.best_solution = cur_solution
-                self.best_obj = cur_obj
-                neighbours = self.get_neighbours(self.best_solution, operator=self.operators_list[0])
+        # 调用common algorithm to get init solution
+        init_variable = self.solution_init() # init each variable value
+        # 初始化全局最优解和当前最优解
+        self.best_variable = init_variable
+        cur_variable = init_variable
+        non_improve_count = 0 # 多次迭代解未更新
+        cur_iter_num = 0 # 当前迭代次数
+        # 初始化邻域结构
+        operator_k = 0 # 记录当前操作的operator index
+        neighborhood = self.get_neighborhood(self.best_variable, operator=self.operators_list[0]) # 获取第0个operator的邻域
+        # main framework
+        while cur_iter_num <= self.iter_num:
+            # 从当前的neighborhood中选择一个解
+            cur_variable_index = self.choose_neighborhood(neighborhood) # 当前解的index
+            cur_variable = neighborhood[cur_variable_index] # 当前解的variable
+            # 更新解
+            if self.best_variable.FT >= cur_variable.FT:
+                self.operators_list.insert(0, self.operators_list.pop(operator_k)) # 把当前operator放在list的第一个位置
+                self.best_variable = cur_variable
+                neighborhood = self.get_neighborhood(self.best_variable, operator=self.operators_list[0]) # 获取第0个operator的邻域
+                non_improve_count = 0
             else:
-                neighbours.pop(ni)
-                if len(neighbours) == 0: # when the neighbour space empty, change anothor neighbour structure(operator)
+                neighborhood.pop(cur_variable_index) # 当前解差所以去除
+                if len(neighborhood) == 0:
+                    # 如果当前的neighborhood已经搜索完毕，前往搜索下一个operator的邻域
                     operator_k += 1
                     if operator_k < len(self.operators_list):
                         operator = self.operators_list[operator_k]
-                        neighbours = self.get_neighbours(self.best_solution, operator=operator)
+                        neighborhood = self.get_neighborhood(self.best_variable, operator=operator) # 获取operator的邻域
                     else:
                         print('local optimal, break out, iterated {} times'.format(step))
                         break
-
-            self.process.append(self.best_obj)
-        self.best_routes = self.transfer(self.best_solution)
-        return self.best_routes   
-
-
-if __name__ == "__main__":
-    input_path = "D:\\Desktop\\python_code\\China_Mobile_City_Delivery\\inputs\\myInstance4"
-    graph = GraphTools.Graph(input_path=input_path)    
-    alg = VNS(graph, iter_num=100000, heuristic=None)
-    routes = alg.run()
-    print(routes)
-    # alg.show_result() 
-    # alg.show_process()
-    # alg.show_routes()
-    # output_result(graph, routes)
-
+                # 记录在这个neighborhood中连续多少次没有找到优化的解了
+                non_improve_count += 1
+            # 更新迭代次数
+            if non_improve_count >= self.non_improve_count:
+                # 如果连续多少次都没有更新了，不要再优化浪费时间了，直接去优化其它的key variable
+                break
+            else:
+                cur_iter_num += 1
 
     
                 

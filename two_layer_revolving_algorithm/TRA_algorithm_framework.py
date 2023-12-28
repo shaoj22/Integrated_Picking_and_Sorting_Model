@@ -15,6 +15,9 @@ from z_relaxed_gurobi_model import zRelaxedGurobiModel
 from two_layer_revolving_algorithm.common_algorithm_by_gurobi import xyzRelaxedGurobiModel
 from TRA_algorithm_framework import Variable
 from TRA_utils import *
+from optimize_x_by_vns import optimize_x_by_vns
+from optimize_y_by_vns import optimize_y_by_vns
+from optimize_z_by_vns import optimize_z_by_vns
 
 
 class TRAAlgorithmFramework:
