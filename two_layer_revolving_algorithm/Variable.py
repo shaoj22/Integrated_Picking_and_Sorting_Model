@@ -41,6 +41,7 @@ class Variable:
 
     def set_x_variable(self, variable_update_dict):
         """ input the variable dict from the solved gurobi model and get x variable
+        
         Args:
             variable_update_dict (dict): from TRA_utils get variable from solved model
         """

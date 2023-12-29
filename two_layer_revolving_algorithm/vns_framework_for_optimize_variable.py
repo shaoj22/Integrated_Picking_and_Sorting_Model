@@ -80,19 +80,25 @@ class VNS:
         """
         solver = commonAlgorithmByGurobi(problem, variable) # init the solver
         model = solver.run_gurobi_model() # run the solver
-        variable_update = get_variable_from_solved_model() # get the update variable
+        update_variable_list = ['a1', 'b1', 'c1', 'd1', 'Q', 'passX', 'f', 'tos', 'toe', 'I', 'Ta', 'Ts', 'Te', 'T', 'FT'] # need to update variable's name 
+        variable_update = get_variable_from_solved_model(variable, update_variable_list, model) # get the update variable
 
         return variable_update
 
-    def get_neighborhood(self, solution, operator):
-        neighborhood = operator.run(solution)
+    def get_neighborhood(self, variable, operator):
+        """ input one operator and cur variable to get the neighborhood """
+        neighborhood = operator.run(variable)
+
         return neighborhood
     
     def choose_neighborhood(self, neighborhood):
-        chosen_ni = np.random.randint(len(neighborhood))
-        return chosen_ni
+        """ random chose one neighborhood as cur variable """
+        chosen_neighborhood = np.random.randint(len(neighborhood))
+
+        return chosen_neighborhood
 
     def run(self):
+        """ the main function of the vns framework: a algorithm runner """
         # 调用common algorithm to get init solution
         init_variable = self.solution_init() # init each variable value
         # 初始化全局最优解和当前最优解
