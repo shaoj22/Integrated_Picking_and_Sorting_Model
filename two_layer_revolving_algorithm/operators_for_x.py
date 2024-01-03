@@ -1,4 +1,15 @@
-# neighbour stuctures (operators)
+'''
+File: operators_for_x.py
+Project: Integrated_Picking_and_Sorting_Model
+Description: 
+----------
+as the file name, here are some operators for the x variable.
+----------
+Author: 626
+Created Date: 2024.01.02
+'''
+
+
 class Relocate():
     def __init__(self, k=1):
         self.k = k # how many points relocate together, k=1:relocate, k>1:Or-Opt

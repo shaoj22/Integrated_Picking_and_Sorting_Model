@@ -23,7 +23,7 @@ from initialization_for_TRA import initialization_for_TRA
 
 
 class TRAAlgorithmFramework:
-    def __init__(self, problem=None, iter_num=50, accept_gap=0.2, iter_num_dict=None, non_improve_count_dict=None, operators_list_dict=None):
+    def __init__(self, problem=None, iter_num=5, accept_gap=0.2, iter_num_dict=None, non_improve_count_dict=None, operators_list_dict=None):
         # input parameters
         self.problem = problem
 
@@ -88,6 +88,9 @@ class TRAAlgorithmFramework:
         while not stop:
             # chose the current need to optimize variable 1/3.
             cur_optimize_variable = self.need_to_optimize_variable[variable_id_index]
+            # 不优化yip
+            if cur_optimize_variable == 'y':
+                continue
             # 判断model的解与lower bound相比是否满足要求，若不满足则继续优化model的解
             lower_bound_of_model = 0
             if ((best_variable.FT - lower_bound_of_model)/best_variable.FT - self.accept_gap):

@@ -210,10 +210,10 @@ class IntegratedGurobiModel:
         return model
 
 if __name__ == "__main__":
-    w_num = 5
-    l_num = 5
-    bins_num = 5
-    robot_num = 5
+    w_num = 10
+    l_num = 10
+    bins_num = 15
+    robot_num = 10
     picking_station_num = 5
     orders_num = 5
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)

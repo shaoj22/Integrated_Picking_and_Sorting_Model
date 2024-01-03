@@ -386,11 +386,16 @@ def solution_transfer(integrated_instance, picking_solution, sorting_solution):
         for i in range(len(route)-1):
             x_val[route[i], route[i+1]] = 1
         x_val[route[-1], route[0]] = 1
+    y_val = np.zeros((integrated_instance.n, integrated_instance.P))
     z_val = np.zeros((integrated_instance.O, integrated_instance.P))
     for o in range(integrated_instance.O):
         for p in range(integrated_instance.P):
             if round(sorting_solution[o]) == p:
                 z_val[o, p] = 1
-    return x_val, z_val
+                for i in range(integrated_instance.n):
+                    if integrated_instance.IO[i][o] == 1:
+                        y_val[i,p] = 1
+
+    return x_val, y_val, z_val
 
 

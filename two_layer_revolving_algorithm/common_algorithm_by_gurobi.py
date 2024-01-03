@@ -17,10 +17,10 @@ import gurobipy as gp
 import time 
 from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 from generate_instances.Integrated_Instance import Instance
-from integrated_gurobi_model_update import IntegratedGurobiModel
-from TRA_utils import *
+from two_layer_revolving_algorithm.integrated_gurobi_model_update import IntegratedGurobiModel
+from two_layer_revolving_algorithm.TRA_utils import *
 from gurobipy import GRB
-from Variable import Variable
+from two_layer_revolving_algorithm.Variable import Variable
 
 
 class commonAlgorithmByGurobi:

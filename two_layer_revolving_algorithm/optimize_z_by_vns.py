@@ -26,8 +26,8 @@ def optimize_z_by_vns(problem=None, input_variable=None, iter_num=1000, non_impr
     Returns:
         best_variable (class): the best variable after this optimize by vns.
     """
-    x_vns = VNS(problem, input_variable, iter_num, non_improve_count, operators_list) # create vns tool
-    x_vns.run() # use tool to optimize the x variable
-    best_variable = x_vns.best_variable # get the best variable
+    z_vns = VNS(problem, input_variable, iter_num, non_improve_count, operators_list) # create vns tool
+    z_vns.run() # use tool to optimize the x variable
+    best_variable = z_vns.best_variable # get the best variable
     
     return best_variable

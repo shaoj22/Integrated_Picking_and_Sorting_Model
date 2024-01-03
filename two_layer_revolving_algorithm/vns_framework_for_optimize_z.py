@@ -1,12 +1,12 @@
 '''
-File: vns_framework_for_optimize_variable.py
+File: vns_framework_for_optimize_z.py
 Project: Integrated_Picking_and_Sorting_Model
 Description: 
 ----------
-design the vns framework specially for optimize x\y\z variable.
+design the vns framework specially for optimize z variable.
 ----------
 Author: 626
-Created Date: 2023.12.27
+Created Date: 2023.01.03
 '''
 
 

@@ -1,7 +1,7 @@
 '''
 File: Integrated_ALNS.py
 Project: Integrated_Picking---Sorting_Model
-Description: Solving integrated model with Adaptive Large Neighbourhood Search algorithm
+Description: Solving integrated model with Adaptive Large Neighborhood Search algorithm
 File Created: Saturday, 6th May 2023 10:11:26 am
 Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 '''
@@ -19,6 +19,9 @@ import tqdm
 import copy
 from integrated_Operators import *
 from heuristic_algorithm import NNH_heuristic_algorithm
+from two_layer_revolving_algorithm.Variable import Variable
+from two_layer_revolving_algorithm.common_algorithm_by_gurobi import commonAlgorithmByGurobi
+
 
 
 class ALNS_base:
@@ -104,22 +107,25 @@ class ALNS_base:
     def run(self):
         self.reset()
         cur_solution = self.solution_init() 
-        cur_obj = self.cal_objective(cur_solution)
+        cur_obj, cur_model_obj = self.cal_objective(cur_solution)
         self.best_solution = cur_solution
         self.best_obj = cur_obj
+        self.best_model_obj = cur_model_obj
         temperature = self.max_temp
-        print(temperature)
         pbar = tqdm.tqdm(range(self.iter_num), desc="ALNS Iteration")
         for step in pbar:
             break_opt_i, repair_opt_i = self.choose_operator()
-            new_solution = self.get_neighbour(cur_solution, break_opt_i, repair_opt_i) 
-            new_obj = self.cal_objective(new_solution)
+            new_solution = self.get_neighbour(cur_solution, break_opt_i, repair_opt_i)
+            new_obj, new_model_obj = self.cal_objective(new_solution)
             # obj: minimize the total distance 
             if new_obj < self.best_obj:
                 self.best_solution = new_solution
                 self.best_obj = new_obj
+                if self.best_model_obj <= new_model_obj:
+                    self.best_model_obj = new_model_obj
                 cur_solution = new_solution
                 cur_obj = new_obj
+                cur_model_obj = new_model_obj
                 self.break_operators_scores[break_opt_i] += self.sigma1
                 self.break_operators_steps[break_opt_i] += 1
                 self.repair_operators_scores[repair_opt_i] += self.sigma1
@@ -127,6 +133,8 @@ class ALNS_base:
             elif new_obj < cur_obj: 
                 cur_solution = new_solution
                 cur_obj = new_obj
+                if self.best_model_obj <= new_model_obj:
+                    self.best_model_obj = new_model_obj
                 self.break_operators_scores[break_opt_i] += self.sigma2
                 self.break_operators_steps[break_opt_i] += 1
                 self.repair_operators_scores[repair_opt_i] += self.sigma2
@@ -134,6 +142,8 @@ class ALNS_base:
             elif np.random.random() < self.SA_accept((new_obj-cur_obj)/(cur_obj+1e-10), temperature): # percentage detaC
                 cur_solution = new_solution
                 cur_obj = new_obj
+                if self.best_model_obj <= new_model_obj:
+                    self.best_model_obj = new_model_obj
                 self.break_operators_scores[break_opt_i] += self.sigma3
                 self.break_operators_steps[break_opt_i] += 1
                 self.repair_operators_scores[repair_opt_i] += self.sigma3
@@ -148,7 +158,9 @@ class ALNS_base:
             pbar.set_postfix({
                 "best_obj" : self.best_obj, 
                 "cur_obj" : cur_obj, 
-                "temperature" : temperature
+                "temperature" : temperature,
+                "best_model_obj" : self.best_model_obj,
+                "cur_model_obj" : cur_model_obj
             })
         return self.best_solution, self.best_obj
 
@@ -190,9 +202,30 @@ class ALNS(ALNS_base):
         picking_solution = solution["picking"]
         sorting_solution = solution["sorting"]
         integrated_instance = self.instance
+
+
+
+        # 把有效评估改成使用common algorithm进行评估
+        variable = Variable(self.instance)
+        # 把xyz赋值给variable
+        x_val, y_val, z_val = utils.solution_transfer(self.instance, picking_solution, sorting_solution)
+        variable_dict = {
+            'x' : x_val,
+            'y' : y_val,
+            'z' : z_val
+        }
+        variable.set_x_variable(variable_dict)
+        variable.set_y_variable(variable_dict)
+        variable.set_z_variable(variable_dict)
+        solver = commonAlgorithmByGurobi(self.instance, variable)
+        model = solver.run_gurobi_model()
+        model_obj = model.objVal
+
+
+
         obj, info = utils.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
         self.obj_info = info
-        return obj
+        return obj, model_obj
 
     def choose_operator(self):
         # choose break operator
@@ -218,21 +251,20 @@ if __name__ == "__main__":
     # create instance
     w_num = 10
     l_num = 10
-    bins_num = 50
-    robot_num = 30
-    picking_station_num = 10
-    orders_num = 20
+    bins_num = 15
+    robot_num = 10
+    picking_station_num = 5
+    orders_num = 5
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=5000)
+    alg = ALNS(instance, iter_num=10)
     start = time.time()
     solution, obj = alg.run()
-    print(solution)
-    instance.render(routes=solution['picking'])
+    # instance.render(routes=solution['picking'])
     time_cost1 = time.time() - start
-    alg.show_process()
+    # alg.show_process()
     # print(alg.repair_operators_scores / alg.repair_operators_steps)
-    # print("\nbest_obj = {}, time_cost = {}\n\nbest_solution: {}".format(obj, time_cost1, solution))
+    print("\nbest_obj = {}, time_cost = {}\n\nbest_solution: {}".format(obj, time_cost1, solution))
 
     # test evaluation
     # start = time.time()
