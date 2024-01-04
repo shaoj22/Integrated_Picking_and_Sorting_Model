@@ -1,9 +1,9 @@
 '''
-File: x_y_z_relaxed_gurobi_model.py
+File: common_algorithm_by_gurobi.py
 Project: Integrated_Picking_and_Sorting_Model
 Description: 
 ----------
-relaxed variable x, y and z.
+a algorithm to get the objective of the model, after fixed x\y\z variable.
 ----------
 Author: 626
 Created Date: 2023.12.11
