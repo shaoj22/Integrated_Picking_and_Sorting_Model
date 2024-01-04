@@ -19,17 +19,16 @@ class Relocate():
         self.instance = instance
         self.k = k # how many orders relocate together, k=1:relocate, k>1:Or-Opt
 
-    def run(self, variable):
+    def run(self, sorting_solution):
         """ relocate orders station idxs
 
         Args:
-            variable (class): including zop variable
+            sorting_solution (List[]): the solution code of the sorting.
 
         Returns:
             neighborhood (List[List[int]]): idxs of the station of the variable zop of each neighborhood 
         """
-        print()
-        solution = variable.zop.copy()
+        solution = sorting_solution.copy()
         neighborhood = []
         # 1. choose a order to relocate
         for o in range(len(solution)):

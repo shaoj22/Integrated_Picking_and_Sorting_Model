@@ -68,9 +68,9 @@ class Variable:
         self.I = variable_update_dict['I']
         self.Ta = variable_update_dict['Ta']
         self.I = variable_update_dict['Ts']
-        self.Ta = variable_update_dict['Te']
-        self.Ta = variable_update_dict['T']
-        self.Ta = variable_update_dict['FT']
+        self.Te = variable_update_dict['Te']
+        self.T = variable_update_dict['T']
+        self.FT = variable_update_dict['FT']
 
 if __name__ == "__main__":
     pass

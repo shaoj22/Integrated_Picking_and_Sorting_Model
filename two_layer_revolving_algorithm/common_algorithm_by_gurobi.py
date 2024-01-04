@@ -15,6 +15,7 @@ sys.path.append('..')
 import numpy as np
 import gurobipy as gp
 import time 
+import utils
 from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 from generate_instances.Integrated_Instance import Instance
 from two_layer_revolving_algorithm.integrated_gurobi_model_update import IntegratedGurobiModel
@@ -218,7 +219,7 @@ class commonAlgorithmByGurobi:
         self.build_gurobi_model(model) # 构建gurobi模型
         if self.time_limit is not None: # 求解时间限制
             model.setParam("TimeLimit", self.time_limit)
-        model.setParam("OutputFlag", 0)  # 求解过程展示
+        model.setParam("OutputFlag", 1)  # 求解过程展示
         if self.init_flag: # 设置gurobi模型初始解
             self.set_init_solution(model)
         model.optimize() # 求解模型
@@ -229,23 +230,27 @@ class commonAlgorithmByGurobi:
 if __name__ == "__main__":
     w_num = 5
     l_num = 5
-    bins_num = 15
-    robot_num = 10
+    bins_num = 100
+    robot_num = 20
     picking_station_num = 5
-    orders_num = 5
+    orders_num = 40
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
-    solver1 = IntegratedGurobiModel(problem)
-    time1 = time.time()
-    model1 = solver1.run_gurobi_model()
-    time2 = time.time()
-    variable = Variable(problem)
-    update_variable_list = ['x', 'y', 'z']
-    variable_dict, is_solved = get_variable_from_solved_model(Variable=variable, update_variable_list=update_variable_list, model=model1)
-    variable.set_x_variable(variable_dict)
-    variable.set_y_variable(variable_dict)
-    variable.set_z_variable(variable_dict)
-    solver2 = commonAlgorithmByGurobi(problem, variable)
+    # 获取初始解
+    input_variable = Variable(problem)
+    picking_alg = NNH_heuristic_algorithm(problem)
+    picking_solution = picking_alg.NNH_main()
+    sorting_solution = [np.random.randint(problem.P) for _ in range(problem.O)]
+    x_val, y_val, z_val = utils.solution_transfer(problem, picking_solution, sorting_solution)
+    variable_dict = {
+            'x' : x_val,
+            'y' : y_val,
+            'z' : z_val
+        }
+    input_variable.set_x_variable(variable_dict)
+    input_variable.set_y_variable(variable_dict)
+    input_variable.set_z_variable(variable_dict)
+    solver2 = commonAlgorithmByGurobi(problem, input_variable)
     time3 = time.time()
     model2 = solver2.run_gurobi_model()
     time4 = time.time()
-    print(time2-time1, time4-time3)
+    print(time4-time3)

@@ -204,7 +204,7 @@ class ALNS(ALNS_base):
         integrated_instance = self.instance
 
 
-
+        """
         # 把有效评估改成使用common algorithm进行评估
         variable = Variable(self.instance)
         # 把xyz赋值给variable
@@ -220,6 +220,9 @@ class ALNS(ALNS_base):
         solver = commonAlgorithmByGurobi(self.instance, variable)
         model = solver.run_gurobi_model()
         model_obj = model.objVal
+        """
+
+        model_obj = 0
 
 
 
@@ -249,15 +252,15 @@ class ALNS(ALNS_base):
 
 if __name__ == "__main__":
     # create instance
-    w_num = 10
-    l_num = 10
-    bins_num = 15
-    robot_num = 10
+    w_num = 5
+    l_num = 5
+    bins_num = 100
+    robot_num = 20
     picking_station_num = 5
-    orders_num = 5
+    orders_num = 40
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=10)
+    alg = ALNS(instance, iter_num=5000)
     start = time.time()
     solution, obj = alg.run()
     # instance.render(routes=solution['picking'])
