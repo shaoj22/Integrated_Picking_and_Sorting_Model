@@ -10,11 +10,11 @@ Created Date: 2023.10.19
 '''
 
 
-import Integrated_Instance
+import generate_instances.Integrated_Instance
 import numpy as np
 import utils
 from tqdm import tqdm
-from Sorting_Instance import Instance
+from generate_instances.Sorting_Instance import Instance
 
 
 class WBA_heuristic_algorithm():
@@ -36,9 +36,8 @@ class WBA_heuristic_algorithm():
             car_chromosome.append(insert_station)
             stations_totes_num[insert_station] += totes_num[i]
         
-        z_val = self.tansfer_z(car_chromosome)
 
-        return z_val
+        return car_chromosome
         
     def calculation_totes_num(self):
         totes_num = []

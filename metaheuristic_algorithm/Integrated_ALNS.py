@@ -17,10 +17,11 @@ import utils
 import time
 import tqdm
 import copy
-from integrated_Operators import *
+from metaheuristic_algorithm.integrated_Operators import *
 from heuristic_algorithm import NNH_heuristic_algorithm
 from two_layer_revolving_algorithm.Variable import Variable
-from two_layer_revolving_algorithm.common_algorithm_by_gurobi import commonAlgorithmByGurobi
+# from two_layer_revolving_algorithm.common_algorithm_by_gurobi import commonAlgorithmByGurobi
+from two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi import commonAlgorithmByStrengthenedGurobi
 
 
 
@@ -121,7 +122,7 @@ class ALNS_base:
             if new_obj < self.best_obj:
                 self.best_solution = new_solution
                 self.best_obj = new_obj
-                if self.best_model_obj <= new_model_obj:
+                if self.best_model_obj >= new_model_obj:
                     self.best_model_obj = new_model_obj
                 cur_solution = new_solution
                 cur_obj = new_obj
@@ -133,7 +134,7 @@ class ALNS_base:
             elif new_obj < cur_obj: 
                 cur_solution = new_solution
                 cur_obj = new_obj
-                if self.best_model_obj <= new_model_obj:
+                if self.best_model_obj >= new_model_obj:
                     self.best_model_obj = new_model_obj
                 self.break_operators_scores[break_opt_i] += self.sigma2
                 self.break_operators_steps[break_opt_i] += 1
@@ -142,7 +143,7 @@ class ALNS_base:
             elif np.random.random() < self.SA_accept((new_obj-cur_obj)/(cur_obj+1e-10), temperature): # percentage detaC
                 cur_solution = new_solution
                 cur_obj = new_obj
-                if self.best_model_obj <= new_model_obj:
+                if self.best_model_obj >= new_model_obj:
                     self.best_model_obj = new_model_obj
                 self.break_operators_scores[break_opt_i] += self.sigma3
                 self.break_operators_steps[break_opt_i] += 1
@@ -154,7 +155,13 @@ class ALNS_base:
             # update SA temperature
             temperature = self.temperature_update(temperature, step)
             # record
-            self.obj_iter_process.append(cur_obj)
+            if cur_obj < 10000:
+                self.obj_iter_process.append(cur_obj)
+            else:
+                self.obj_iter_process.append(10000)
+            if step == 500:
+                self.obj_of_500 = cur_obj
+
             pbar.set_postfix({
                 "best_obj" : self.best_obj, 
                 "cur_obj" : cur_obj, 
@@ -162,7 +169,9 @@ class ALNS_base:
                 "best_model_obj" : self.best_model_obj,
                 "cur_model_obj" : cur_model_obj
             })
-        return self.best_solution, self.best_obj
+            
+
+        return self.best_solution, self.best_obj, self.obj_of_500
 
 
 class ALNS(ALNS_base):
@@ -204,7 +213,7 @@ class ALNS(ALNS_base):
         integrated_instance = self.instance
 
 
-        """
+        
         # 把有效评估改成使用common algorithm进行评估
         variable = Variable(self.instance)
         # 把xyz赋值给variable
@@ -217,12 +226,19 @@ class ALNS(ALNS_base):
         variable.set_x_variable(variable_dict)
         variable.set_y_variable(variable_dict)
         variable.set_z_variable(variable_dict)
-        solver = commonAlgorithmByGurobi(self.instance, variable)
-        model = solver.run_gurobi_model()
-        model_obj = model.objVal
-        """
+        # solver = commonAlgorithmByGurobi(self.instance, variable)
+        # solver = commonAlgorithmByStrengthenedGurobi(self.instance, variable)
+        model = None
 
-        model_obj = 0
+        # model = solver.run_gurobi_model()
+
+        if model is not None and model.status == 2:
+            model_obj = model.objVal
+        else:
+            model_obj = float('inf')
+
+
+
 
 
 
@@ -252,22 +268,22 @@ class ALNS(ALNS_base):
 
 if __name__ == "__main__":
     # create instance
-    w_num = 5
-    l_num = 5
-    bins_num = 100
-    robot_num = 20
-    picking_station_num = 5
-    orders_num = 40
+    w_num = 8
+    l_num = 8
+    bins_num = 500
+    robot_num = 50
+    picking_station_num = 20
+    orders_num = 300
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=5000)
+    alg = ALNS(instance, iter_num=2500)
     start = time.time()
-    solution, obj = alg.run()
-    # instance.render(routes=solution['picking'])
+    solution, obj, obj_of_500 = alg.run()
+    instance.render(routes=solution['picking'])
     time_cost1 = time.time() - start
-    # alg.show_process()
+    alg.show_process()
     # print(alg.repair_operators_scores / alg.repair_operators_steps)
-    print("\nbest_obj = {}, time_cost = {}\n\nbest_solution: {}".format(obj, time_cost1, solution))
+    print("\nALNS best_obj = {}, time_cost = {}\n".format(obj, time_cost1))
 
     # test evaluation
     # start = time.time()
@@ -278,6 +294,30 @@ if __name__ == "__main__":
     # time_cost2 = time.time() - start
     # print("true_obj2 = {}, time_cost = {}".format(true_obj2, time_cost2))
     # print()
+
+
+
+
+
+    # # 把有效评估改成使用common algorithm进行评估
+    # variable = Variable(instance)
+    # # 把xyz赋值给variable
+    # x_val, y_val, z_val = utils.solution_transfer(instance, solution['picking'], solution['sorting'])
+    # variable_dict = {
+    #     'x' : x_val,
+    #     'y' : y_val,
+    #     'z' : z_val
+    # }
+    # variable.set_x_variable(variable_dict)
+    # variable.set_y_variable(variable_dict)
+    # variable.set_z_variable(variable_dict)
+    # # solver = commonAlgorithmByGurobi(instance, variable)
+    # solver = commonAlgorithmByStrengthenedGurobi(instance, variable)
+    # model = None
+    # model = solver.run_gurobi_model()
+    # if model is not None and model.status == 2:
+    #     model_obj = model.objVal
+    # print("TRA best solution : ", model_obj)
 
 
 

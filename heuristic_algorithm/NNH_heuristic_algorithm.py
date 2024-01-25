@@ -10,10 +10,12 @@ Created Date: 2023.10.19
 '''
 
 
-from generate_instances import Integrated_Instance
+import sys
+sys.path.append('..')
 import numpy as np
 import utils
-
+import time
+from generate_instances.Integrated_Instance import Instance
 
 class NNH_heuristic_algorithm():
 
@@ -139,19 +141,22 @@ class NNH_heuristic_algorithm():
 
 if __name__ == "__main__":
     # generate instance]
-    w_num = 5
-    l_num = 5
-    bins_num = 30
-    robot_num = 20
-    picking_station_num = 5
-    orders_num = 2
-    instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    w_num = 8
+    l_num = 8
+    bins_num = 500
+    robot_num = 50
+    picking_station_num = 20
+    orders_num = 200
+    instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     NNH = NNH_heuristic_algorithm(instance)
+    time1 = time.time()
     solution = NNH.NNH_main()
-    Obj = utils.efficient_picking_evaluate(instance, solution)
-    print(Obj)
-    Obj2 = utils.picking_integrated_evaluate(instance, NNH.transfer(solution))
-    print(Obj2)
+    time2 = time.time()
+    # Obj = utils.efficient_picking_evaluate(instance, solution)
+    # print(Obj)
+    # Obj2 = utils.picking_integrated_evaluate(instance, NNH.transfer(solution))
+    # print(Obj2)
+    print(time2-time1)
   
 
 

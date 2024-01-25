@@ -15,6 +15,7 @@ sys.path.append("..")
 import numpy as np
 import tqdm
 from common_algorithm_by_gurobi import commonAlgorithmByGurobi
+from two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi import commonAlgorithmByStrengthenedGurobi
 from Variable import Variable
 from TRA_utils import *
 from generate_instances.Integrated_Instance import Instance
@@ -109,7 +110,9 @@ class VNS:
         operator_k = 0 # 记录当前操作的operator index
         neighborhood = self.get_neighborhood(self.best_solution, operator=self.operators_list[0]) # 获取第0个operator的邻域
         pbar = tqdm.tqdm(range(self.iter_num), desc="Variable z VNS Iteration")
+        
         # main framework
+        # while cur_iter_num < self.iter_num:
         for step in pbar:
             # 从当前的neighborhood中选择一个解
             cur_index = self.choose_neighborhood(neighborhood) # 当前解的index
@@ -122,6 +125,7 @@ class VNS:
                 self.best_solution = cur_solution
                 neighborhood = self.get_neighborhood(self.best_solution, operator=self.operators_list[0]) # 获取第0个operator的邻域
                 non_improve_count = 0
+                self.best_obj = cur_obj
             else:
                 neighborhood.pop(cur_index) # 当前解差所以去除
                 if len(neighborhood) == 0:
@@ -142,7 +146,7 @@ class VNS:
             else:
                 cur_iter_num += 1
             # record
-            pbar.update(1)
+            # pbar.update(1)
             pbar.set_postfix({
                 "init_obj" : self.init_obj,
                 "best_obj" : self.best_obj, 
@@ -158,36 +162,18 @@ if __name__ == "__main__":
     bins_num = 100
     robot_num = 20
     picking_station_num = 5
-    orders_num = 40
+    orders_num = 50
     instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # 获取初始解
-    input_variable = Variable(instance)
     picking_alg = NNH_heuristic_algorithm(instance)
     picking_solution = picking_alg.NNH_main()
     sorting_solution = [np.random.randint(instance.P) for _ in range(instance.O)]
-    x_val, y_val, z_val = utils.solution_transfer(instance, picking_solution, sorting_solution)
-    variable_dict = {
-            'x' : x_val,
-            'y' : y_val,
-            'z' : z_val
-        }
-    input_variable.set_x_variable(variable_dict)
-    input_variable.set_y_variable(variable_dict)
-    input_variable.set_z_variable(variable_dict)
-    solver = commonAlgorithmByGurobi(instance, input_variable) # 构建common algorithm的solver
-    init_model = solver.run_gurobi_model() # run common algorithm
-    init_variable = input_variable # 构建init variable
-    update_variable_list = ['a1', 'b1', 'c1', 'd1', 'Q', 'passX', 'f', 'tos', 'toe', 'I', 'Ta', 'Ts', 'Te', 'T', 'FT'] # choose update's variable
-    variable_dict, is_solved = get_variable_from_solved_model(Variable=init_variable, update_variable_list=update_variable_list, model=init_model)
-    # update each variable value
-    init_variable.set_auxiliary_variable(variable_dict)
-    init_variable.set_time_variable(variable_dict)
-    print("init solution of the model: ", init_variable.FT)
-    iter_num = 1000
+    init_obj, init_info = utils.efficient_integrated_evaluate(instance, picking_solution, sorting_solution)
+    iter_num = 10000
     non_improve_count = 10000
     operators_list = [operators_for_z.Relocate(instance=instance, k=1)]
     # 构建优化z_vns的优化器
-    z_vns = VNS(problem=instance, picking_solution=picking_solution, sorting_solution=sorting_solution, init_obj=init_variable.FT, iter_num=iter_num, non_improve_count=non_improve_count, operators_list=operators_list)
+    z_vns = VNS(problem=instance, picking_solution=picking_solution, sorting_solution=sorting_solution, init_obj=init_obj, iter_num=iter_num, non_improve_count=non_improve_count, operators_list=operators_list)
     # 优化求解
     z_vns.run()
 

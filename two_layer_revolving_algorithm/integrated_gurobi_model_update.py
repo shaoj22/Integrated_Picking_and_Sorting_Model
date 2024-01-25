@@ -121,7 +121,7 @@ class IntegratedGurobiModel:
         model.addConstrs( passX[i,k] - passX[j,k] >= M * (x[i,j] - 1) for i in self.N for j in self.N for k in self.K)
         model.addConstrs( passX[i,k] - passX[j,k] <= M * (1 - x[i,j]) for i in self.N for j in self.N for k in self.K)
         # model.addConstrs( (x[i, j] == 1) >> (passX[i, k] == passX[j, k]) for i in self.N for j in self.N for k in self.K )
-        model.addConstrs( passX[self.W[k], k] == 1 for k in self.K )
+        model.addConstrs( passX[self.W[k], k] == 1 for k in self.K)
         model.addConstrs( gp.quicksum(passX[i, k] for k in self.K) == 1 for i in self.N)
         model.addConstrs( passX[i, k] == passX[i+2*self.n, k] for i in self.P1+self.P2 for k in self.K)
         # 4. 一个车只能从自己的出发点出发一次
@@ -210,10 +210,10 @@ class IntegratedGurobiModel:
         return model
 
 if __name__ == "__main__":
-    w_num = 10
-    l_num = 10
-    bins_num = 15
-    robot_num = 10
+    w_num = 5
+    l_num = 5
+    bins_num = 12
+    robot_num = 5
     picking_station_num = 5
     orders_num = 5
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)

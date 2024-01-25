@@ -7,6 +7,8 @@ Author: CharlesLee
 Created Date: Thursday April 20th 2023
 '''
 
+import sys
+sys.path.append('..')
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -165,7 +167,7 @@ def build_picking_evaluate_model(picking_instance, x_val):
     Returns:
         model: gurobi model
     """
-    from Picking_Gurobi_Model import Picking_Gurobi_Model
+    from gurobi_model.Picking_Gurobi_Model import Picking_Gurobi_Model
     import gurobipy as gp
     # 1. build model
     model_builder = Picking_Gurobi_Model(picking_instance)
@@ -214,10 +216,10 @@ def build_picking_integrated_evluate_model(integrated_instance, x_val):
     Returns:
         model: gurobi model
     """
-    from Integrated_Gurobi_Model import Integrated_Gurobi_Model
+    from gurobi_model.Integrated_Gurobi_Model import Integrated_Gurobi_Model
     import gurobipy as gp
     # 1. build model
-    model_builder = Integrated_Gurobi_Model(integrated_instance)
+    model_builder = Integrated_Gurobi_Model(integrated_instance, time_limit=360)
     model = gp.Model("Evaluate_Picking_Integrated_Model")
     # 2. set variables value
     info = model_builder.build_model(model)

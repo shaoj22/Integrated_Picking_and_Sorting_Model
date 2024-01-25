@@ -16,7 +16,7 @@ import gurobipy as gp
 from gurobipy import GRB
 import time
 from generate_instances import Integrated_Instance
-from Picking_Gurobi_Model import Picking_Gurobi_Model
+from gurobi_model.Picking_Gurobi_Model import Picking_Gurobi_Model
 
 
 class Integrated_Gurobi_Model(Picking_Gurobi_Model):

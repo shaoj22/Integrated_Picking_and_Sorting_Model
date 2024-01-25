@@ -20,7 +20,7 @@ def get_objective_from_solved_model(model):
     Returns:
         objective_value (float): the objective value of the solved model
     """
-    objective_value = model.objval
+    objective_value = model.objVal
 
     return objective_value
 
@@ -40,7 +40,7 @@ def get_variable_from_solved_model(Variable, update_variable_list, model):
     variable_dict = {}
     # 是否有解
     is_solved = True
-    if model.status == 2: # 有解
+    if model.status == 2 or True: # 有解
         # 获取x
         if 'x' in update_variable_list: # 若x在则更新x
             x_update = np.zeros(Variable.x.shape)

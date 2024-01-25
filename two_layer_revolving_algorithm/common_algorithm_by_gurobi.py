@@ -149,7 +149,7 @@ class commonAlgorithmByGurobi:
         model.addConstrs( Q[i] >= 0 for i in self.N)
         model.addConstrs( Q[i] <= self.Q for i in self.N)
         # 6. 时间约束
-        # model.addConstrs( M * (1 - self.Variable.x[i,j]) + self.Variable.T[j] >= self.Variable.T[i] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"] for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j)
+        model.addConstrs( T[j] >= T[i] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"] - M * (1 - self.Variable.x[i, j]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j)
         # model.addConstrs( (x[i, j] == 1) >> (T[j] >= T[i] + self.timeMatrix[i][j] + self.nodes[i]["serviceTime"]) for i in self.N for j in (self.P1 + self.P2 + self.D1 + self.D2) if i!=j)
         model.addConstrs( T[i] >= self.nodes[i]["readyTime"] for i in self.N )
         model.addConstrs( T[i] <= self.nodes[i]["dueTime"] for i in self.N )
@@ -219,7 +219,7 @@ class commonAlgorithmByGurobi:
         self.build_gurobi_model(model) # 构建gurobi模型
         if self.time_limit is not None: # 求解时间限制
             model.setParam("TimeLimit", self.time_limit)
-        model.setParam("OutputFlag", 1)  # 求解过程展示
+        model.setParam("OutputFlag", 0)  # 求解过程展示
         if self.init_flag: # 设置gurobi模型初始解
             self.set_init_solution(model)
         model.optimize() # 求解模型
