@@ -10,6 +10,9 @@ Created Date: 2024.01.02
 '''
 
 
+import numpy as np
+import math
+
 class Relocate():
     def __init__(self, k=1):
         self.k = k # how many points relocate together, k=1:relocate, k>1:Or-Opt

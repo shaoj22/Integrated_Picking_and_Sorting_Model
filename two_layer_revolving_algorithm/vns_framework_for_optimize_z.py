@@ -159,17 +159,17 @@ if __name__ == "__main__":
     # create instance
     w_num = 5
     l_num = 5
-    bins_num = 100
-    robot_num = 20
+    bins_num = 30
+    robot_num = 5
     picking_station_num = 5
-    orders_num = 50
+    orders_num = 40
     instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # 获取初始解
     picking_alg = NNH_heuristic_algorithm(instance)
     picking_solution = picking_alg.NNH_main()
     sorting_solution = [np.random.randint(instance.P) for _ in range(instance.O)]
     init_obj, init_info = utils.efficient_integrated_evaluate(instance, picking_solution, sorting_solution)
-    iter_num = 10000
+    iter_num = 1000
     non_improve_count = 10000
     operators_list = [operators_for_z.Relocate(instance=instance, k=1)]
     # 构建优化z_vns的优化器
