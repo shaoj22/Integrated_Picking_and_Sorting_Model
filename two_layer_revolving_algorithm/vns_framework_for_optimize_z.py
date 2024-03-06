@@ -23,6 +23,7 @@ from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 import utils
 import operators_for_z
 
+
 class VNS:
     def __init__(self, problem=None, picking_solution=None, sorting_solution=None, init_obj=0, iter_num=1000, non_improve_count=100, operators_list=None):
         """ input model's variable and use vns framework to optimize the variable.
@@ -123,6 +124,7 @@ class VNS:
             if self.best_obj >= cur_obj:
                 self.operators_list.insert(0, self.operators_list.pop(operator_k)) # 把当前operator放在list的第一个位置
                 self.best_solution = cur_solution
+                print(self.best_solution)
                 neighborhood = self.get_neighborhood(self.best_solution, operator=self.operators_list[0]) # 获取第0个operator的邻域
                 non_improve_count = 0
                 self.best_obj = cur_obj
@@ -170,7 +172,7 @@ if __name__ == "__main__":
     sorting_solution = [np.random.randint(instance.P) for _ in range(instance.O)]
     init_obj, init_info = utils.efficient_integrated_evaluate(instance, picking_solution, sorting_solution)
     iter_num = 1000
-    non_improve_count = 10000
+    non_improve_count = 100
     operators_list = [operators_for_z.Relocate(instance=instance, k=1)]
     # 构建优化z_vns的优化器
     z_vns = VNS(problem=instance, picking_solution=picking_solution, sorting_solution=sorting_solution, init_obj=init_obj, iter_num=iter_num, non_improve_count=non_improve_count, operators_list=operators_list)

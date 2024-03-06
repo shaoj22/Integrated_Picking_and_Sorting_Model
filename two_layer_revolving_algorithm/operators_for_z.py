@@ -8,10 +8,13 @@ as the file name, here are some operators for the z variable.
 Author: 626
 Created Date: 2024.01.02
 '''
+
+
 import sys
 sys.path.append('..')
 from itertools import permutations
 from generate_instances.Integrated_Instance import Instance
+
 
 class Relocate():
     def __init__(self, instance=None, k=1):
@@ -26,7 +29,7 @@ class Relocate():
             sorting_solution (List[]): the solution code of the sorting.
 
         Returns:
-            neighborhood (List[List[int]]): idxs of the station of the variable zop of each neighborhood 
+            neighborhood (List[int]): idxs of the station of the variable zop of each neighborhood 
         """
         solution = sorting_solution.copy()
         neighborhood = []
