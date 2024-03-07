@@ -9,8 +9,8 @@ Author: 626
 Created Date: 2023.12.27
 '''
 
-from vns_framework_for_optimize_variable import VNS
 
+from vns_framework_for_optimize_variable import VNS
 
 
 def optimize_x_by_vns(problem=None, input_variable=None, iter_num=1000, non_improve_count=100, operators_list=None):
@@ -32,5 +32,5 @@ def optimize_x_by_vns(problem=None, input_variable=None, iter_num=1000, non_impr
     
     return best_variable
 
-        
+
 

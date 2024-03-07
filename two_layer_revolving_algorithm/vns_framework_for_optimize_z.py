@@ -156,6 +156,8 @@ class VNS:
                 "cur_iter_num" : cur_iter_num,
                 "non_improve_count" : non_improve_count
             })
+        
+        return self.best_solution, self.best_obj
 
 if __name__ == "__main__":
     # create instance

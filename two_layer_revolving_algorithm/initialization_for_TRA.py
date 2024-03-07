@@ -10,19 +10,36 @@ Created Date: 2023.12.29
 '''
 
 
-def initialization_for_TRA(problem, variable):
+import sys
+sys.path.append('..')
+import numpy as np
+import utils
+from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm as picking_greedy_alg
+
+
+def initialization_for_TRA(problem):
     """ input the problem and variable and then use the ALNS algorithm to generate the init solution for the variable 
     
     Args:
         problem (class): instance of the problem.
-        variable (class): variable of the model.
+        variable ({}): variable of the model.
 
     Return:
-        init_variable (class): after optimized by ALNS algorithm.
+        init_variable ({}): after optimized by greedy algorithm or ALNS algorithm.
+        solution ({}): after optimized by greedy algorithm or ALNS algorithm, include picking and sorting solution.
+        init_obj (int): the init obj after optimized by greedy or ALNS algorithm. 
     """
-
-    init_variable = variable
+    # create the picking greedy algorithm
+    picking_greedy_algorithm = picking_greedy_alg(instance=problem)
+    picking_solution = picking_greedy_algorithm.NNH_main()
+    # create the sorting greedy algorithm
+    sorting_solution = [np.random.randint(problem.P) for _ in range(problem.O)]
+    # record the init solution of picking and sorting
+    solution = {
+        'picking_solution': picking_solution,
+        'sorting_solution': sorting_solution
+    }
+    # record the obj
+    obj, info = utils.efficient_integrated_evaluate(problem, picking_solution, sorting_solution)
     
-
-
-    return init_variable
+    return solution, obj

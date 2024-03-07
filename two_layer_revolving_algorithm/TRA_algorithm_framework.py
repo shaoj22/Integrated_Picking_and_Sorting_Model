@@ -19,6 +19,9 @@ from TRA_utils import *
 from optimize_x_by_vns import optimize_x_by_vns
 from optimize_y_by_vns import optimize_y_by_vns
 from optimize_z_by_vns import optimize_z_by_vns
+from vns_framework_for_optimize_x import VNS as vns_for_optimize_x
+from vns_framework_for_optimize_y import VNS as vns_for_optimize_y
+from vns_framework_for_optimize_z import VNS as vns_for_optimize_z
 from initialization_for_TRA import initialization_for_TRA
 
 
@@ -45,41 +48,80 @@ class TRAAlgorithmFramework:
         self.y_operators_list = operators_list_dict['y'] 
         self.z_operators_list = operators_list_dict['z']
 
+        # best solution and best obj
+        self.best_solution = None
+        self.best_obj = 0
 
-    def sub_process_solver(self, cur_optimize_variable, input_variable):
+
+    def sub_process_solver(self, cur_optimize_variable, input_solution, input_obj):
         """ input the variable need to optimize and use the variable by vns 
         
         Args:
             cur_optimize_variable (String): 'x' or 'y' or 'z'.
-            input_variable (class): current variable.
-        Return:
-            update_variable (class): use the vns to optimized.
-        """
-        if cur_optimize_variable == 'x':
-            return optimize_x_by_vns(problem=self.problem, input_variable=input_variable, 
-                                     iter_num=self.x_iter_num, 
-                                     non_improve_count=self.x_non_improve_count, 
-                                     operators_list=self.x_operators_list)
-        elif cur_optimize_variable == 'y':
-            return optimize_y_by_vns(problem=self.problem, input_variable=input_variable, 
-                                     iter_num=self.y_iter_num, 
-                                     non_improve_count=self.y_non_improve_count, 
-                                     operators_list=self.y_operators_list)
-        elif cur_optimize_variable == 'z':
-            return optimize_z_by_vns(problem=self.problem, input_variable=input_variable, 
-                                     iter_num=self.z_iter_num, 
-                                     non_improve_count=self.z_non_improve_count, 
-                                     operators_list=self.z_operators_list)
+            input_solution ({}): current solution.
+            input_obj (int): the obj input.
 
+        Return:
+            output_solution ({}): use the vns to optimized.
+        """
+        output_solution = input_solution
+
+        # 优化x
+        if cur_optimize_variable == 'x':
+            x_vns = vns_for_optimize_x(problem=self.problem, 
+                                       picking_solution=input_solution['picking_solution'],
+                                       sorting_solution=input_solution['sorting_solution'],
+                                       init_obj=input_obj,
+                                       iter_num=self.x_iter_num,
+                                       non_improve_count=self.x_non_improve_count,
+                                       operators_list=self.x_operators_list
+                                       )
+            new_picking_solution, new_obj = x_vns.run()
+            output_solution['picking_solution'] = new_picking_solution
+
+            return output_solution, new_obj
+        
+        # 优化y
+        elif cur_optimize_variable == 'y':
+            y_vns = vns_for_optimize_y(problem=self.problem, 
+                                       picking_solution=input_solution['picking_solution'],
+                                       sorting_solution=input_solution['sorting_solution'],
+                                       init_obj=input_obj,
+                                       iter_num=self.y_iter_num,
+                                       non_improve_count=self.y_non_improve_count,
+                                       operators_list=self.y_operators_list
+                                       )
+            new_picking_solution = y_vns.run()
+            output_solution['picking_solution'] = new_picking_solution
+
+            return output_solution
+
+        # 优化z
+        elif cur_optimize_variable == 'z':
+            z_vns = vns_for_optimize_z(problem=self.problem, 
+                                       picking_solution=input_solution['picking_solution'],
+                                       sorting_solution=input_solution['sorting_solution'],
+                                       init_obj=input_obj,
+                                       iter_num=self.z_iter_num,
+                                       non_improve_count=self.z_non_improve_count,
+                                       operators_list=self.z_operators_list
+                                       )
+            new_sorting_solution, new_obj = z_vns.run()
+            output_solution['sorting_solution'] = new_sorting_solution
+
+            return output_solution, new_obj
 
     def main(self):
-        # 初始化Variable
-        variable = Variable(self.problem)
-        # use ALNS to get solution as init variable / initialization for the TRA
-        init_variable = initialization_for_TRA(variable, self.problem)
-        cur_variable = init_variable # 当前解
-        best_variable = cur_variable # 最优解
-        # 初始化循环控制参数
+        # use greedy or ALNS algorithm to get solution as init variable / initialization for the TRA
+        # 1. 获取初始解
+        init_solution, init_obj = initialization_for_TRA(self.problem)
+        # 2. 设置当前解为初始解
+        cur_solution = init_solution
+        cur_obj = init_obj
+        # 3. 设置最优解为初始解
+        self.best_solution = init_solution
+        self.best_obj = init_obj
+        # 4. 初始化循环控制参数
         stop = False
         variable_id_index = 0 # to chose the variable
         mark = 0
@@ -93,12 +135,13 @@ class TRAAlgorithmFramework:
                 continue
             # 判断model的解与lower bound相比是否满足要求，若不满足则继续优化model的解
             lower_bound_of_model = 0
-            if ((best_variable.FT - lower_bound_of_model)/best_variable.FT - self.accept_gap):
+            if ((self.best_obj - lower_bound_of_model)/self.best_obj - self.accept_gap):
                 # 调用对应的sub-process to optimize the variable
-                cur_variable = self.sub_process_solver(cur_optimize_variable, best_variable)
+                cur_solution, cur_obj = self.sub_process_solver(cur_optimize_variable, self.best_solution, self.best_obj)
             # 判断是否更新best_variable
-            if (cur_variable.FT < best_variable.FT):
-                best_variable = cur_variable
+            if (cur_obj < self.best_obj):
+                self.best_solution = cur_solution
+                self.best_obj = cur_obj
                 mark = 0
             else:
                 mark += 1
@@ -112,11 +155,15 @@ class TRAAlgorithmFramework:
             if (mark >= 3 or iter_num >= self.max_iter_num):
                 stop = True
                 print("algorithm stop")
-        self.best_variable = best_variable
 
     def runner(self):
+        # run algorithm 
         self.main()
 
+        return self.best_solution, self.best_obj
+
+if __name__ == "__main__":
+    pass
 
 
 

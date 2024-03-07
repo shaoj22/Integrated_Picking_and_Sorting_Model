@@ -155,6 +155,8 @@ class VNS:
                 "cur_iter_num" : cur_iter_num,
                 "non_improve_count" : non_improve_count
             })
+        
+        return self.best_solution, self.best_obj
 
 if __name__ == "__main__":
     # create instance
@@ -176,4 +178,4 @@ if __name__ == "__main__":
     # 构建优化x_vns的优化器
     x_vns = VNS(problem=instance, picking_solution=picking_solution, sorting_solution=sorting_solution, init_obj=init_obj, iter_num=iter_num, non_improve_count=non_improve_count, operators_list=operators_list)
     # 优化求解
-    x_vns.run()
+    best_solution = x_vns.run()
