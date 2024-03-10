@@ -124,7 +124,6 @@ class VNS:
             if self.best_obj >= cur_obj:
                 self.operators_list.insert(0, self.operators_list.pop(operator_k)) # 把当前operator放在list的第一个位置
                 self.best_solution = cur_solution
-                print(self.best_solution)
                 neighborhood = self.get_neighborhood(self.best_solution, operator=self.operators_list[0]) # 获取第0个operator的邻域
                 non_improve_count = 0
                 self.best_obj = cur_obj

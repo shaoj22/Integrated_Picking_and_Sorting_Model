@@ -9,12 +9,12 @@ Author: 626
 Created Date: 2023.12.08
 '''
 
-
+import operators_for_x
+import operators_for_y
+import operators_for_z
 from x_relaxed_gurobi_model import xRelaxedGurobiModel
 from y_relaxed_gurobi_model import yRelaxedGurobiModel
 from z_relaxed_gurobi_model import zRelaxedGurobiModel
-from two_layer_revolving_algorithm.common_algorithm_by_gurobi import xyzRelaxedGurobiModel
-from TRA_algorithm_framework import Variable
 from TRA_utils import *
 from optimize_x_by_vns import optimize_x_by_vns
 from optimize_y_by_vns import optimize_y_by_vns
@@ -23,6 +23,7 @@ from vns_framework_for_optimize_x import VNS as vns_for_optimize_x
 from vns_framework_for_optimize_y import VNS as vns_for_optimize_y
 from vns_framework_for_optimize_z import VNS as vns_for_optimize_z
 from initialization_for_TRA import initialization_for_TRA
+from generate_instances.Integrated_Instance import Instance
 
 
 class TRAAlgorithmFramework:
@@ -132,6 +133,7 @@ class TRAAlgorithmFramework:
             cur_optimize_variable = self.need_to_optimize_variable[variable_id_index]
             # 不优化yip
             if cur_optimize_variable == 'y':
+                variable_id_index += 1
                 continue
             # 判断model的解与lower bound相比是否满足要求，若不满足则继续优化model的解
             lower_bound_of_model = 0
@@ -152,7 +154,7 @@ class TRAAlgorithmFramework:
             else:
                 variable_id_index = 0 # 旋转优化第一个决策变量
             # 判断算法终止条件
-            if (mark >= 3 or iter_num >= self.max_iter_num):
+            if (mark >= 3 or iter_num >= self.iter_num):
                 stop = True
                 print("algorithm stop")
 
@@ -163,7 +165,55 @@ class TRAAlgorithmFramework:
         return self.best_solution, self.best_obj
 
 if __name__ == "__main__":
-    pass
+    # create instance
+    w_num = 5
+    l_num = 5
+    bins_num = 10
+    robot_num = 5
+    picking_station_num = 5
+    orders_num = 10
+    instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    # create algorithm
+    TRA_iter_num = 50
+    TRA_accept_gap = 0.2
+    # each variable iter num
+    x_iter_num = 10000
+    y_iter_num = 10000
+    z_iter_num = 10000
+    TRA_iter_num_dict = {
+        "x": x_iter_num,
+        "y": y_iter_num,
+        "z": z_iter_num,
+    }
+    # each variable non improve count
+    x_non_improve_count = 1000
+    y_non_improve_count = 1000
+    z_non_improve_count = 1000
+    TRA_non_improve_count_dict = {
+        "x": x_non_improve_count,
+        "y": y_non_improve_count,
+        "z": z_non_improve_count,
+    }
+    # each variable operator list
+    x_operators_list = [operators_for_x.Relocate(instance=instance, k=1)]
+    y_operators_list = []
+    z_operators_list = [operators_for_z.Relocate(instance=instance, k=1)]
+    TRA_operators_dict = {
+        "x": x_operators_list,
+        "y": y_operators_list,
+        "z": z_operators_list,
+    }
+    # create TRA algorithm
+    TRA_algorithm = TRAAlgorithmFramework(problem=instance, 
+                                          iter_num=TRA_iter_num,
+                                          accept_gap=TRA_accept_gap,
+                                          iter_num_dict=TRA_iter_num_dict,
+                                          non_improve_count_dict=TRA_non_improve_count_dict,
+                                          operators_list_dict=TRA_operators_dict           
+    )
+    # run TRA algorithm
+    solution, obj = TRA_algorithm.runner()
+
 
 
 

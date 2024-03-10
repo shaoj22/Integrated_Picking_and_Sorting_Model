@@ -117,7 +117,6 @@ class ALNS_base:
         for step in pbar:
             break_opt_i, repair_opt_i = self.choose_operator()
             new_solution = self.get_neighbour(cur_solution, break_opt_i, repair_opt_i)
-            print("1:", cur_solution)
             new_obj, new_model_obj = self.cal_objective(new_solution)
             # obj: minimize the total distance 
             if new_obj < self.best_obj:
@@ -269,20 +268,20 @@ class ALNS(ALNS_base):
 
 if __name__ == "__main__":
     # create instance
-    w_num = 8
-    l_num = 8
-    bins_num = 20
+    w_num = 5
+    l_num = 5
+    bins_num = 10
     robot_num = 5
     picking_station_num = 5
-    orders_num = 20
+    orders_num = 10
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=2500)
+    alg = ALNS(instance, iter_num=50000)
     start = time.time()
     solution, obj, obj_of_500 = alg.run()
-    instance.render(routes=solution['picking'])
+    # instance.render(routes=solution['picking'])
     time_cost1 = time.time() - start
-    alg.show_process()
+    # alg.show_process()
     # print(alg.repair_operators_scores / alg.repair_operators_steps)
     print("\nALNS best_obj = {}, time_cost = {}\n".format(obj, time_cost1))
 

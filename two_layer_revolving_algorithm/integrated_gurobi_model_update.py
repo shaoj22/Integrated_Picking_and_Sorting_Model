@@ -30,7 +30,7 @@ class IntegratedGurobiModel:
         # common param
         self.integrated_instance = integrated_instance
         self.time_limit = time_limit
-        self.bigM = 1000
+        self.bigM = 2000
         # picking param
         self.init_flag = init_flag
         self.Q = integrated_instance.capacity
@@ -61,7 +61,6 @@ class IntegratedGurobiModel:
     def build_gurobi_model(self, model):
         """ build gurobi model with obj and cons """
         M = self.bigM
-
 
         # 添加决策变量
         # 订单任务分拨上墙的决策变量
@@ -107,6 +106,7 @@ class IntegratedGurobiModel:
         # 添加目标函数
         model.modelSense = GRB.MINIMIZE
         model.setObjective( FT ) # 最小化最大完成时间目标
+        
 
 
         # 添加约束条件
@@ -141,6 +141,7 @@ class IntegratedGurobiModel:
         # sorting 约束条件
         # 8. 到达P2的时间>=到达环形输送机出口的时间
         model.addConstrs( T[i - self.n] >= Te[i - 2 * self.n, self.P-1] + (self.Dpi[i - 2 * self.n][self.P-1]/self.v) for i in self.D1 )
+        # model.addConstrs( T[i] == 3000 for i in self.P2)
         # 9. 到达输送机的时间要>=到达D1的时间
         model.addConstrs( I[i] == T[i + 2 * self.n] for i in range(self.n) )
         # 10. 控制决策变量f的两条约束
@@ -178,6 +179,14 @@ class IntegratedGurobiModel:
         model.addConstrs( tos[o] - Ts[i,p] <= (3 - self.IO[i][o] - y[i,p] - z[o,p]) * self.bigM for o in range(self.O) for i in range(self.n) for p in range(self.P))
         model.update()
 
+        info = {}
+        info["x"] = x
+        info["z"] = z
+
+        return info
+
+
+
     def set_init_solution(self, model):
         """ set init solution for model """
         x_val = np.zeros((self.integrated_instance.nodeNum, self.integrated_instance.nodeNum))
@@ -212,10 +221,10 @@ class IntegratedGurobiModel:
 if __name__ == "__main__":
     w_num = 5
     l_num = 5
-    bins_num = 12
+    bins_num = 10
     robot_num = 5
     picking_station_num = 5
-    orders_num = 5
+    orders_num = 10
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     solver = IntegratedGurobiModel(problem)
     model = solver.run_gurobi_model()

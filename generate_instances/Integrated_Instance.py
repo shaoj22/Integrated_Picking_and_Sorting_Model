@@ -17,6 +17,8 @@ import matplotlib.pyplot as plt
 from utils import DrawTools
 import random
 from generate_instances import Picking_Instance
+# import Picking_Instance
+
 
 class Instance(Picking_Instance.Instance):
     def __init__(self, w_num, l_num, bins_num, robot_num, picking_station_num, orders_num, seed=1):
@@ -35,7 +37,7 @@ class Instance(Picking_Instance.Instance):
         super().__init__(w_num, l_num, bins_num, robot_num)
         # add set conveyors params
         self.distance_between_pickers = 5
-        self.conveyor_length = 55
+        self.conveyor_length = 105
         self.P = picking_station_num
         self.O = orders_num
         self.picking_time = 10
@@ -88,10 +90,12 @@ if __name__ == "__main__":
     l_num = 5
     bins_num = 10
     robot_num = 10
-    picking_station_num = 5
+    picking_station_num = 20
     orders_num = 2
     instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     print(instance.n)
     # print("generate {} tasks".format(5))
     # show map structure
-    instance.map.render()
+    # instance.map.render()
+    print("inter to picking station: ", instance.Dip)
+    print("picking station to outdoor: ", instance.Dpi)
