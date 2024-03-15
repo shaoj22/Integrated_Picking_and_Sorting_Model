@@ -13,7 +13,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from generate_instances import Integrated_Instance
-import utils
 import time
 import tqdm
 import copy
@@ -186,13 +185,16 @@ class ALNS(ALNS_base):
     def set_operators_list(self, instance):
         self.break_operators_list = [
             PickingRandomBreak(instance),
-            SortingRandomBreak(instance),
+            PickingGreedyBreak(instance),
             PickingRandomBreak(instance, break_num=2),
+
+            SortingRandomBreak(instance),
             SortingRandomBreak(instance, break_num=2),
         ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), 
             # PickingGreedyRepair(instance), 
+
             SortingRandomRepair(instance),
             # SortingGreedyRepair(instance),
         ]
@@ -214,20 +216,20 @@ class ALNS(ALNS_base):
 
 
         
-        # 把有效评估改成使用common algorithm进行评估
-        variable = Variable(self.instance)
-        # 把xyz赋值给variable
-        x_val, y_val, z_val = utils.solution_transfer(self.instance, picking_solution, sorting_solution)
-        variable_dict = {
-            'x' : x_val,
-            'y' : y_val,
-            'z' : z_val
-        }
-        variable.set_x_variable(variable_dict)
-        variable.set_y_variable(variable_dict)
-        variable.set_z_variable(variable_dict)
-        # solver = commonAlgorithmByGurobi(self.instance, variable)
-        # solver = commonAlgorithmByStrengthenedGurobi(self.instance, variable)
+        # # 把有效评估改成使用common algorithm进行评估
+        # variable = Variable(self.instance)
+        # # 把xyz赋值给variable
+        # x_val, y_val, z_val = utils.solution_transfer(self.instance, picking_solution, sorting_solution)
+        # variable_dict = {
+        #     'x' : x_val,
+        #     'y' : y_val,
+        #     'z' : z_val
+        # }
+        # variable.set_x_variable(variable_dict)
+        # variable.set_y_variable(variable_dict)
+        # variable.set_z_variable(variable_dict)
+        # # solver = commonAlgorithmByGurobi(self.instance, variable)
+        # # solver = commonAlgorithmByStrengthenedGurobi(self.instance, variable)
         model = None
 
         # model = solver.run_gurobi_model()
@@ -237,13 +239,10 @@ class ALNS(ALNS_base):
         else:
             model_obj = float('inf')
 
-
-
-
-
-
-        obj, info = utils.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
+        # use new utils to evaluate
+        obj, info = utils_new.efficient_integrated_evaluate(integrated_instance, picking_solution, sorting_solution)
         self.obj_info = info
+
         return obj, model_obj
 
     def choose_operator(self):
@@ -268,15 +267,15 @@ class ALNS(ALNS_base):
 
 if __name__ == "__main__":
     # create instance
-    w_num = 5
-    l_num = 5
-    bins_num = 10
-    robot_num = 5
-    picking_station_num = 5
-    orders_num = 10
+    w_num = 6
+    l_num = 4
+    bins_num = 18
+    robot_num = 9
+    picking_station_num = 6
+    orders_num = 9
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=50000)
+    alg = ALNS(instance, iter_num=20000)
     start = time.time()
     solution, obj, obj_of_500 = alg.run()
     # instance.render(routes=solution['picking'])

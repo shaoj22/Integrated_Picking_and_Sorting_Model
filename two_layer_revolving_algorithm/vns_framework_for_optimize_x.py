@@ -21,6 +21,7 @@ from TRA_utils import *
 from generate_instances.Integrated_Instance import Instance
 from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 import utils
+import utils_new
 import operators_for_x
 
 
@@ -162,10 +163,10 @@ if __name__ == "__main__":
     # create instance
     w_num = 5
     l_num = 5
-    bins_num = 20
-    robot_num = 5
-    picking_station_num = 5
-    orders_num = 20
+    bins_num = 500
+    robot_num = 20
+    picking_station_num = 15
+    orders_num = 200
     instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # 获取初始解
     picking_alg = NNH_heuristic_algorithm(instance)

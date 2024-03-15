@@ -168,18 +168,18 @@ if __name__ == "__main__":
     # create instance
     w_num = 5
     l_num = 5
-    bins_num = 10
-    robot_num = 5
-    picking_station_num = 5
-    orders_num = 10
+    bins_num = 30
+    robot_num = 20
+    picking_station_num = 10
+    orders_num = 30
     instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # create algorithm
     TRA_iter_num = 50
     TRA_accept_gap = 0.2
     # each variable iter num
-    x_iter_num = 10000
-    y_iter_num = 10000
-    z_iter_num = 10000
+    x_iter_num = 1000
+    y_iter_num = 1000
+    z_iter_num = 1000
     TRA_iter_num_dict = {
         "x": x_iter_num,
         "y": y_iter_num,

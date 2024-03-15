@@ -2,7 +2,7 @@
 Author: shaoj22 935619774@qq.com
 Date: 2024-03-10 10:58:36
 LastEditors: shaoj22 935619774@qq.com
-LastEditTime: 2024-03-10 21:54:00
+LastEditTime: 2024-03-11 19:14:39
 FilePath: \Integrated_Picking_and_Sorting_Model\test_fitness.py
 Description: test the fitness function.
 '''
@@ -21,21 +21,20 @@ from two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi impor
 
 
 
-
 if __name__ == "__main__":
-    w_num = 5
-    l_num = 5
-    bins_num = 45
-    robot_num = 10
+    w_num = 7
+    l_num = 7
+    bins_num = 40
+    robot_num = 20
     picking_station_num = 10
-    orders_num = 35
+    orders_num = 40
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run ALNS
-    alg = ALNS(problem, iter_num=2000)
+    alg = ALNS(problem, iter_num=10000)
     solution, obj, obj_of_500 = alg.run()
     picking_solution = solution['picking']
+    # picking_solution = [[40, 7, 0, 15, 35, 27, 20, 16, 36], [41, 9, 4, 1, 21, 29, 24], [42, 5, 8, 10, 30, 25, 28, 19, 14, 39, 34], [43, 3, 23, 18, 13, 38, 33], [44, 2, 6, 22, 26, 17, 11, 31, 12, 37, 32]]
     sorting_solution = solution['sorting']
-    print("test the final solution:\n\n\n\n\n")
     obj, info = utils.efficient_integrated_evaluate(integrated_instance=problem, picking_solution=picking_solution, sorting_solution=sorting_solution)
     # 把有效评估改成使用common algorithm进行评估
     variable = Variable(problem)

@@ -8,6 +8,7 @@ Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 
 import numpy as np
 import utils
+import utils_new
 
 
 # base classes
@@ -77,6 +78,7 @@ class PickingRandomBreak(Operator):
             "break_p_list": break_p_list,
             "break_d_list": break_d_list
         }
+
         return break_info
 
 class PickingRandomRepair(Operator):
@@ -99,6 +101,46 @@ class PickingRandomRepair(Operator):
             # 插入起终点
             self.safe_insert(routes[k], pos, d_break)
             self.safe_insert(routes[k], pos, p_break)
+
+class PickingGreedyBreak(Operator):
+    def __init__(self, instance, break_num=1):
+        super().__init__(instance)
+        self.break_num = break_num # 破坏任务数
+        self.type = "picking"
+    
+    def set(self, solution):
+        """ greedy break, random choose one robot's route and break the max insert cost's tote. """
+        routes = solution["picking"]
+        break_p_list = []
+        break_d_list = []
+        cur_break_num = 0
+        while cur_break_num < self.break_num:
+            # 随机选择一辆车
+            k = np.random.randint(0, self.instance.robotNum)
+            # 计算可以删除的p_list及其对应的pos
+            p_pos_list = []
+            for pos, p in enumerate(routes[k]):
+                if self.node2type[p] in ["P1", "P2"]:
+                    p_pos_list.append(pos)
+            # 计算每个可删除pos的删除后减少的成本
+            max_remove_cost = -float('inf')
+            # 初始化p_break
+            for pos in p_pos_list:
+                cur_remove_cost = self.cal_remove_cost(routes[k], pos)
+                if cur_remove_cost > max_remove_cost:
+                    p_break = routes[k][pos]
+                    max_remove_cost = cur_remove_cost
+            d_break = p_break + 2*self.n
+            break_p_list.append(p_break)
+            break_d_list.append(d_break)
+            cur_break_num += 1
+        # 返回删除的起终点
+        break_info = {
+            "break_p_list": break_p_list,
+            "break_d_list": break_d_list
+        }
+
+        return break_info
 
 class PickingGreedyRepair(Operator):
     def __init__(self, instance):
@@ -139,9 +181,8 @@ class PickingGreedyRepair(Operator):
                     routes[k].pop(p_pos)
             # 插入最优位置
             self.safe_insert(routes[min_k], min_p_pos, p_break)
-            self.safe_insert(routes[min_k], min_d_pos, d_break)
-                    
-
+            self.safe_insert(routes[min_k], min_d_pos, d_break)   
+            
 class SortingRandomBreak(Operator):
     def __init__(self, instance, break_num=1):
         super().__init__(instance)

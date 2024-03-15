@@ -21,6 +21,7 @@ from TRA_utils import *
 from generate_instances.Integrated_Instance import Instance
 from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 import utils
+import utils_new
 import operators_for_z
 
 
