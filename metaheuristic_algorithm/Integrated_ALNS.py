@@ -16,6 +16,8 @@ from generate_instances import Integrated_Instance
 import time
 import tqdm
 import copy
+import utils_new
+import utils
 from metaheuristic_algorithm.integrated_Operators import *
 from heuristic_algorithm import NNH_heuristic_algorithm
 from two_layer_revolving_algorithm.Variable import Variable
@@ -183,19 +185,21 @@ class ALNS(ALNS_base):
         self.set_operators_list(self.instance)
     
     def set_operators_list(self, instance):
+        """ note. base operators are very good """
         self.break_operators_list = [
-            PickingRandomBreak(instance),
-            PickingGreedyBreak(instance),
-            PickingRandomBreak(instance, break_num=2),
+            PickingRandomBreak(instance), # base
+            PickingRandomBreak(instance, break_num=2), # base
+            # PickingGreedyBreak(instance), # base 
+            # PickingShawBreak(instance, break_num=2),
 
-            SortingRandomBreak(instance),
-            SortingRandomBreak(instance, break_num=2),
+            SortingRandomBreak(instance), # base
+            # SortingRandomBreak(instance, break_num=2),
+            # SortingBalanceBreak(instance, break_num=2),
         ]
         self.repair_operators_list = [
-            PickingRandomRepair(instance), 
-            # PickingGreedyRepair(instance), 
-
-            SortingRandomRepair(instance),
+            PickingRandomRepair(instance), # base
+            PickingGreedyRepair(instance), # base
+            SortingRandomRepair(instance), # base
             # SortingGreedyRepair(instance),
         ]
     
@@ -252,11 +256,11 @@ class ALNS(ALNS_base):
         break_opt_i = np.random.choice(range(len(self.break_operators_list)), p=break_prob)
         # filter repair operators with the same type
         type = self.break_operators_list[break_opt_i].type
-        availabel_repair_list = [i for i in range(len(self.repair_operators_list)) if self.repair_operators_list[i].type == type]
+        available_repair_list = [i for i in range(len(self.repair_operators_list)) if self.repair_operators_list[i].type == type]
         # choose repair operator
-        repair_weights = (self.repair_operators_scores / self.repair_operators_steps)[availabel_repair_list]
+        repair_weights = (self.repair_operators_scores / self.repair_operators_steps)[available_repair_list]
         repair_prob = repair_weights / sum(repair_weights)
-        repair_opt_i = np.random.choice(availabel_repair_list, p=repair_prob)
+        repair_opt_i = np.random.choice(available_repair_list, p=repair_prob)
         return break_opt_i, repair_opt_i
   
     def test_run(self):
@@ -267,15 +271,15 @@ class ALNS(ALNS_base):
 
 if __name__ == "__main__":
     # create instance
-    w_num = 6
-    l_num = 4
-    bins_num = 18
-    robot_num = 9
-    picking_station_num = 6
-    orders_num = 9
+    w_num = 9
+    l_num = 8
+    bins_num = 60
+    robot_num = 20
+    picking_station_num = 10
+    orders_num = 50
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=20000)
+    alg = ALNS(instance, iter_num=100000)
     start = time.time()
     solution, obj, obj_of_500 = alg.run()
     # instance.render(routes=solution['picking'])
@@ -293,9 +297,6 @@ if __name__ == "__main__":
     # time_cost2 = time.time() - start
     # print("true_obj2 = {}, time_cost = {}".format(true_obj2, time_cost2))
     # print()
-
-
-
 
 
     # # 把有效评估改成使用common algorithm进行评估

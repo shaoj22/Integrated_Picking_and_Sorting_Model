@@ -219,12 +219,12 @@ class IntegratedGurobiModel:
         return model
 
 if __name__ == "__main__":
-    w_num = 6
-    l_num = 4
-    bins_num = 18
-    robot_num = 9
-    picking_station_num = 6
-    orders_num = 9
+    w_num = 9
+    l_num = 8
+    bins_num = 60
+    robot_num = 20
+    picking_station_num = 10
+    orders_num = 50
     problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
     solver = IntegratedGurobiModel(problem)
     model = solver.run_gurobi_model()

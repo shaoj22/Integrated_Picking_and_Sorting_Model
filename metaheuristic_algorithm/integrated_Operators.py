@@ -7,9 +7,8 @@ Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 
 
 import numpy as np
-import utils
 import utils_new
-
+import random
 
 # base classes
 class Operator:
@@ -117,6 +116,8 @@ class PickingGreedyBreak(Operator):
         while cur_break_num < self.break_num:
             # 随机选择一辆车
             k = np.random.randint(0, self.instance.robotNum)
+            if len(routes[k]) == 1:
+                continue
             # 计算可以删除的p_list及其对应的pos
             p_pos_list = []
             for pos, p in enumerate(routes[k]):
@@ -130,7 +131,10 @@ class PickingGreedyBreak(Operator):
                 if cur_remove_cost > max_remove_cost:
                     p_break = routes[k][pos]
                     max_remove_cost = cur_remove_cost
-            d_break = p_break + 2*self.n
+            try:
+                d_break = p_break + 2*self.n
+            except Exception as e:
+                print(e)
             break_p_list.append(p_break)
             break_d_list.append(d_break)
             cur_break_num += 1
@@ -182,7 +186,41 @@ class PickingGreedyRepair(Operator):
             # 插入最优位置
             self.safe_insert(routes[min_k], min_p_pos, p_break)
             self.safe_insert(routes[min_k], min_d_pos, d_break)   
-            
+
+class PickingShawBreak(Operator):
+    def __init__(self, instance, break_num=1):
+        super().__init__(instance)
+        self.break_num = break_num
+        self.type = "picking"
+        self.disMatrix = instance.disMatrix
+    
+    def set(self, solution):
+        """ shaw break operator, random choose one pos and get its break num similar pos. """
+        routes = solution["picking"]
+        break_p_list = []
+        break_d_list = []
+        # 随机选择一辆车
+        k = np.random.randint(0, self.instance.robotNum)
+        # 随机选择一个pos
+        pos = np.random.randint(0, len(routes[k]))
+        # 计算出它的p
+        if self.node2type[routes[k][pos]] in ["P1", "P2"]:
+            p_break = routes[k][pos]
+        else:
+            p_break = routes[k][pos] - self.n*2
+        # 计算该p点与任意p点之间的距离
+        p_list = [p for p in range(self.n*2)]
+        p_distance_list = [self.disMatrix[p_break][p] for p in p_list]
+        # 里面值倒数break_num+1个p加入break_p_list
+        break_p_list = sorted(range(len(p_distance_list)), key=lambda i: p_distance_list[i])[-(self.break_num+1):]
+        break_d_list = [(p+self.n*2) for p in break_p_list]
+        break_info = {
+            "break_p_list": break_p_list,
+            "break_d_list": break_d_list
+        }
+
+        return break_info
+             
 class SortingRandomBreak(Operator):
     def __init__(self, instance, break_num=1):
         super().__init__(instance)
@@ -197,6 +235,55 @@ class SortingRandomBreak(Operator):
         break_info = {
             "break_o_list": break_o_list.tolist()
         }
+        return break_info
+
+class SortingGreedyBreak(Operator):
+    def __init__(self, instance, break_num=1):
+        super().__init__(instance)
+        self.break_num = break_num
+        self.type = "sorting"
+
+    def set(self, solution):
+        """ greedy to break the sorting solution """
+
+        pass
+
+class SortingBalanceBreak(Operator):
+    def __init__(self, instance, break_num=1):
+        """ note. break_num """
+        super().__init__(instance)
+        self.break_num = break_num
+        self.type = "sorting"
+
+    def set(self, solution):
+        """ Balance to break the sorting solution """
+        sorting = solution["sorting"]
+        # 选择order最多的和最少的拣选站
+        station_counts = {}
+        for station_index in sorting:
+            if station_index not in station_counts:
+                station_counts[station_index] = 1
+            else:
+                station_counts[station_index] += 1
+        # 找出分配给拣选站最多和最少的订单数量
+        max_orders = max(station_counts.values())
+        min_orders = min(station_counts.values())
+        # 找出分配给拣选站最多和最少订单的拣选站
+        stations_with_max_orders = [station_index for station_index, count in station_counts.items() if count == max_orders]
+        # 随机选择((o1-o2)//2)个最多order拣选站上的order移至最少的拣选站
+        break_o_num = self.break_num
+        # find a max orders station
+        station_idx = random.choice(stations_with_max_orders)
+        # 选择属于拣选站idx的订单的索引
+        orders_in_station_idx = [i for i, station_index in enumerate(sorting) if station_index == station_idx]
+        # 随机选择break o num个订单的索引
+        break_o_list = random.sample(orders_in_station_idx, break_o_num)
+        for o in break_o_list:
+            sorting[o] = 0
+        break_info = {
+            "break_o_list": break_o_list
+        }
+
         return break_info
 
 class SortingRandomRepair(Operator):
@@ -218,7 +305,7 @@ class SortingGreedyRepair(Operator):
     
     def backupon(self, best_solution, best_obj, cur_solution, break_o_list, cur_p):
         if cur_p >= len(break_o_list):
-            cur_obj, _ = utils.efficient_integrated_evaluate(self.instance, cur_solution['picking'], cur_solution['sorting'])
+            cur_obj, _ = utils_new.efficient_integrated_evaluate(self.instance, cur_solution['picking'], cur_solution['sorting'])
             if cur_obj < best_obj:
                 best_obj = cur_obj
                 best_solution['sorting'] = cur_solution['sorting'].copy()
@@ -230,7 +317,7 @@ class SortingGreedyRepair(Operator):
 
     def set(self, solution, break_info):
         best_solution = solution.copy()
-        best_obj, _ = utils.efficient_integrated_evaluate(self.instance, best_solution['picking'], best_solution['sorting']) 
+        best_obj, _ = utils_new.efficient_integrated_evaluate(self.instance, best_solution['picking'], best_solution['sorting']) 
         cur_solution = solution.copy()
         break_o_list = break_info["break_o_list"]
         cur_p = 0
