@@ -14,14 +14,14 @@ import sys
 sys.path.append('..')
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import DrawTools
+from Integrated_Picking_and_Sorting_Model.utils import DrawTools
 import random
-from generate_instances import Picking_Instance
+from Integrated_Picking_and_Sorting_Model.generate_instances import Picking_Instance
 # import Picking_Instance
 
 
 class Instance(Picking_Instance.Instance):
-    def __init__(self, w_num, l_num, bins_num, robot_num, picking_station_num, orders_num, seed=1):
+    def __init__(self, w_num, l_num, bins_num, orders_num, robot_num, picking_station_num, seed=1):
         """
         __init__ generate instance
 

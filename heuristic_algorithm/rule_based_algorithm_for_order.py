@@ -12,7 +12,7 @@ Created Date: 2024.03.19
 
 import sys
 sys.path.append('..')
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 
 
 class ruleBasedAlgorithmForOrder():
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     robot_num = 3
     picking_station_num = 5
     orders_num = 3
-    instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    instance = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     algorithm_tools = ruleBasedAlgorithmForOrder(instance)
     assignment_solution = algorithm_tools.runner()
     print(assignment_solution)
