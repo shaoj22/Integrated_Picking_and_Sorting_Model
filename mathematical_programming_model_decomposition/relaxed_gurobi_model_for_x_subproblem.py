@@ -1,12 +1,12 @@
 '''
-File: integrated_gurobi_model_update.py
+File: x_relaxed_gurobi_model.py
 Project: Integrated_Picking_and_Sorting_Model
 Description: 
 ----------
-a new update model for the picking and sorting model.
+relaxed all variable except x.
 ----------
 Author: 626
-Created Date: 2023.12.08
+Created Date: 2023.12.19
 '''
 
 
@@ -14,23 +14,27 @@ import sys
 sys.path.append('..')
 import numpy as np
 import gurobipy as gp
-from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from generate_instances.Integrated_Instance import Instance
 from gurobipy import GRB
+from variable import Variable
+import utils
 
-
-class IntegratedGurobiModel:
-    def __init__(self, integrated_instance, time_limit=None, init_flag=True):
+class xRelaxedGurobiModel:
+    def __init__(self, integrated_instance, variable, time_limit=None, init_flag=True):
         """
-        init the IntegratedGurobiModel with inputting instance.
+        init the xRelaxedGurobiModel with inputting instance and variable.
 
         Args:
         integrated_instance (class): instance class of the problem. 
+        variable (class): all variable num of the problem.
         """
+        # variable
+        self.variable = variable
         # common param
         self.integrated_instance = integrated_instance
         self.time_limit = time_limit
-        self.bigM = 2000
+        self.bigM = 1000
         # picking param
         self.init_flag = init_flag
         self.Q = integrated_instance.capacity
@@ -46,7 +50,6 @@ class IntegratedGurobiModel:
         self.K = list(range(integrated_instance.robotNum))
         self.disMatrix = integrated_instance.disMatrix
         self.timeMatrix = integrated_instance.timeMatrix
-
         # sorting param
         self.P = integrated_instance.P
         self.Dip = integrated_instance.Dip
@@ -62,11 +65,13 @@ class IntegratedGurobiModel:
         """ build gurobi model with obj and cons """
         M = self.bigM
 
+
         # 添加决策变量
         # 订单任务分拨上墙的决策变量
-        tos_list = [o for o in range(self.O)]
+
+        tos_list = [ o for o in range(self.O)]
         tos = model.addVars( tos_list, vtype=GRB.CONTINUOUS, name="tos")
-        toe_list = [o for o in range(self.O)]
+        toe_list = [ o for o in range(self.O)]
         toe = model.addVars( toe_list, vtype=GRB.CONTINUOUS, name="toe")
         a1_list = [(o1,o2) for o1 in range(self.O) for o2 in range(self.O)]
         a1 = model.addVars(a1_list, vtype=GRB.BINARY, name="a1")
@@ -76,38 +81,43 @@ class IntegratedGurobiModel:
         c1 = model.addVars(c1_list, vtype=GRB.BINARY, name="c1")
         d1_list = [(o1,o2) for o1 in range(self.O) for o2 in range(self.O)]
         d1 = model.addVars(d1_list, vtype=GRB.BINARY, name="d1")
+
         # picking 决策变量
+
         x_list = [(i,j) for i in self.N for j in self.N]
         x = model.addVars(x_list, vtype=GRB.BINARY, name="x") # 车的路径
+
         Q_list = [i for i in self.N]
         Q = model.addVars( Q_list, vtype=GRB.CONTINUOUS, name="Q")  # 车的载重
         T_list = [i for i in self.N]
-        T = model.addVars(T_list, vtype=GRB.CONTINUOUS, name="T")  # 车的时间
+        T = model.addVars( T_list, vtype=GRB.CONTINUOUS, name="T")  # 车的时间
         pass_list = [(i,k) for i in self.N for k in self.K]
         passX = model.addVars( pass_list, vtype=GRB.BINARY, name="passX")  # 车k是否经过点i
-        FT = model.addVar( vtype=GRB.CONTINUOUS, name="FT") # 所有任务完成的时间
+
         # sorting 决策变量
-        I_list = [i for i in range(self.n)]
+        I_list = [ i for i in range(self.n)]
         I = model.addVars( I_list, vtype=GRB.INTEGER, name="I")  # 料箱i的初始到达输送机的时间
-        y_list = [(i,p) for i in range(self.n) for p in range(self.P)]
-        y = model.addVars(y_list, vtype=GRB.BINARY, name="y") # 料箱i是否被分配给了拣选站p
-        z_list = [(o,p) for o in range(self.O) for p in range(self.P)]
-        z = model.addVars(z_list, vtype=GRB.BINARY, name="z") # 订单o是否被分配给了拣选站p
+
+        # y_list = [(i, p) for i in range(self.n) for p in range(self.P)]
+        # y = model.addVars(y_list, vtype=GRB.BINARY, name="y") # 料箱i是否被分配给了拣选站p
+
+        # z_list = [(o,p) for o in range(self.O) for p in range(self.P)]
+        # z = model.addVars(z_list, vtype=GRB.BINARY, name="z") # 订单o是否被分配给了拣选站p
+
         Ta_list = [(i,p) for i in range(self.n) for p in range(self.P)]
         Ta = model.addVars(Ta_list, vtype=GRB.INTEGER, name="Ta") # 料箱i到达拣选站p的时间
-        Ts_list = [(i,p) for i in range(self.n) for p in range(self.P)]
+        Ts_list = [(i, p) for i in range(self.n) for p in range(self.P)]
         Ts = model.addVars(Ts_list, vtype=GRB.INTEGER, name="Ts")  # 料箱i在拣选站p的开始拣选时间
         Te_list = [(i,p) for i in range(self.n) for p in range(self.P)]
         Te = model.addVars(Te_list, vtype=GRB.INTEGER, name="Te" ) # 料箱i在拣选站p的结束拣选时间
         f_list = [(i,j,p) for i in range(self.n) for j in range(self.n) for p in range(self.P)]
         f = model.addVars( f_list, vtype=GRB.BINARY, name="f") # 料箱i是否先于料箱j到达拣选站p
 
+        FT = model.addVar( vtype=GRB.CONTINUOUS, name="FT") # 所有任务完成的时间
 
         # 添加目标函数
         model.modelSense = GRB.MINIMIZE
         model.setObjective( FT ) # 最小化最大完成时间目标
-        
-
 
         # 添加约束条件
         # 0. 最大完成时间约束
@@ -141,24 +151,23 @@ class IntegratedGurobiModel:
         # sorting 约束条件
         # 8. 到达P2的时间>=到达环形输送机出口的时间
         model.addConstrs( T[i - self.n] >= Te[i - 2 * self.n, self.P-1] + (self.Dpi[i - 2 * self.n][self.P-1]/self.v) for i in self.D1 )
-        # model.addConstrs( T[i] == 3000 for i in self.P2)
         # 9. 到达输送机的时间要>=到达D1的时间
         model.addConstrs( I[i] == T[i + 2 * self.n] for i in range(self.n) )
         # 10. 控制决策变量f的两条约束
         model.addConstrs( Ta[i,p] - Ta[j,p] <= (1 - f[i,j,p]) * M for i in range(self.n) for j in range(i+1,self.n) for p in range(self.P))
         model.addConstrs( Ta[i,p] - Ta[j,p] >= -f[i,j,p] * M for i in range(self.n) for j in range(i+1,self.n) for p in range(self.P))
         # 11. 先到达拣选站p的料箱i的结束拣选时间要小于等于后到达拣选站p的料箱j的开始拣选时间
-        model.addConstrs( Ts[j,p] - Te[i,p] >= M * (f[i,j,p] + y[i,p] + y[j,p] - 3) for i in range(self.n) for j in range(i+1,self.n) for p in range(self.P))
-        model.addConstrs( Ts[i,p] - Te[j,p] >= M * ((1- f[i,j,p]) + y[i,p] + y[j,p] - 3) for i in range(self.n) for j in range(i+1,self.n) for p in range(self.P))
+        model.addConstrs( Ts[j,p] - Te[i,p] >= M * (f[i,j,p] + self.variable.y[i,p] + self.variable.y[j,p] - 3) for i in range(self.n) for j in range(i+1,self.n) for p in range(self.P))
+        model.addConstrs( Ts[i,p] - Te[j,p] >= M * ((1- f[i,j,p]) + self.variable.y[i,p] + self.variable.y[j,p] - 3) for i in range(self.n) for j in range(i+1,self.n) for p in range(self.P))
         # 12. 只有订单o被分配给了拣选站p & 料箱i属于订单o，那么料箱i一定能被分配给拣选站p
-        model.addConstrs( self.IO[i][o] * z[o,p] <= y[i,p] for i in range(self.n) for p in range(self.P) for o in range(self.O))
+        # model.addConstrs( self.variable.y[i,p] >= self.IO[i][o] * self.variable.z[o,p] for i in range(self.n) for p in range(self.P) for o in range(self.O))
         # 13. 所有任务都要被完成
-        model.addConstrs( gp.quicksum( z[o,p] for p in range(self.P)) == 1 for o in range(self.O))
-        model.addConstr( gp.quicksum( y[i,p] for i in range(self.n) for p in range(self.P)) <= self.sumIO)
+        # model.addConstrs( gp.quicksum( self.variable.z[o,p] for p in range(self.P)) == 1 for o in range(self.O))
+        # model.addConstr( gp.quicksum( self.variable.y[i,p] for i in range(self.n) for p in range(self.P)) <= self.sumIO)
         # 14. 料箱i的结束拣选时间一定大于等于它的开始拣选时间（当yip=0时）
-        model.addConstrs( Te[i,p] == Ts[i,p] + self.picking_time * y[i,p] for i in range(self.n) for p in range(self.P))
+        model.addConstrs( Te[i,p] == Ts[i,p] + self.picking_time * self.variable.y[i,p] for i in range(self.n) for p in range(self.P))
         # 15. 当料箱i不去拣选站p时，Ts=Ta
-        model.addConstrs( Ts[i,p] <= Ta[i,p] + M * y[i,p] for i in range(self.n) for p in range(self.P))
+        model.addConstrs( Ts[i,p] <= Ta[i,p] + M * self.variable.y[i,p] for i in range(self.n) for p in range(self.P))
         # 16. 料箱i到达第一个拣选站p=0时的时间（初始化）：
         model.addConstrs( Ta[i,0] == I[i] + self.Dip[i][0]/self.v for i in range(self.n))
         # 17. 料箱到达下一个拣选站的时间为：在上一个拣选站结束拣选的时间+路程时间（----------标记）约束条件3和约束条件2二选一就可以，到底是大于等于还是等于？
@@ -172,33 +181,16 @@ class IntegratedGurobiModel:
         model.addConstrs( toe[o2] - tos[o1] <= b1[o1,o2] * self.bigM for o1 in range(self.O) for o2 in range(self.O))
         model.addConstrs( tos[o] <= toe[o] for o in range(self.O))
         model.addConstrs( c1[o1,o2] >= a1[o1,o2] + b1[o1,o2] - 1 for o1 in range(self.O) for o2 in range(self.O))
-        model.addConstrs( d1[o1,o2] >= c1[o1,o2] + z[o1,p] +z[o2,p] - 2 for o1 in range(self.O) for o2 in range(self.O) for p in range(self.P))
+        model.addConstrs( d1[o1,o2] >= c1[o1,o2] + self.variable.z[o1,p] + self.variable.z[o2,p] - 2 for o1 in range(self.O) for o2 in range(self.O) for p in range(self.P))
         model.addConstrs( gp.quicksum( d1[o1,o2] for o2 in range(self.O)) <= 8 for o1 in range(self.O))
         # 添加订单任务分拨上墙与任务分配和机器人调度的衔接约束条件
-        model.addConstrs( toe[o] - Te[i,p] >= (self.IO[i][o] + y[i,p] + z[o,p] - 3) * self.bigM for o in range(self.O) for i in range(self.n) for p in range(self.P))
-        model.addConstrs( tos[o] - Ts[i,p] <= (3 - self.IO[i][o] - y[i,p] - z[o,p]) * self.bigM for o in range(self.O) for i in range(self.n) for p in range(self.P))
+        model.addConstrs( toe[o] - Te[i,p] >= (self.IO[i][o] + self.variable.y[i,p] + self.variable.z[o,p] - 3) * self.bigM for o in range(self.O) for i in range(self.n) for p in range(self.P))
+        model.addConstrs( tos[o] - Ts[i,p] <= (3 - self.IO[i][o] - self.variable.y[i,p] - self.variable.z[o,p]) * self.bigM for o in range(self.O) for i in range(self.n) for p in range(self.P))
         model.update()
-
-        info = {}
-        info["x"] = x
-        info["z"] = z
-
-        return info
 
     def set_init_solution(self, model):
         """ set init solution for model """
-        x_val = np.zeros((self.integrated_instance.nodeNum, self.integrated_instance.nodeNum))
-        # init strategy 1
-        init_alg = NNH_heuristic_algorithm(self.integrated_instance)
-        routes = init_alg.NNH_main()
-        # init strategy 2
-        # set init solution
-        for route in routes:
-            for i in range(1, len(route)):
-                pi = route[i-1]
-                pj = route[i]
-                x_val[pi, pj] = 1
-            x_val[route[-1], route[0]] = 1
+        x_val = self.variable.x
         for i in range(self.integrated_instance.nodeNum):
             for j in range(self.integrated_instance.nodeNum):
                 model.getVarByName("x[{},{}]".format(i,j)).start = x_val[i,j]
@@ -213,21 +205,44 @@ class IntegratedGurobiModel:
         if self.init_flag: # 设置gurobi模型初始解
             self.set_init_solution(model)
         model.optimize() # 求解模型
+        # 获取解
+        solution_x = []
+        for i in self.N:
+            each_x = []
+            for j in self.N:
+                var_name = f"x[{i},{j}]"
+                x_i_j = model.getVarByName(var_name).X
+                each_x.append(x_i_j)
+            solution_x.append(each_x)
+        objVal = model.objVal
+        objBound = model.objBound
 
-        return model
+        return objVal, solution_x
+
 
 if __name__ == "__main__":
     w_num = 6
     l_num = 6
-    bins_num = 40
+    bins_num = 20
     robot_num = 20
     picking_station_num = 10
-    orders_num = 30
+    orders_num = 20
     problem = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
-    solver = IntegratedGurobiModel(problem, init_flag=False)
-    model = solver.run_gurobi_model()
-
-
-
-
-
+    # 获得初始解
+    picking_alg = NNH_heuristic_algorithm(problem)
+    picking_solution = picking_alg.NNH_main()
+    sorting_solution = [np.random.randint(problem.P) for _ in range(problem.O)]
+    # 构造初始variable
+    variable = Variable(problem)
+    x_val, y_val, z_val = utils.solution_transfer(problem, picking_solution, sorting_solution)
+    variable_dict = {
+            'x' : x_val,
+            'y' : y_val,
+            'z' : z_val
+        }
+    variable.set_x_variable(variable_dict)
+    variable.set_y_variable(variable_dict)
+    variable.set_z_variable(variable_dict)
+    # 求解
+    solver = xRelaxedGurobiModel(problem, variable, time_limit=30)
+    objVal, solution_x = solver.run_gurobi_model()
