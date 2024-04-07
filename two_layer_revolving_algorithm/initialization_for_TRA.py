@@ -13,8 +13,8 @@ Created Date: 2023.12.29
 import sys
 sys.path.append('..')
 import numpy as np
-import utils
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm as picking_greedy_alg
+import Integrated_Picking_and_Sorting_Model.utils_new as utils_new
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm as picking_greedy_alg
 
 
 def initialization_for_TRA(problem):
@@ -40,6 +40,6 @@ def initialization_for_TRA(problem):
         'sorting_solution': sorting_solution
     }
     # record the obj
-    obj, info = utils.efficient_integrated_evaluate(problem, picking_solution, sorting_solution)
+    obj, info = utils_new.efficient_integrated_evaluate(problem, picking_solution, sorting_solution)
     
     return solution, obj

@@ -16,6 +16,7 @@ from Integrated_Picking_and_Sorting_Model.generate_instances import Integrated_I
 import time
 import tqdm
 import copy
+from Integrated_Picking_and_Sorting_Model import utils
 from Integrated_Picking_and_Sorting_Model import utils_new
 from Integrated_Picking_and_Sorting_Model.metaheuristic_algorithm.integrated_Operators import *
 from Integrated_Picking_and_Sorting_Model.heuristic_algorithm import NNH_heuristic_algorithm
@@ -270,15 +271,15 @@ class ALNS(ALNS_base):
 
 if __name__ == "__main__":
     # create instance
-    w_num = 12
-    l_num = 12
-    bins_num = 200
-    robot_num = 25
-    picking_station_num = 10
-    orders_num = 120
+    w_num = 6
+    l_num = 4
+    bins_num = 30
+    robot_num = 15
+    picking_station_num = 9
+    orders_num = 20
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=5000)
+    alg = ALNS(instance, iter_num=50000)
     start = time.time()
     solution, obj, obj_of_500 = alg.run()
     # instance.render(routes=solution['picking'])

@@ -15,7 +15,7 @@ sys.path.append('..')
 import numpy as np
 import gurobipy as gp
 import time 
-import utils
+import Integrated_Picking_and_Sorting_Model.utils
 from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 from generate_instances.Integrated_Instance import Instance
 from two_layer_revolving_algorithm.integrated_gurobi_model_update import IntegratedGurobiModel

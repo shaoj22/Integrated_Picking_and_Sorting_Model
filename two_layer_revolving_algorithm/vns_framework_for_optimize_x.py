@@ -14,14 +14,11 @@ import sys
 sys.path.append("..")
 import numpy as np
 import tqdm
-from common_algorithm_by_gurobi import commonAlgorithmByGurobi
-from two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi import commonAlgorithmByStrengthenedGurobi
-from Variable import Variable
 from TRA_utils import *
-from generate_instances.Integrated_Instance import Instance
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-import utils
-import utils_new
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+import Integrated_Picking_and_Sorting_Model.utils
+import Integrated_Picking_and_Sorting_Model.utils_new as utils_new
 import operators_for_x
 
 
@@ -80,7 +77,7 @@ class VNS:
         Returns:
             obj (double): the update obj after solving by neighborhood;
         """
-        obj, info = utils.efficient_integrated_evaluate(self.problem, cur_picking_solution, self.sorting_solution)
+        obj, info = utils_new.efficient_integrated_evaluate(self.problem, cur_picking_solution, self.sorting_solution)
         
         return obj
 
@@ -116,6 +113,8 @@ class VNS:
         # main framework
         # while cur_iter_num < self.iter_num:
         for step in pbar:
+            # 邻域数量
+            neighborhood_num = len(neighborhood)
             # 从当前的neighborhood中选择一个解
             cur_index = self.choose_neighborhood(neighborhood) # 当前解的index
             cur_solution = neighborhood[cur_index] # 当前解的variable
@@ -154,7 +153,9 @@ class VNS:
                 "best_obj" : self.best_obj, 
                 "cur_obj" : cur_obj, 
                 "cur_iter_num" : cur_iter_num,
-                "non_improve_count" : non_improve_count
+                "non_improve_count" : non_improve_count,
+                "neighborhood_num" : neighborhood_num,
+                "operator_k" : operator_k,
             })
         
         return self.best_solution, self.best_obj

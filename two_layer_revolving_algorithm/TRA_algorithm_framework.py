@@ -9,21 +9,17 @@ Author: 626
 Created Date: 2023.12.08
 '''
 
+
 import operators_for_x
 import operators_for_y
 import operators_for_z
-from x_relaxed_gurobi_model import xRelaxedGurobiModel
-from y_relaxed_gurobi_model import yRelaxedGurobiModel
-from z_relaxed_gurobi_model import zRelaxedGurobiModel
 from TRA_utils import *
-from optimize_x_by_vns import optimize_x_by_vns
-from optimize_y_by_vns import optimize_y_by_vns
-from optimize_z_by_vns import optimize_z_by_vns
 from vns_framework_for_optimize_x import VNS as vns_for_optimize_x
 from vns_framework_for_optimize_y import VNS as vns_for_optimize_y
 from vns_framework_for_optimize_z import VNS as vns_for_optimize_z
 from initialization_for_TRA import initialization_for_TRA
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+import Integrated_Picking_and_Sorting_Model.utils_new as utils_new
 
 
 class TRAAlgorithmFramework:
@@ -137,7 +133,7 @@ class TRAAlgorithmFramework:
                 continue
             # 判断model的解与lower bound相比是否满足要求，若不满足则继续优化model的解
             lower_bound_of_model = 0
-            if ((self.best_obj - lower_bound_of_model)/self.best_obj - self.accept_gap):
+            if ((self.best_obj - lower_bound_of_model)/self.best_obj - self.accept_gap) >= 0:
                 # 调用对应的sub-process to optimize the variable
                 cur_solution, cur_obj = self.sub_process_solver(cur_optimize_variable, self.best_solution, self.best_obj)
             # 判断是否更新best_variable
@@ -168,18 +164,18 @@ if __name__ == "__main__":
     # create instance
     w_num = 6
     l_num = 4
-    bins_num = 18
+    bins_num = 9
     robot_num = 9
     picking_station_num = 6
-    orders_num = 9
+    orders_num = 5
     instance = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # create algorithm
-    TRA_iter_num = 5000
+    TRA_iter_num = 500
     TRA_accept_gap = 0.2
     # each variable iter num
     x_iter_num = 10000
-    y_iter_num = 10000
-    z_iter_num = 100
+    y_iter_num = 1000
+    z_iter_num = 500
     TRA_iter_num_dict = {
         "x": x_iter_num,
         "y": y_iter_num,
@@ -195,7 +191,10 @@ if __name__ == "__main__":
         "z": z_non_improve_count,
     }
     # each variable operator list
-    x_operators_list = [operators_for_x.Relocate(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.Relocate(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.Exchange1(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.Exchange2(instance=instance, k=1)]
+    x_operators_list = [operators_for_x.Relocate(instance=instance, k=1), operators_for_x.Exchange1(instance=instance, k=1), operators_for_x.Exchange2(instance=instance, k=1)]
     y_operators_list = []
     z_operators_list = [operators_for_z.Relocate(instance=instance, k=1)]
     TRA_operators_dict = {
@@ -213,6 +212,9 @@ if __name__ == "__main__":
     )
     # run TRA algorithm
     solution, obj = TRA_algorithm.runner()
+    # print(solution)
+    # obj, info = utils_new.efficient_integrated_evaluate(instance, solution['picking_solution'], solution['sorting_solution'])
+    # print(obj)
 
 
 

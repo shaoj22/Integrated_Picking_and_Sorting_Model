@@ -218,11 +218,11 @@ class IntegratedGurobiModel:
 
 if __name__ == "__main__":
     w_num = 6
-    l_num = 6
-    bins_num = 40
-    robot_num = 20
-    picking_station_num = 10
-    orders_num = 30
+    l_num = 4
+    bins_num = 9
+    robot_num = 9
+    picking_station_num = 6
+    orders_num = 5
     problem = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     solver = IntegratedGurobiModel(problem, init_flag=False)
     model = solver.run_gurobi_model()

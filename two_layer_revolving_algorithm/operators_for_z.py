@@ -13,7 +13,7 @@ Created Date: 2024.01.02
 import sys
 sys.path.append('..')
 from itertools import permutations
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 
 
 class Relocate():

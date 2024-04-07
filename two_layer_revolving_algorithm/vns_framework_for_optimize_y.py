@@ -14,13 +14,11 @@ import sys
 sys.path.append("..")
 import numpy as np
 import tqdm
-from common_algorithm_by_gurobi import commonAlgorithmByGurobi
-from two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi import commonAlgorithmByStrengthenedGurobi
-from Variable import Variable
 from TRA_utils import *
-from generate_instances.Integrated_Instance import Instance
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-import utils
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+import Integrated_Picking_and_Sorting_Model.utils
+import Integrated_Picking_and_Sorting_Model.utils_new
 import operators_for_x
 
 
@@ -79,7 +77,7 @@ class VNS:
         Returns:
             obj (double): the update obj after solving by neighborhood;
         """
-        obj, info = utils.efficient_integrated_evaluate(self.problem, cur_picking_solution, self.sorting_solution)
+        obj, info = utils_new.efficient_integrated_evaluate(self.problem, cur_picking_solution, self.sorting_solution)
         
         return obj
 
