@@ -5,6 +5,8 @@ File Created: Thursday, 21st March 2024 3:04:18 pm
 Author: limingzhe05 (lmz22@mails.tsinghua.edu.cn)
 '''
 
+import sys
+sys.path.append('..')
 import gymnasium as gym
 from metaheuristic_algorithm.Integrated_ALNS import ALNS
 import numpy as np
@@ -15,8 +17,13 @@ class ALNSToLearn(ALNS):
     def __init__(self, *args, **kwargs):
         super(ALNSToLearn, self).__init__(*args, **kwargs)
 
-    def reset(self):
+    def reset(self, instance=None):
         super(ALNSToLearn, self).reset()
+        # 重置算例
+        if instance is not None:
+            self.instance = instance
+            self.set_operators_list(instance)
+        # 重置选算子相关指标
         self.cur_solution = self.solution_init() 
         self.cur_obj, self.cur_model_obj = self.cal_objective(self.cur_solution)
         self.best_solution = self.cur_solution
@@ -33,6 +40,7 @@ class ALNSToLearn(ALNS):
         new_obj, new_model_obj = self.cal_objective(new_solution)
         # obj: minimize the total distance 
         if new_obj < self.best_obj:
+            # 新解超出最优解
             self.best_solution = new_solution
             self.best_obj = new_obj
             if self.best_model_obj >= new_model_obj:
@@ -46,6 +54,7 @@ class ALNSToLearn(ALNS):
             self.repair_operators_steps[repair_opt_i] += 1
             self.solution_accept_state = 0  # 记录解的接受状态
         elif new_obj < self.cur_obj: 
+            # 新解超出当前解
             self.cur_solution = new_solution
             self.cur_obj = new_obj
             if self.best_model_obj >= new_model_obj:
@@ -56,6 +65,7 @@ class ALNSToLearn(ALNS):
             self.repair_operators_steps[repair_opt_i] += 1
             self.solution_accept_state = 1
         elif np.random.random() < self.SA_accept((new_obj-self.cur_obj)/(self.cur_obj+1e-10), self.temperature): # percentage detaC
+            # 新解被模拟退火接受
             self.cur_solution = new_solution
             self.cur_obj = new_obj
             if self.best_model_obj >= new_model_obj:
@@ -99,8 +109,11 @@ class ALNSToLearn(ALNS):
     
 
 class ALNSGymEnv(gym.Env): 
-    def __init__(self, instance, iter_num):
-        self.alns = ALNSToLearn(instance, iter_num)
+    def __init__(self, instance_list, iter_num, static_flag=False):
+        assert len(instance_list) > 0, "算例列表instance_list不能为空！"
+        self.instance_list = instance_list
+        self.alns = ALNSToLearn(self.instance_list[0], iter_num)
+        self.static_flag = static_flag  # 是否不断更新算例
         self.operator_pair_list = [(i, j) for i in range(len(self.alns.break_operators_list)) for j in range(len(self.alns.repair_operators_list)) if self.alns.break_operators_list[i].type == self.alns.repair_operators_list[j].type]
         self.action_num = len(self.operator_pair_list)
         self.action_space = gym.spaces.Discrete(self.action_num)
@@ -113,8 +126,15 @@ class ALNSGymEnv(gym.Env):
         self.reward_list = [5, 3, 1, 0]  # 奖励对应于解的各个接受状态
         self.reset()
     
-    def reset(self, seed=None):
-        self.alns.reset()
+    def reset(self, seed=None, instance=None):
+        if self.static_flag:
+            self.alns.reset()
+        elif instance is None:
+            np.random.seed(seed)
+            new_instance = np.random.choice(self.instance_list)
+            self.alns.reset(new_instance)
+        else:
+            self.alns.reset(instance) 
         # 重置状态相关量
         self.s_reduced_cost = 0
         self.s_cost_from_min = 0
