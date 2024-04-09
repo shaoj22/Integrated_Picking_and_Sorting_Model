@@ -68,9 +68,10 @@ class Tester:
 
 if __name__ == '__main__':
     cur_dir = os.path.dirname(__file__)
-    instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/test_instances.txt').readlines()]
+    # instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/test_instances.txt').readlines()]
+    instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/train_instances.txt').readlines()]
     instance_list = [Integrated_Instance.Instance(*params) for params in instance_params_list]
-    tester = Tester(instance_list, 100, cur_dir + '\log\sb3\ppo-20240409-101523\model.zip', cur_dir + '/result')
+    tester = Tester(instance_list, 1000, cur_dir + '\log\sb3\ppo-iter1000\model.zip', cur_dir + '/result')
     tester.test()
 
         

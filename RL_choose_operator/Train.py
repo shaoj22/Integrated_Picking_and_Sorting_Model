@@ -30,14 +30,14 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.logger import configure
 import datetime
 
-env = ALNSGymEnv(instance_list, iter_num=1000)  # 迭代次数
+env = ALNSGymEnv(instance_list, iter_num=100)  # 迭代次数
 policy_kwargs = dict(activation_fn=torch.nn.ReLU,
                      net_arch=dict(pi=[256, 256], vf=[256, 256]))  # 网络参数
 model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs, gamma=0.5, learning_rate=1e-5, batch_size=64)  # 训练参数
 log_path = cur_dir + "/log/sb3/ppo-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 logger = configure(log_path, ["tensorboard", "stdout"])
 model.set_logger(logger)
-model.learn(total_timesteps=1000000)
+model.learn(total_timesteps=100000)
 model.save(log_path + '/model.zip')
 
 # %%

@@ -169,7 +169,9 @@ class ALNSGymEnv(gym.Env):
     
     def step(self, action):
         # 推进ALNS计算
+        start_time = time.time()
         done = self.alns.single_run(self.operator_pair_list[action])
+        timecost = time.time() - start_time
         # 计算状态信息
         self.s_reduced_cost = self.alns.cur_obj - self.last_obj
         self.s_cost_from_min = self.alns.cur_obj - self.alns.best_obj
@@ -190,6 +192,7 @@ class ALNSGymEnv(gym.Env):
         state = self.get_state()
         # 计算奖励
         reward = self.reward_list[self.alns.solution_accept_state]
+        reward += 1e-3 / timecost  # 迭代时间奖励
         # 更新结果记录
         self.last_action = action
         self.last_obj = self.alns.cur_obj

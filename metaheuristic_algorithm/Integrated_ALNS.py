@@ -188,18 +188,18 @@ class ALNS(ALNS_base):
         self.break_operators_list = [
             PickingRandomBreak(instance), # base
             PickingRandomBreak(instance, break_num=2), # base
-            # PickingGreedyBreak(instance), # base 
-            # PickingShawBreak(instance, break_num=2),
+            PickingGreedyBreak(instance), # base 
+            PickingShawBreak(instance, break_num=2),
 
             SortingRandomBreak(instance), # base
-            # SortingRandomBreak(instance, break_num=2),
-            # SortingBalanceBreak(instance, break_num=2),
+            SortingRandomBreak(instance, break_num=2),
+            SortingBalanceBreak(instance, break_num=2),
         ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), # base
             PickingGreedyRepair(instance), # base
             SortingRandomRepair(instance), # base
-            # SortingGreedyRepair(instance),
+            SortingGreedyRepair(instance),
         ]
     
     def solution_init(self):
