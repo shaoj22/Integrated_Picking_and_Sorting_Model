@@ -2,7 +2,7 @@
 Author: shaoj22 935619774@qq.com
 Date: 2024-03-10 16:33:10
 LastEditors: shaoj22 935619774@qq.com
-LastEditTime: 2024-03-15 11:42:37
+LastEditTime: 2024-03-20 21:44:06
 FilePath: /Integrated_Picking_and_Sorting_Model/utils_new.py.
 Description: new utils for the fitness evaluate.
 '''
@@ -50,8 +50,10 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
     while robot_completed.count(False)>0:
         # base case: 不符合约束的解直接退出
         num += 1
-        if num == 1000:
+        if num == 30000:
             print("error")
+            obj += 10000
+            return obj, info
         # 为每个车前进 one step
         for r in range(integrated_instance.robotNum):
             # base case1:如果该车未用直接设置完成

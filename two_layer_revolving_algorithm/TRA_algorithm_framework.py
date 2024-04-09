@@ -166,29 +166,29 @@ class TRAAlgorithmFramework:
 
 if __name__ == "__main__":
     # create instance
-    w_num = 5
-    l_num = 5
-    bins_num = 30
-    robot_num = 20
-    picking_station_num = 10
-    orders_num = 30
-    instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    w_num = 6
+    l_num = 4
+    bins_num = 18
+    robot_num = 9
+    picking_station_num = 6
+    orders_num = 9
+    instance = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # create algorithm
-    TRA_iter_num = 50
+    TRA_iter_num = 5000
     TRA_accept_gap = 0.2
     # each variable iter num
-    x_iter_num = 1000
-    y_iter_num = 1000
-    z_iter_num = 1000
+    x_iter_num = 10000
+    y_iter_num = 10000
+    z_iter_num = 100
     TRA_iter_num_dict = {
         "x": x_iter_num,
         "y": y_iter_num,
         "z": z_iter_num,
     }
     # each variable non improve count
-    x_non_improve_count = 1000
-    y_non_improve_count = 1000
-    z_non_improve_count = 1000
+    x_non_improve_count = 10000
+    y_non_improve_count = 10000
+    z_non_improve_count = 10000
     TRA_non_improve_count_dict = {
         "x": x_non_improve_count,
         "y": y_non_improve_count,

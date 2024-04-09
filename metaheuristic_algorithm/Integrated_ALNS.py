@@ -12,17 +12,16 @@ sys.path.append("..")
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-from generate_instances import Integrated_Instance
+from Integrated_Picking_and_Sorting_Model.generate_instances import Integrated_Instance
 import time
 import tqdm
 import copy
-import utils_new
-import utils
-from metaheuristic_algorithm.integrated_Operators import *
-from heuristic_algorithm import NNH_heuristic_algorithm
-from two_layer_revolving_algorithm.Variable import Variable
+from Integrated_Picking_and_Sorting_Model import utils_new
+from Integrated_Picking_and_Sorting_Model.metaheuristic_algorithm.integrated_Operators import *
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm import NNH_heuristic_algorithm
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.Variable import Variable
 # from two_layer_revolving_algorithm.common_algorithm_by_gurobi import commonAlgorithmByGurobi
-from two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi import commonAlgorithmByStrengthenedGurobi
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi import commonAlgorithmByStrengthenedGurobi
 
 
 
@@ -271,15 +270,15 @@ class ALNS(ALNS_base):
 
 if __name__ == "__main__":
     # create instance
-    w_num = 9
-    l_num = 8
-    bins_num = 60
-    robot_num = 20
+    w_num = 12
+    l_num = 12
+    bins_num = 200
+    robot_num = 25
     picking_station_num = 10
-    orders_num = 50
-    instance = Integrated_Instance.Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    orders_num = 120
+    instance = Integrated_Instance.Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=100000)
+    alg = ALNS(instance, iter_num=5000)
     start = time.time()
     solution, obj, obj_of_500 = alg.run()
     # instance.render(routes=solution['picking'])

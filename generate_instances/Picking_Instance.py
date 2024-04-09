@@ -9,7 +9,7 @@ import sys
 sys.path.append('..')
 import numpy as np
 import matplotlib.pyplot as plt
-import utils
+import Integrated_Picking_and_Sorting_Model.utils
 
 class Map:
     """ map class

@@ -7,7 +7,7 @@ Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
 
 
 import numpy as np
-import utils_new
+from Integrated_Picking_and_Sorting_Model.utils_new import efficient_integrated_evaluate
 import random
 
 # base classes
@@ -305,7 +305,7 @@ class SortingGreedyRepair(Operator):
     
     def backupon(self, best_solution, best_obj, cur_solution, break_o_list, cur_p):
         if cur_p >= len(break_o_list):
-            cur_obj, _ = utils_new.efficient_integrated_evaluate(self.instance, cur_solution['picking'], cur_solution['sorting'])
+            cur_obj, _ = efficient_integrated_evaluate.efficient_integrated_evaluate(self.instance, cur_solution['picking'], cur_solution['sorting'])
             if cur_obj < best_obj:
                 best_obj = cur_obj
                 best_solution['sorting'] = cur_solution['sorting'].copy()
@@ -317,7 +317,7 @@ class SortingGreedyRepair(Operator):
 
     def set(self, solution, break_info):
         best_solution = solution.copy()
-        best_obj, _ = utils_new.efficient_integrated_evaluate(self.instance, best_solution['picking'], best_solution['sorting']) 
+        best_obj, _ = efficient_integrated_evaluate.efficient_integrated_evaluate(self.instance, best_solution['picking'], best_solution['sorting']) 
         cur_solution = solution.copy()
         break_o_list = break_info["break_o_list"]
         cur_p = 0

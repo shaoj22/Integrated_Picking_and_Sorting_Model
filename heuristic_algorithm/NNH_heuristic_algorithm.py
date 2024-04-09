@@ -13,9 +13,9 @@ Created Date: 2023.10.19
 import sys
 sys.path.append('..')
 import numpy as np
-import utils
+import Integrated_Picking_and_Sorting_Model.utils
 import time
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 
 class NNH_heuristic_algorithm():
 

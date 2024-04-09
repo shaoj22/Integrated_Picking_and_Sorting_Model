@@ -12,23 +12,37 @@ Created Date: 2024.03.19
 
 import sys
 sys.path.append('..')
-from generate_instances.Integrated_Instance import Instance
-
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 
 class greedyAlgorithmForRobot():
     def __init__(self, instance):
+        self.instance = instance
         self.n = instance.n
         self.R = instance.robotNum
     
     def main(self):
         """ input instance, use greedy algorithm to generate the init solution for the robot. """
         routes = [[] for _ in range(self.R)]
-        
+        # add robot's start point.
+        cur_robot = 0
+        for i in range(self.R):
+            routes[i].append(self.n*4+i)
+            cur_robot += 1
+        # init the p1 and p2 list.
+        p1_list = [i for i in range(self.n)]
+        p2_list = [i+self.n for i in range(self.n)]
+        # 
+
+
+
         return routes
 
     def runner(self):
         """ runner of the rule based algorithm for robot. """
-        routes = self.main()
+        # routes = self.main()
+        NNH = NNH_heuristic_algorithm(self.instance)
+        routes = NNH.NNH_main()
 
         return routes
 
@@ -40,7 +54,7 @@ if __name__ == "__main__":
     robot_num = 3
     picking_station_num = 5
     orders_num = 3
-    instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    instance = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     algorithm_tools = greedyAlgorithmForRobot(instance)
     routes = algorithm_tools.runner()
     print(routes)

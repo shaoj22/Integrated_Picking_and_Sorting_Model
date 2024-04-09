@@ -14,8 +14,8 @@ import sys
 sys.path.append('..')
 import numpy as np
 import gurobipy as gp
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from gurobipy import GRB
 
 
@@ -154,7 +154,7 @@ class IntegratedGurobiModel:
         model.addConstrs( self.IO[i][o] * z[o,p] <= y[i,p] for i in range(self.n) for p in range(self.P) for o in range(self.O))
         # 13. 所有任务都要被完成
         model.addConstrs( gp.quicksum( z[o,p] for p in range(self.P)) == 1 for o in range(self.O))
-        model.addConstr( gp.quicksum( y[i,p] for i in range(self.n) for p in range(self.P)) == self.sumIO)
+        model.addConstr( gp.quicksum( y[i,p] for i in range(self.n) for p in range(self.P)) <= self.sumIO)
         # 14. 料箱i的结束拣选时间一定大于等于它的开始拣选时间（当yip=0时）
         model.addConstrs( Te[i,p] == Ts[i,p] + self.picking_time * y[i,p] for i in range(self.n) for p in range(self.P))
         # 15. 当料箱i不去拣选站p时，Ts=Ta
@@ -184,8 +184,6 @@ class IntegratedGurobiModel:
         info["z"] = z
 
         return info
-
-
 
     def set_init_solution(self, model):
         """ set init solution for model """
@@ -219,14 +217,14 @@ class IntegratedGurobiModel:
         return model
 
 if __name__ == "__main__":
-    w_num = 9
-    l_num = 8
-    bins_num = 60
+    w_num = 6
+    l_num = 6
+    bins_num = 40
     robot_num = 20
     picking_station_num = 10
-    orders_num = 50
-    problem = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
-    solver = IntegratedGurobiModel(problem)
+    orders_num = 30
+    problem = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
+    solver = IntegratedGurobiModel(problem, init_flag=False)
     model = solver.run_gurobi_model()
 
 

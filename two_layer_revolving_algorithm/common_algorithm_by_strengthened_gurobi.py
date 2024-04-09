@@ -15,14 +15,14 @@ sys.path.append('..')
 import numpy as np
 import gurobipy as gp
 import time
-import utils
-from generate_instances.Integrated_Instance import Instance
-from two_layer_revolving_algorithm.integrated_gurobi_model_update import IntegratedGurobiModel
-from two_layer_revolving_algorithm.TRA_utils import *
+import Integrated_Picking_and_Sorting_Model.utils
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.integrated_gurobi_model_update import IntegratedGurobiModel
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.TRA_utils import *
 from gurobipy import GRB
-from two_layer_revolving_algorithm.Variable import Variable
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.Variable import Variable
 # from metaheuristic_algorithm.Integrated_ALNS import ALNS
-from two_layer_revolving_algorithm.TRA_utils import *
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.TRA_utils import *
 
 class commonAlgorithmByStrengthenedGurobi:
     def __init__(self, integrated_instance, Variable, time_limit=None, init_flag=False):
