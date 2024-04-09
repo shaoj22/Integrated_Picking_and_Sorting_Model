@@ -11,6 +11,7 @@ import gymnasium as gym
 from metaheuristic_algorithm.Integrated_ALNS import ALNS
 import numpy as np
 import tqdm
+import time
 
 
 class ALNSToLearn(ALNS):
@@ -171,7 +172,7 @@ class ALNSGymEnv(gym.Env):
         # 推进ALNS计算
         start_time = time.time()
         done = self.alns.single_run(self.operator_pair_list[action])
-        timecost = time.time() - start_time
+        timecost = time.time() - start_time + 1e-3
         # 计算状态信息
         self.s_reduced_cost = self.alns.cur_obj - self.last_obj
         self.s_cost_from_min = self.alns.cur_obj - self.alns.best_obj

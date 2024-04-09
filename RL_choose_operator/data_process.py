@@ -3,11 +3,12 @@
 import sys
 sys.path.append('..')
 from generate_instances import Integrated_Instance
-from generate_instances.generate_instances import generate_medium_instances
+from generate_instances.generate_instances import generate_medium_instances, generate_small_instances
 import numpy as np
 import os
 
-instance_params_list = generate_medium_instances()
+instance_params_list = generate_small_instances()
+# instance_params_list = generate_medium_instances()
 
 np.random.seed(0)
 np.random.shuffle(instance_params_list)
