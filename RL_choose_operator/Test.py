@@ -14,6 +14,7 @@ from generate_instances.generate_instances import generate_medium_instances
 from RL_choose_operator.Env import ALNSGymEnv
 from stable_baselines3 import PPO
 from collections import defaultdict
+import numpy as np
 import time
 import json
 
@@ -77,8 +78,12 @@ class Tester:
                 test_result[alg.name()]["iter_obj_list"].append(iter_obj_list)
                 test_result[alg.name()]["action_list"].append(action_list)
         # 保存结果
+        def default_serializer(obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()  # 将NumPy数组转换为列表
+            raise TypeError(f"Type {type(obj)} is not JSON serializable")
         with open(self.result_dir + '/test_result.json', 'w') as f:
-            json.dump(test_result, f) 
+            json.dump(test_result, f, default=default_serializer) 
         return test_result
 
 
@@ -87,7 +92,7 @@ if __name__ == '__main__':
     instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/test_instances.txt').readlines()]
     # instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/train_instances.txt').readlines()]
     instance_list = [Integrated_Instance.Instance(*params) for params in instance_params_list]
-    tester = Tester(instance_list, 1000, cur_dir + '\log\sb3\ppo-20240409-150511\model.zip', cur_dir + '/result')
+    tester = Tester(instance_list, 1000, cur_dir + '\log\sb3\ppo-20240409-191312\model.zip', cur_dir + '/result')
     tester.test()
 
         

@@ -124,7 +124,7 @@ class ALNSGymEnv(gym.Env):
             shape=(8+self.action_num,),  # 12 features
             dtype=np.float32
         )
-        self.reward_list = [5, 3, 1, 0]  # 奖励对应于解的各个接受状态
+        self.reward_list = [10, 1, 1e-3, 0]  # 奖励对应于解的各个接受状态
         self.reset()
     
     def reset(self, seed=None, instance=None):
@@ -193,7 +193,7 @@ class ALNSGymEnv(gym.Env):
         state = self.get_state()
         # 计算奖励
         reward = self.reward_list[self.alns.solution_accept_state]
-        reward += 1e-3 / timecost  # 迭代时间奖励
+        # reward += 1e-5 / timecost  # 迭代时间奖励
         # 更新结果记录
         self.last_action = action
         self.last_obj = self.alns.cur_obj
