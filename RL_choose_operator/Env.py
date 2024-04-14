@@ -124,7 +124,7 @@ class ALNSGymEnv(gym.Env):
             shape=(8+self.action_num,),  # 12 features
             dtype=np.float32
         )
-        self.reward_list = [10, 1, 1e-3, 0]  # 奖励对应于解的各个接受状态
+        self.reward_list = [10, 1, 1e-2, 0]  # 奖励对应于解的各个接受状态
         self.reset()
     
     def reset(self, seed=None, instance=None):
