@@ -273,10 +273,10 @@ if __name__ == "__main__":
     # create instance
     w_num = 6
     l_num = 4
-    bins_num = 30
-    robot_num = 15
-    picking_station_num = 9
-    orders_num = 20
+    bins_num = 50
+    robot_num = 9
+    picking_station_num = 6
+    orders_num = 30
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # run algorithm
     alg = ALNS(instance, iter_num=50000)

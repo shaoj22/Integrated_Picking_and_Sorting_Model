@@ -164,10 +164,10 @@ if __name__ == "__main__":
     # create instance
     w_num = 6
     l_num = 4
-    bins_num = 9
+    bins_num = 18
     robot_num = 9
     picking_station_num = 6
-    orders_num = 5
+    orders_num = 9
     instance = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # create algorithm
     TRA_iter_num = 500
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     # each variable iter num
     x_iter_num = 10000
     y_iter_num = 1000
-    z_iter_num = 500
+    z_iter_num = 200
     TRA_iter_num_dict = {
         "x": x_iter_num,
         "y": y_iter_num,
@@ -191,10 +191,26 @@ if __name__ == "__main__":
         "z": z_non_improve_count,
     }
     # each variable operator list
-    # x_operators_list = [operators_for_x.Relocate(instance=instance, k=1)]
-    # x_operators_list = [operators_for_x.Exchange1(instance=instance, k=1)]
-    # x_operators_list = [operators_for_x.Exchange2(instance=instance, k=1)]
-    x_operators_list = [operators_for_x.Relocate(instance=instance, k=1), operators_for_x.Exchange1(instance=instance, k=1), operators_for_x.Exchange2(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.relocateInner1(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.relocateInner2(instance=instance, k=2)]
+    # x_operators_list = [operators_for_x.relocateInter1(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.exchangeInner1(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.exchangeInter1(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.reverseInner(instance=instance, k=1)]
+    # x_operators_list = [operators_for_x.reverseInter(instance=instance, k=1)]
+
+    x_operators_list = [
+        operators_for_x.relocateInner1(instance=instance, k=1),
+        operators_for_x.relocateInter1(instance=instance, k=1),
+        operators_for_x.exchangeInner1(instance=instance, k=1),
+        operators_for_x.exchangeInter1(instance=instance, k=1),
+        operators_for_x.reverseInner(instance=instance, k=1),
+        operators_for_x.reverseInter(instance=instance, k=1),
+
+
+
+        
+        ]
     y_operators_list = []
     z_operators_list = [operators_for_z.Relocate(instance=instance, k=1)]
     TRA_operators_dict = {
