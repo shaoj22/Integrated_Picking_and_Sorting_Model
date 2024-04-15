@@ -92,7 +92,7 @@ if __name__ == '__main__':
     instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/test_instances.txt').readlines()]
     # instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/train_instances.txt').readlines()]
     instance_list = [Integrated_Instance.Instance(*params) for params in instance_params_list]
-    tester = Tester(instance_list, 1000, cur_dir + '\log\sb3\ppo-20240409-191312\model.zip', cur_dir + '/result')
+    tester = Tester(instance_list, 10000, cur_dir + '\log\sb3\ppo-20240414-203214\model.zip', cur_dir + '/result')
     tester.test()
 
         
