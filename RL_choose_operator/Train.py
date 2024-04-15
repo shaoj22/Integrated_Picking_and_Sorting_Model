@@ -28,16 +28,18 @@ instance_list = [Integrated_Instance.Instance(*params) for params in instance_pa
 # #%% train
 from stable_baselines3 import PPO
 from stable_baselines3.common.logger import configure
+from stable_baselines3.common.callbacks import CheckpointCallback
 import datetime
 
-env = ALNSGymEnv(instance_list, iter_num=1000)  # 迭代次数
+env = ALNSGymEnv(instance_list, iter_num=10000)  # 迭代次数
 policy_kwargs = dict(activation_fn=torch.nn.ReLU,
                      net_arch=dict(pi=[256, 256], vf=[256, 256]))  # 网络参数
-model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs, gamma=0.5, learning_rate=1e-5, batch_size=256)  # 训练参数
+model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs, gamma=0.5, learning_rate=1e-7, batch_size=512)  # 训练参数
 log_path = cur_dir + "/log/sb3/ppo-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 logger = configure(log_path, ["tensorboard", "stdout"])
 model.set_logger(logger)
-model.learn(total_timesteps=1000000)
+checkpoint_callback = CheckpointCallback(save_freq=1000000, save_path=cur_dir + '/log/sb3/model_log/', name_prefix='ppo_1000')  # 每n步保存一次模型
+model.learn(total_timesteps=10000000, callback=checkpoint_callback)  # 训练
 model.save(log_path + '/model.zip')
 
 # %%
