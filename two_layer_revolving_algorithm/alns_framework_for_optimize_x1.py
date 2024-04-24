@@ -1,11 +1,3 @@
-'''
-File: Integrated_ALNS.py
-Project: Integrated_Picking---Sorting_Model
-Description: Solving integrated model with Adaptive Large Neighborhood Search algorithm
-File Created: Saturday, 6th May 2023 10:11:26 am
-Author: Charles Lee (lmz22@mails.tsinghua.edu.cn)
-'''
-
 
 import sys
 sys.path.append("..")
@@ -18,14 +10,7 @@ import tqdm
 import copy
 from Integrated_Picking_and_Sorting_Model import utils
 from Integrated_Picking_and_Sorting_Model import utils_new
-from Integrated_Picking_and_Sorting_Model.metaheuristic_algorithm.integrated_Operators import *
-from Integrated_Picking_and_Sorting_Model.heuristic_algorithm import NNH_heuristic_algorithm
-from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.Variable import Variable
-# from two_layer_revolving_algorithm.common_algorithm_by_gurobi import commonAlgorithmByGurobi
-from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi import commonAlgorithmByStrengthenedGurobi
-from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.greedy_algorithm_for_order import greedyAlgorithmForOrder
-from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.greedy_algorithm_for_robot import greedyAlgorithmForRobot
-
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.operators_for_x1 import *
 
 
 class ALNS_base:
@@ -36,7 +21,7 @@ class ALNS_base:
             2. solution_init: 返回一个初始解
             3. cal_objective: 计算解的目标函数值
     """
-    def __init__(self, iter_num):
+    def __init__(self, iter_num, algorithm_info):
         self.iter_num = iter_num
         
         # set params
@@ -46,10 +31,21 @@ class ALNS_base:
         self.sigma2 = 1
         self.sigma3 = 0.1
         ## 2. SA params
-        self.max_temp = 0.01
+        self.max_temp = algorithm_info["temperature"]
         self.min_temp = 1e-10
         self.cooling_rate = 0.97
         self.cooling_period = 30
+
+        self.break_operators_scores = algorithm_info["break_operators_scores"]
+        self.repair_operators_scores = algorithm_info["repair_operators_scores"]
+        self.break_operators_steps = algorithm_info["break_operators_steps"]
+        self.repair_operators_steps = algorithm_info["repair_operators_steps"]
+        self.best_solution = algorithm_info["best_solution"]
+        self.best_obj = algorithm_info["best_obj"]
+        self.cur_solution = algorithm_info["cur_solution"]
+        self.cur_obj = algorithm_info["cur_obj"]
+
+        self.obj_iter_process = []
     
     # to be implemented in subclass
     def set_operators_list(self):
@@ -109,11 +105,9 @@ class ALNS_base:
         plt.show()
 
     def run(self):
-        self.reset()
-        cur_solution = self.solution_init() 
+        # self.reset()
+        cur_solution = self.cur_solution
         cur_obj, cur_model_obj = self.cal_objective(cur_solution)
-        self.best_solution = cur_solution
-        self.best_obj = cur_obj
         self.best_model_obj = cur_model_obj
         temperature = self.max_temp
         pbar = tqdm.tqdm(range(self.iter_num), desc="ALNS Iteration")
@@ -172,18 +166,31 @@ class ALNS_base:
                 "best_model_obj" : self.best_model_obj,
                 "cur_model_obj" : cur_model_obj
             })
+        
+        algorithm_info = {
+            "temperature" : temperature,
+            "break_operators_scores" : self.break_operators_scores,
+            "repair_operators_scores" : self.repair_operators_scores, 
+            "break_operators_steps" : self.break_operators_steps, 
+            "repair_operators_steps" : self.repair_operators_steps, 
+            "best_obj" : self.best_obj,
+            "best_solution" : self.best_solution,
+            "cur_obj" : cur_obj,
+            "cur_solution" : cur_solution,
+        }
             
-
-        return self.best_solution, self.best_obj, self.obj_of_500
+        return self.best_solution, self.best_obj, algorithm_info
 
 
 class ALNS(ALNS_base):
     """
     ALNS algorithm for integrated picking and sorting problem 
     """
-    def __init__(self, instance, iter_num):
-        super().__init__(iter_num)
+    def __init__(self, instance, iter_num, picking_solution, sorting_solution, algorithm_info=None):
+        super().__init__(iter_num, algorithm_info=algorithm_info)
         self.instance = instance
+        self.picking_solution = picking_solution
+        self.sorting_solution = sorting_solution
         self.set_operators_list(self.instance)
     
     def set_operators_list(self, instance):
@@ -192,33 +199,25 @@ class ALNS(ALNS_base):
             PickingRandomBreak(instance), # base
             PickingRandomBreak(instance, break_num=2), # base
             PickingGreedyBreak(instance), # base 
-            PickingShawBreak(instance, break_num=2),
+            # PickingShawBreak(instance, break_num=2),
 
             SortingRandomBreak(instance), # base
-            SortingRandomBreak(instance, break_num=2),
-            SortingBalanceBreak(instance, break_num=2),
+            # SortingRandomBreak(instance, break_num=2),
+            # SortingBalanceBreak(instance, break_num=2),
         ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), # base
             PickingGreedyRepair(instance), # base
             SortingRandomRepair(instance), # base
-            SortingGreedyRepair(instance),
+            # SortingGreedyRepair(instance),
         ]
     
     def solution_init(self):
-        # picking_alg = NNH_heuristic_algorithm.NNH_heuristic_algorithm(self.instance)
-        # picking_solution = picking_alg.NNH_main()
-        # sorting_solution = [np.random.randint(self.instance.P) for _ in range(self.instance.O)]
-
-        order_algorithm_tools = greedyAlgorithmForOrder(instance)
-        sorting_solution = order_algorithm_tools.runner()
-        robot_algorithm_tools = greedyAlgorithmForRobot(instance)
-        picking_solution = robot_algorithm_tools.runner()
-
         solution = {
-            "picking" : picking_solution,
-            "sorting" : sorting_solution
+            "picking" : self.picking_solution,
+            "sorting" : self.sorting_solution,
         }
+
         return solution
     
     def cal_objective(self, solution):
@@ -279,15 +278,15 @@ class ALNS(ALNS_base):
 
 if __name__ == "__main__":
     # create instance
-    w_num = 4
+    w_num = 6
     l_num = 4
-    bins_num = 12
-    robot_num = 6
-    picking_station_num = 5
-    orders_num = 6
+    bins_num = 18
+    robot_num = 9
+    picking_station_num = 6
+    orders_num = 9
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=100000)
+    alg = ALNS(instance, iter_num=30000)
     start = time.time()
     solution, obj, obj_of_500 = alg.run()
     # instance.render(routes=solution['picking'])

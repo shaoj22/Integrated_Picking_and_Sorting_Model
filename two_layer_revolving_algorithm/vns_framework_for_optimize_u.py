@@ -1,12 +1,12 @@
 '''
-File: vns_framework_for_optimize_x.py
+File: vns_framework_for_optimize_u.py
 Project: Integrated_Picking_and_Sorting_Model
 Description: 
 ----------
-design the vns framework specially for optimize x variable.
+design the vns framework specially for optimize u variable.
 ----------
 Author: 626
-Created Date: 2023.03.06
+Created Date: 2023.04.23
 '''
 
 
@@ -17,6 +17,7 @@ import tqdm
 from TRA_utils import *
 from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.lkh_for_tsp import LKH
 import Integrated_Picking_and_Sorting_Model.utils
 import Integrated_Picking_and_Sorting_Model.utils_new as utils_new
 import operators_for_x
@@ -41,6 +42,7 @@ class VNS:
 
         # input parameters
         self.problem = problem
+        self.LKH_tool = LKH(problem=self.problem)
         self.picking_solution = picking_solution
         self.sorting_solution = sorting_solution
         self.init_obj = init_obj
@@ -77,7 +79,15 @@ class VNS:
         Returns:
             obj (double): the update obj after solving by neighborhood;
         """
-        obj, info = utils_new.efficient_integrated_evaluate(self.problem, cur_picking_solution, self.sorting_solution)
+
+        """ TODO: 计算cur_picking_solution对应的路径solution """
+        # 利用LKH_tool求解real routes
+        real_routes = []
+        for r in range(len(cur_picking_solution)):
+            real_route = self.LKH_tool.runner(cur_picking_solution[r])
+            real_routes.append(real_route)
+
+        obj, info = utils_new.efficient_integrated_evaluate(self.problem, real_routes, self.sorting_solution)
         
         return obj
 
@@ -109,7 +119,7 @@ class VNS:
         neighborhood = []
         operator_k = 0 # 记录当前操作的operator index
         neighborhood = self.get_neighborhood(self.best_solution, operator=self.operators_list[0]) # 获取第0个operator的邻域
-        pbar = tqdm.tqdm(range(self.iter_num), desc="Variable x VNS Iteration")
+        pbar = tqdm.tqdm(range(self.iter_num), desc="Variable u VNS Iteration")
         
         # main framework
         # while cur_iter_num < self.iter_num:

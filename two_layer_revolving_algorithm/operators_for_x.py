@@ -1,3 +1,4 @@
+
 '''
 File: operators_for_x.py
 Project: Integrated_Picking_and_Sorting_Model
@@ -9,11 +10,43 @@ Author: 626
 Created Date: 2024.01.02
 '''
 
+
 import sys
 sys.path.append('..')
 import numpy as np
 import copy
 from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+
+
+class Operator:
+    def __init__(self, instance):
+        # 获取算例信息
+        self.instance = instance
+    
+    def safe_insert(self, sequence, pos, item):
+        """ 在序列 sequence 的 pos 位置插入 item """
+        if pos == len(sequence):
+            sequence.append(item)
+        else:
+            sequence.insert(pos, item)
+    
+    def cal_insert_cost(self, sequence, pos, item):
+        """ 计算在序列 sequence 的 pos 位置插入 item 的成本 """
+        if pos == len(sequence):
+            return self.instance.disMatrix[sequence[-1], item]
+        else:
+            return self.instance.disMatrix[sequence[pos-1], item] + self.instance.disMatrix[item, sequence[pos]] - self.instance.disMatrix[sequence[pos-1], sequence[pos]]
+    
+    def cal_remove_cost(self, sequence, pos):
+        """ 计算删除序列 sequence 的 pos 位置减少的成本 """
+        if pos == len(sequence) - 1:
+            return self.instance.disMatrix[sequence[pos-1], sequence[pos]]
+        else:
+            return self.instance.disMatrix[sequence[pos-1], sequence[pos]] + self.instance.disMatrix[sequence[pos], sequence[pos+1]] - self.instance.disMatrix[sequence[pos-1], sequence[pos+1]]
+
+    def set(self, solution):
+        # 获取邻域解
+        raise NotImplementedError
 
 
 class relocateInner1():
@@ -479,9 +512,10 @@ def transfer_list_2_picking_solution(solution, node_num):
     return picking_solution
 
 
-class greedyRelocateInner1():
+class greedyRelocateInner1(Operator):
     def __init__(self, instance=None, k=1):
         """ greedy choose some p and d pair and relocate their positions in different robots """
+        super().__init__(instance)
         self.instance = instance
         self.k = k # how many points relocate together, k=1:relocate, k>1:Or-Opt
 
@@ -496,37 +530,46 @@ class greedyRelocateInner1():
         """
         routes = copy.deepcopy(picking_solution)
         neighborhood = [] # 邻域集合
-        p_list = []
-        while len(p_list) == 0:
-            # random choose one robot
-            """ TODO: relocate each robot rather than random one """
-            k = np.random.randint(0, len(routes))
+        for k in range(len(routes)):
+            p_pos_list = []
             # random choose one start point of this robot
-            p_list = [p for p in routes[k] if self.instance.node2type[p] in ["P1", "P2"]]
-        # 获取起终点
-        p_choose = np.random.choice(p_list)
-        d_choose = p_choose + 2*self.instance.n
-        # 删除起终点
-        routes[k].remove(p_choose)
-        routes[k].remove(d_choose)
-        # 根据chosen的pd来获取neighborhood
-        route_point_num = len(routes[k])
-        """ tips: pos_p < pos_d """
-        for pos_p in range(1, route_point_num+1): # 不能插入第一个点
-            for pos_d in range(pos_p, route_point_num+1): # d在p之后
-                neighbor = copy.deepcopy(routes)
-                # 插入p和d
-                neighbor[k].insert(pos_p, p_choose)
-                neighbor[k].insert(pos_d, d_choose)
-                if neighbor not in neighborhood:
-                    neighborhood.append(neighbor)
+            for pos, p in enumerate(routes[k]):
+                if self.instance.node2type[p] in ["P1", "P2"]:
+                    p_pos_list.append(pos)
+            if len(p_pos_list) <= 1:
+                continue
+            # greedy get p and d
+            max_remove_cost = -float('inf')
+            for pos in p_pos_list:
+                    cur_remove_cost = self.cal_remove_cost(routes[k], pos)
+                    if cur_remove_cost > max_remove_cost:
+                        p_choose = routes[k][pos]
+                        max_remove_cost = cur_remove_cost
+            d_choose = p_choose + 2*self.instance.n
+            # 删除起终点
+            routes[k].remove(p_choose)
+            routes[k].remove(d_choose)
+            # 根据chosen的pd来获取neighborhood
+            route_point_num = len(routes[k])
+            """ tips: pos_p < pos_d """
+            for pos_p in range(1, route_point_num+1): # 不能插入第一个点
+                for pos_d in range(pos_p, route_point_num+1): # d在p之后
+                    neighbor = copy.deepcopy(routes)
+                    # 插入p和d
+                    neighbor[k].insert(pos_p, p_choose)
+                    neighbor[k].insert(pos_d, d_choose)
+                    if neighbor not in neighborhood:
+                        neighborhood.append(neighbor)
 
         return neighborhood
 
 
-class greedyRelocateInter1():
+class greedyRelocateInter1(Operator):
     def __init__(self, instance=None, k=1):
-        """ greedy choose some p and d pair and relocate their positions in different robots """
+        """ greedy choose some p and d pair and relocate their positions in different robots 
+            note. include inter route
+        """
+        super().__init__(instance)
         self.instance = instance
         self.k = k # how many points relocate together, k=1:relocate, k>1:Or-Opt
 
@@ -541,31 +584,120 @@ class greedyRelocateInter1():
         """
         routes = copy.deepcopy(picking_solution)
         neighborhood = [] # 邻域集合
-        p_list = []
-        while len(p_list) == 0:
-            # random choose one robot
-            """ TODO: relocate each robot rather than random one """
-            k = np.random.randint(0, len(routes))
+        for each_k in range(len(routes)):
+            p_pos_list = []
             # random choose one start point of this robot
-            p_list = [p for p in routes[k] if self.instance.node2type[p] in ["P1", "P2"]]
-        # 获取起终点
-        p_choose = np.random.choice(p_list)
-        d_choose = p_choose + 2*self.instance.n
-        # 删除起终点
-        routes[k].remove(p_choose)
-        routes[k].remove(d_choose)
-        # 根据chosen的pd来获取neighborhood
-        route_num = len(routes)
-        for r in range(route_num): # 选择第几个robot插入
-            """ tips: pos_p < pos_d """
-            route_point_num = len(routes[r])
-            for pos_p in range(1, route_point_num): # 不能插入第一个点
-                for pos_d in range(pos_p, route_point_num): # d在p之后
-                    neighbor = copy.deepcopy(routes)
-                    # 插入p和d
-                    neighbor[r].insert(pos_p, p_choose)
-                    neighbor[r].insert(pos_d, d_choose)
-                    if neighbor not in neighborhood:
-                        neighborhood.append(neighbor)
+            for pos, p in enumerate(routes[each_k]):
+                if self.instance.node2type[p] in ["P1", "P2"]:
+                    p_pos_list.append(pos)
+            if len(p_pos_list) <= 1:
+                continue
+            # greedy get p and d
+            max_remove_cost = -float('inf')
+            for pos in p_pos_list:
+                    cur_remove_cost = self.cal_remove_cost(routes[each_k], pos)
+                    if cur_remove_cost > max_remove_cost:
+                        p_choose = routes[each_k][pos]
+                        max_remove_cost = cur_remove_cost
+            d_choose = p_choose + 2*self.instance.n
+            # 删除起终点
+            routes[each_k].remove(p_choose)
+            routes[each_k].remove(d_choose)
+            # 根据chosen的pd来获取neighborhood
+            for k in range(len(routes)):
+                min_cost = np.inf
+                # 对于所有起点插入位置
+                for p_pos in range(1, len(routes[k])+1):
+                    cost1 = self.cal_insert_cost(routes[k], p_pos, p_choose)
+                    self.safe_insert(routes[k], p_pos, p_choose)
+                    # 对于所有终点插入位置
+                    for d_pos in range(p_pos+1, len(routes[k])+1):
+                        cost2 = self.cal_insert_cost(routes[k], d_pos, d_choose)
+                        self.safe_insert(routes[k], d_pos, d_choose)
+                        # 计算插入该位置的成本
+                        cur_cost = cost1 + cost2
+                        if cur_cost < min_cost:
+                            min_cost = cur_cost
+                            min_p_pos = p_pos
+                            min_d_pos = d_pos
+                        # 恢复
+                        routes[k].pop(d_pos)
+                    # 恢复
+                    routes[k].pop(p_pos)
+                neighbor = copy.deepcopy(routes)
+                neighbor[k].insert(min_p_pos, p_choose)
+                neighbor[k].insert(min_d_pos, d_choose)
+                neighborhood.append(neighbor)
+
+        return neighborhood
+    
+
+
+class greedyExchangeInter(Operator):
+    def __init__(self, instance=None):
+        """ exchange two p and d pairs greedy inter route
+        ps: Exchange operator won't change the points number of each robot
+
+        Args:
+            picking_solution (List[List[int]]): idxs of points of each route
+
+        Returns:
+            neighborhood (List[List[int]]): idxs of points of each route of each neighbor
+        """
+        super().__init__(instance)
+        self.instance = instance
+
+    def run(self, picking_solution):
+        routes = copy.deepcopy(picking_solution)
+        neighborhood = [] # 邻域集合
+        for k1 in range(len(routes)):
+            p_pos_list = []
+            # random choose one start point of this robot
+            for pos, p in enumerate(routes[k1]):
+                if self.instance.node2type[p] in ["P1", "P2"]:
+                    p_pos_list.append(pos)
+            if len(p_pos_list) <= 1:
+                continue
+            # greedy get p and d
+            max_remove_cost = -float('inf')
+            for pos in p_pos_list:
+                    cur_remove_cost = self.cal_remove_cost(routes[k1], pos)
+                    if cur_remove_cost > max_remove_cost:
+                        p_choose_1 = routes[k1][pos]
+                        max_remove_cost = cur_remove_cost
+            d_choose_1 = p_choose_1 + 2*self.instance.n
+            for k2 in range(len(routes)):
+                if k1 == k2:
+                    continue
+                p_pos_list = []
+                # random choose one start point of this robot
+                for pos, p in enumerate(routes[k2]):
+                    if self.instance.node2type[p] in ["P1", "P2"]:
+                        p_pos_list.append(pos)
+                if len(p_pos_list) <= 1:
+                    continue
+                # greedy get p and d
+                max_remove_cost = -float('inf')
+                for pos in p_pos_list:
+                        cur_remove_cost = self.cal_remove_cost(routes[k2], pos)
+                        if cur_remove_cost > max_remove_cost:
+                            p_choose_2 = routes[k2][pos]
+                            max_remove_cost = cur_remove_cost
+                d_choose_2 = p_choose_2 + 2*self.instance.n
+                # 计算p1和p2和d1和d2在route[r]中的idx
+                p_idx_1 = routes[k1].index(p_choose_1)
+                p_idx_2 = routes[k2].index(p_choose_2)
+                d_idx_1 = routes[k1].index(d_choose_1)
+                d_idx_2 = routes[k2].index(d_choose_2)
+                # 交换加入neighborhood
+                neighbor = copy.deepcopy(routes)
+                temp_p = neighbor[k1][p_idx_1]
+                temp_d = neighbor[k1][d_idx_1]
+                neighbor[k1][p_idx_1] = neighbor[k2][p_idx_2]
+                neighbor[k2][p_idx_2] = temp_p
+                neighbor[k1][d_idx_1] = neighbor[k2][d_idx_2]
+                neighbor[k2][d_idx_2] = temp_d
+                if neighbor not in neighborhood:
+                    neighborhood.append(neighbor)
 
         return neighborhood

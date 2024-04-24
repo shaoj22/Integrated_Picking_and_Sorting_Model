@@ -8,7 +8,7 @@ Author: limingzhe05 (lmz22@mails.tsinghua.edu.cn)
 import sys
 sys.path.append('..')
 import gymnasium as gym
-from metaheuristic_algorithm.Integrated_ALNS import ALNS
+from Integrated_Picking_and_Sorting_Model.metaheuristic_algorithm.Integrated_ALNS import ALNS
 import numpy as np
 import tqdm
 import time

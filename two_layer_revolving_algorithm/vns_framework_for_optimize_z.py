@@ -14,7 +14,6 @@ import sys
 sys.path.append("..")
 import numpy as np
 import tqdm
-
 from TRA_utils import *
 from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
@@ -110,7 +109,6 @@ class VNS:
         operator_k = 0 # 记录当前操作的operator index
         neighborhood = self.get_neighborhood(self.best_solution, operator=self.operators_list[0]) # 获取第0个operator的邻域
         pbar = tqdm.tqdm(range(self.iter_num), desc="Variable z VNS Iteration")
-        
         # main framework
         # while cur_iter_num < self.iter_num:
         for step in pbar:
