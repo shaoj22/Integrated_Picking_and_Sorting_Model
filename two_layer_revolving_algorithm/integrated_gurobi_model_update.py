@@ -30,7 +30,7 @@ class IntegratedGurobiModel:
         # common param
         self.integrated_instance = integrated_instance
         self.time_limit = time_limit
-        self.bigM = 2000
+        self.bigM = 1200
         # picking param
         self.init_flag = init_flag
         self.Q = integrated_instance.capacity

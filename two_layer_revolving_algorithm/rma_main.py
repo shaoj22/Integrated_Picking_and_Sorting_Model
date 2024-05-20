@@ -11,11 +11,11 @@ Created Date: 2023.12.08
 
 
 import numpy as np
-import operators_for_x
-import operators_for_y
-import operators_for_z
-import operators_for_u
-import operators_for_x1
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm import operators_for_x
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm import operators_for_y
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm import operators_for_z
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm import operators_for_u
+from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm import operators_for_x1
 from Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.TRA_algorithm_framework import TRAAlgorithmFramework
 from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
@@ -57,9 +57,9 @@ def rma_main(instance=None):
         operators_for_x1.PickingRandomBreak(instance), # base
         operators_for_x1.PickingRandomBreak(instance, break_num=2), # base
         operators_for_x1.PickingGreedyBreak(instance), # base 
-        # operators_for_x1.PickingShawBreak(instance, break_num=2),
+        operators_for_x1.PickingShawBreak(instance, break_num=2),
         operators_for_x1.SortingRandomBreak(instance), # base
-        # operators_for_x1.SortingRandomBreak(instance, break_num=2),
+        operators_for_x1.SortingRandomBreak(instance, break_num=2),
         # operators_for_x1.SortingBalanceBreak(instance, break_num=2),
     ]
 
@@ -67,7 +67,7 @@ def rma_main(instance=None):
         operators_for_x1.PickingRandomRepair(instance), # base
         operators_for_x1.PickingGreedyRepair(instance), # base
         operators_for_x1.SortingRandomRepair(instance), # base
-        # SortingGreedyRepair(instance),
+        operators_for_x1.SortingGreedyRepair(instance),
     ]
 
     # picking_alg = NNH_heuristic_algorithm(instance)
@@ -99,6 +99,8 @@ def rma_main(instance=None):
         "best_obj" : 10000,
         "cur_solution" : cur_solution,
         "cur_obj" : None,
+        "break_operators_list" : break_operators_list,
+        "repair_operators_list" : repair_operators_list,
     }
     
     args = {
@@ -108,9 +110,9 @@ def rma_main(instance=None):
         "TRA_iter_num_dict" : {
             "x": 10000,
             "y": 1000,
-            "z": 500,
+            "z": 2000,
             "u": 10000,
-            "x1": 10000,
+            "x1": 30000,
         },
         "TRA_non_improve_count_dict" : {
             "x": 10000,
@@ -125,8 +127,6 @@ def rma_main(instance=None):
             "z": z_operators_list,
             "u": u_operators_list,
         },
-        "break_operators_list" : break_operators_list,
-        "repair_operators_list" : repair_operators_list,
         "algorithm_info" : algorithm_info,
         "need_to_optimize_variable" : need_to_optimize_variable,
     }

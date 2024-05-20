@@ -32,7 +32,7 @@ class ALNS_base:
         self.sigma3 = 0.1
         ## 2. SA params
         self.max_temp = algorithm_info["temperature"]
-        self.min_temp = 1e-10
+        self.min_temp = 1e-8
         self.cooling_rate = 0.97
         self.cooling_period = 30
 
@@ -177,6 +177,8 @@ class ALNS_base:
             "best_solution" : self.best_solution,
             "cur_obj" : cur_obj,
             "cur_solution" : cur_solution,
+            "break_operators_list" : self.break_operators_list,
+            "repair_operators_list" : self.repair_operators_list,
         }
             
         return self.best_solution, self.best_obj, algorithm_info
@@ -191,26 +193,12 @@ class ALNS(ALNS_base):
         self.instance = instance
         self.picking_solution = picking_solution
         self.sorting_solution = sorting_solution
-        self.set_operators_list(self.instance)
+        self.set_operators_list(algorithm_info)
     
-    def set_operators_list(self, instance):
+    def set_operators_list(self, algorithm_info):
         """ note. base operators are very good """
-        self.break_operators_list = [
-            PickingRandomBreak(instance), # base
-            PickingRandomBreak(instance, break_num=2), # base
-            PickingGreedyBreak(instance), # base 
-            # PickingShawBreak(instance, break_num=2),
-
-            SortingRandomBreak(instance), # base
-            # SortingRandomBreak(instance, break_num=2),
-            # SortingBalanceBreak(instance, break_num=2),
-        ]
-        self.repair_operators_list = [
-            PickingRandomRepair(instance), # base
-            PickingGreedyRepair(instance), # base
-            SortingRandomRepair(instance), # base
-            # SortingGreedyRepair(instance),
-        ]
+        self.break_operators_list = algorithm_info['break_operators_list']
+        self.repair_operators_list = algorithm_info['repair_operators_list']
     
     def solution_init(self):
         solution = {
@@ -273,6 +261,7 @@ class ALNS(ALNS_base):
     def test_run(self):
         cur_solution = self.solution_init() 
         cur_obj = self.cal_objective(cur_solution)
+
         return cur_solution, cur_obj
 
 

@@ -14,12 +14,12 @@ import sys
 sys.path.append("..")
 import numpy as np
 import tqdm
-from TRA_utils import *
+# from TRA_utils import *
 from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 import Integrated_Picking_and_Sorting_Model.utils
 import Integrated_Picking_and_Sorting_Model.utils_new as utils_new
-import operators_for_z
+import Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.operators_for_z
 
 
 class VNS:

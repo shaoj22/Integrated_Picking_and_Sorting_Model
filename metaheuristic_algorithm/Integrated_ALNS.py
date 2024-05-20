@@ -190,19 +190,19 @@ class ALNS(ALNS_base):
         """ note. base operators are very good """
         self.break_operators_list = [
             PickingRandomBreak(instance), # base
-            PickingRandomBreak(instance, break_num=2), # base
+            # PickingRandomBreak(instance, break_num=2), # base
             PickingGreedyBreak(instance), # base 
-            PickingShawBreak(instance, break_num=2),
+            # PickingShawBreak(instance, break_num=2),
 
             SortingRandomBreak(instance), # base
-            SortingRandomBreak(instance, break_num=2),
-            SortingBalanceBreak(instance, break_num=2),
+            # SortingRandomBreak(instance, break_num=2),
+            # SortingBalanceBreak(instance, break_num=2),
         ]
         self.repair_operators_list = [
             PickingRandomRepair(instance), # base
             PickingGreedyRepair(instance), # base
             SortingRandomRepair(instance), # base
-            SortingGreedyRepair(instance),
+            # SortingGreedyRepair(instance),
         ]
     
     def solution_init(self):
@@ -210,15 +210,16 @@ class ALNS(ALNS_base):
         # picking_solution = picking_alg.NNH_main()
         # sorting_solution = [np.random.randint(self.instance.P) for _ in range(self.instance.O)]
 
-        order_algorithm_tools = greedyAlgorithmForOrder(instance)
+        order_algorithm_tools = greedyAlgorithmForOrder(self.instance)
         sorting_solution = order_algorithm_tools.runner()
-        robot_algorithm_tools = greedyAlgorithmForRobot(instance)
+        robot_algorithm_tools = greedyAlgorithmForRobot(self.instance)
         picking_solution = robot_algorithm_tools.runner()
 
         solution = {
             "picking" : picking_solution,
             "sorting" : sorting_solution
         }
+        
         return solution
     
     def cal_objective(self, solution):
@@ -287,7 +288,7 @@ if __name__ == "__main__":
     orders_num = 6
     instance = Integrated_Instance.Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # run algorithm
-    alg = ALNS(instance, iter_num=100000)
+    alg = ALNS(instance, iter_num=1000)
     start = time.time()
     solution, obj, obj_of_500 = alg.run()
     # instance.render(routes=solution['picking'])
