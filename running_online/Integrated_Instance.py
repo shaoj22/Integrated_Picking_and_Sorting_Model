@@ -1,0 +1,96 @@
+'''
+File: Integrated_instance.py
+Project: Integrated_Picking_and_Sorting_Model
+Description:
+----------
+Instance class
+----------
+Author: 626
+Created Date: 2023.10.20
+'''
+
+
+import numpy as np
+import random
+import Picking_Instance
+
+
+class Instance(Picking_Instance.Instance):
+    def __init__(self, w_num, l_num, bins_num, orders_num, robot_num, picking_station_num, seed=1):
+        """
+        __init__ generate instance
+
+        Args:
+            w_num (int): 宽度方向上块的个数 (y方向)
+            l_num (int): 长度方向上块的个数 (x方向)
+            bins_num (int): number of the tote
+            robot_num (int): number of AMRs
+            picking_station_num (int): number of picking station
+            orders_num (int): number of the orders
+            seed (int, optional): 随机种子. Defaults to 1.
+        """
+        super().__init__(w_num, l_num, bins_num, robot_num)
+        # add set conveyors params
+        self.distance_between_pickers = 5
+        self.conveyor_length = 105
+        self.P = picking_station_num
+        self.O = orders_num
+        self.picking_time = 10
+        self.queue_length = 8
+        self.v = 0.25
+        self.bins_num = bins_num
+        self.seed = seed
+        self.Dip, self.Dpi, self.IO, self.sumIO = self.generate_conveyors()
+
+    def generate_conveyors(self):
+        """ 产生输送机相关的基本信息 """
+        N = self.bins_num
+        P = self.P
+        O = self.O
+        T1 = self.picking_time
+        # 生成入口至拣选站的距离矩阵（固定长度为10）
+        dip = []
+        dpi = []
+        x1 = 0
+        for i in range(P):
+            x1 += self.distance_between_pickers
+            dip.append(x1)
+            x2 = self.conveyor_length - x1
+            dpi.append(x2)
+        Dip = [dip for _ in range(N)]
+        # 生成出口至拣选站的距离矩阵
+        np.random.seed(self.seed)
+        random.seed(self.seed)
+        Dpi = [dpi for _ in range(N)]
+        # 初始化料箱i与订单o直接的关系（随机初始化）
+        IO = [[0 for _ in range(O)] for _ in range(N)]
+        for i in range(N):
+            # 该料箱属于几个订单,n代表最多属于几个订单
+            n = random.randint(1, 2)
+            for j in range(n):
+                m = random.randint(0, O - 1)
+                IO[i][m] = 1
+        # 初始化总的料箱任务数量
+        sum1 = 0
+        for i in range(len(IO)):
+            sum1 += sum(IO[i])
+        sumIO = sum1
+
+        return Dip, Dpi, IO, sumIO
+
+
+if __name__ == "__main__":
+    # generate instance
+    w_num = 5
+    l_num = 5
+    bins_num = 10
+    robot_num = 10
+    picking_station_num = 20
+    orders_num = 2
+    instance = Instance(w_num, l_num, bins_num, robot_num, picking_station_num, orders_num)
+    print(instance.n)
+    # print("generate {} tasks".format(5))
+    # show map structure
+    # instance.map.render()
+    print("inter to picking station: ", instance.Dip)
+    print("picking station to outdoor: ", instance.Dpi)

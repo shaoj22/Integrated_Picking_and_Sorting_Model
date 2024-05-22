@@ -14,11 +14,11 @@ import sys
 sys.path.append('..')
 import numpy as np
 import gurobipy as gp
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from gurobipy import GRB
-from variable import Variable
-import utils
+from Integrated_Picking_and_Sorting_Model.mathematical_programming_model_decomposition.variable import Variable
+import Integrated_Picking_and_Sorting_Model.utils as utils
 
 class zRelaxedGurobiModel:
     def __init__(self, integrated_instance, variable, time_limit=None, init_flag=False):
@@ -91,8 +91,8 @@ class zRelaxedGurobiModel:
         Q = model.addVars( Q_list, vtype=GRB.CONTINUOUS, name="Q")  # 车的载重
         T_list = [i for i in self.N]
         T = model.addVars( T_list, vtype=GRB.CONTINUOUS, name="T")  # 车的时间
-        pass_list = [(i,k) for i in self.N for k in self.K]
-        passX = model.addVars( pass_list, vtype=GRB.BINARY, name="passX")  # 车k是否经过点i
+        # pass_list = [(i,k) for i in self.N for k in self.K]
+        # passX = model.addVars( pass_list, vtype=GRB.BINARY, name="passX")  # 车k是否经过点i
 
         # sorting 决策变量
         I_list = [ i for i in range(self.n)]
@@ -128,12 +128,12 @@ class zRelaxedGurobiModel:
         # 2. 车辆要完成所有任务
         model.addConstrs( gp.quicksum( self.variable.x[i,j] for j in self.N if j != i) >= 1 for i in (self.P1 + self.P2 + self.D1 + self.D2))
         # 3. 同一个任务用同一个车
-        model.addConstrs( passX[i,k] - passX[j,k] >= M * (self.variable.x[i,j] - 1) for i in self.N for j in self.N for k in self.K)
-        model.addConstrs( passX[i,k] - passX[j,k] <= M * (1 - self.variable.x[i,j]) for i in self.N for j in self.N for k in self.K)
-        # model.addConstrs( (x[i, j] == 1) >> (passX[i, k] == passX[j, k]) for i in self.N for j in self.N for k in self.K )
-        model.addConstrs( passX[self.W[k], k] == 1 for k in self.K)
-        model.addConstrs( gp.quicksum(passX[i, k] for k in self.K) == 1 for i in self.N)
-        model.addConstrs( passX[i, k] == passX[i+2*self.n, k] for i in self.P1+self.P2 for k in self.K)
+        # model.addConstrs( self.variable.passX[i,k] - self.variable.passX[j,k] >= M * (self.variable.x[i,j] - 1) for i in self.N for j in self.N for k in self.K)
+        # model.addConstrs( self.variable.passX[i,k] - self.variable.passX[j,k] <= M * (1 - self.variable.x[i,j]) for i in self.N for j in self.N for k in self.K)
+        # model.addConstrs( (x[i, j] == 1) >> (self.variable.passX[i, k] == self.variable.passX[j, k]) for i in self.N for j in self.N for k in self.K )
+        # model.addConstrs( self.variable.passX[self.W[k], k] == 1 for k in self.K)
+        # model.addConstrs( gp.quicksum(self.variable.passX[i, k] for k in self.K) == 1 for i in self.N)
+        # model.addConstrs( self.variable.passX[i, k] == self.variable.passX[i+2*self.n, k] for i in self.P1+self.P2 for k in self.K)
         # 4. 一个车只能从自己的出发点出发一次
         model.addConstrs( gp.quicksum( self.variable.x[self.W[k],j] for j in self.N if j != self.W[k]) <= 1 for k in self.K)
         # 5. 载重约束
@@ -194,7 +194,7 @@ class zRelaxedGurobiModel:
         z_val = self.variable.z
         for o in range(self.integrated_instance.O):
             for p in range(self.integrated_instance.P):
-                model.getVarByName("z[{},{}]".format(o,p)).start = y_val[o,p]
+                model.getVarByName("z[{},{}]".format(o,p)).start = z_val[o,p]
         model.update()
 
     def run_gurobi_model(self):
@@ -207,7 +207,7 @@ class zRelaxedGurobiModel:
             self.set_init_solution(model)
         model.optimize() # 求解模型
         # 获取解
-        if model.status == 2:
+        if model.status == 9 or model.status == 2:
             solution_z = []
             for o in range(self.O):
                 each_z = []
@@ -219,15 +219,15 @@ class zRelaxedGurobiModel:
         objVal = model.objVal
         objBound = model.objBound
 
-        return objVal, solution_z
+        return objVal, objBound, solution_z
 
 if __name__ == "__main__":
     w_num = 6
     l_num = 6
-    bins_num = 20
-    robot_num = 20
-    picking_station_num = 10
-    orders_num = 20
+    bins_num = 10
+    robot_num = 10
+    picking_station_num = 5
+    orders_num = 10
     problem = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # 获得初始解
     picking_alg = NNH_heuristic_algorithm(problem)
@@ -235,8 +235,9 @@ if __name__ == "__main__":
     sorting_solution = [np.random.randint(problem.P) for _ in range(problem.O)]
     # 构造初始variable
     variable = Variable(problem)
-    x_val, y_val, z_val = utils.solution_transfer(problem, picking_solution, sorting_solution)
+    x_val, y_val, z_val, passX_val = utils.solution_transfer(problem, picking_solution, sorting_solution)
     variable_dict = {
+            'passX' : passX_val,
             'x' : x_val,
             'y' : y_val,
             'z' : z_val,
@@ -247,6 +248,7 @@ if __name__ == "__main__":
     # print(y_val)
     # print(np.array(problem.IO))
 
+    variable.set_passX_variable(variable_dict)
     variable.set_x_variable(variable_dict)
     variable.set_y_variable(variable_dict)
     variable.set_z_variable(variable_dict)

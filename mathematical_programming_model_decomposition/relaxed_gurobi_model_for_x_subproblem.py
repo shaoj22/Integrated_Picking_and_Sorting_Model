@@ -14,11 +14,11 @@ import sys
 sys.path.append('..')
 import numpy as np
 import gurobipy as gp
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from gurobipy import GRB
-from variable import Variable
-import utils
+from Integrated_Picking_and_Sorting_Model.mathematical_programming_model_decomposition.variable import Variable
+import Integrated_Picking_and_Sorting_Model.utils as utils
 
 class xRelaxedGurobiModel:
     def __init__(self, integrated_instance, variable, time_limit=None, init_flag=True):
@@ -194,9 +194,14 @@ class xRelaxedGurobiModel:
         for i in range(self.integrated_instance.nodeNum):
             for j in range(self.integrated_instance.nodeNum):
                 model.getVarByName("x[{},{}]".format(i,j)).start = x_val[i,j]
+        passX_val = self.variable.passX
+        for i in range(self.integrated_instance.nodeNum):
+            for j in range(self.integrated_instance.robotNum):
+                model.getVarByName("passX[{},{}]".format(i,j)).start = passX_val[i,j]
         model.update()
 
     def run_gurobi_model(self):
+        """  """
         model = gp.Model("IntegratedGurobiModel") # 创建gurobi模型
         self.build_gurobi_model(model) # 构建gurobi模型
         if self.time_limit is not None: # 求解时间限制
@@ -205,28 +210,41 @@ class xRelaxedGurobiModel:
         if self.init_flag: # 设置gurobi模型初始解
             self.set_init_solution(model)
         model.optimize() # 求解模型
-        # 获取解
-        solution_x = []
-        for i in self.N:
-            each_x = []
-            for j in self.N:
-                var_name = f"x[{i},{j}]"
-                x_i_j = model.getVarByName(var_name).X
-                each_x.append(x_i_j)
-            solution_x.append(each_x)
         objVal = model.objVal
         objBound = model.objBound
+        solution_x = []
+        solution_passX = []
+        if objVal == 0:
+            return objVal, objBound, solution_x, solution_passX
+        # 获取解
+        if model.status == 9 or model.status == 2:
+            # get x 
+            for i in range(len(self.N)):
+                each_x = []
+                for j in range(len(self.N)):
+                    var_name = f"x[{i},{j}]"
+                    x_i_j = model.getVarByName(var_name).X
+                    each_x.append(x_i_j)
+                solution_x.append(each_x)
+            # get passX
+            for i in range(len(self.N)):
+                each_passX = []
+                for k in range(len(self.K)):
+                    var_name = f"passX[{i},{k}]"
+                    passX_i_k = model.getVarByName(var_name).X
+                    each_passX.append(passX_i_k)
+                solution_passX.append(each_passX)
 
-        return objVal, solution_x
+        return objVal, objBound, solution_x, solution_passX
 
 
 if __name__ == "__main__":
     w_num = 6
     l_num = 6
-    bins_num = 20
-    robot_num = 20
-    picking_station_num = 10
-    orders_num = 20
+    bins_num = 10
+    robot_num = 10
+    picking_station_num = 5
+    orders_num = 10
     problem = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
     # 获得初始解
     picking_alg = NNH_heuristic_algorithm(problem)
@@ -234,15 +252,17 @@ if __name__ == "__main__":
     sorting_solution = [np.random.randint(problem.P) for _ in range(problem.O)]
     # 构造初始variable
     variable = Variable(problem)
-    x_val, y_val, z_val = utils.solution_transfer(problem, picking_solution, sorting_solution)
+    x_val, y_val, z_val, passX_val = utils.solution_transfer(problem, picking_solution, sorting_solution)
     variable_dict = {
             'x' : x_val,
+            'passX' : passX_val,
             'y' : y_val,
             'z' : z_val
         }
     variable.set_x_variable(variable_dict)
+    variable.set_passX_variable(variable_dict)
     variable.set_y_variable(variable_dict)
     variable.set_z_variable(variable_dict)
     # 求解
-    solver = xRelaxedGurobiModel(problem, variable, time_limit=30)
-    objVal, solution_x = solver.run_gurobi_model()
+    solver = xRelaxedGurobiModel(problem, variable, time_limit=20)
+    objVal, obj_bound, solution_x, solution_passX = solver.run_gurobi_model()

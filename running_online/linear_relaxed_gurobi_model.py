@@ -1,28 +1,24 @@
 '''
-File: integrated_gurobi_model_update.py
+File: linear_relaxed_gurobi_model.py
 Project: Integrated_Picking_and_Sorting_Model
 Description: 
 ----------
-a new update model for the picking and sorting model.
+a linear relaxed gurobi model.
 ----------
 Author: 626
-Created Date: 2023.12.08
+Created Date: 2024.05.22
 '''
 
 
-import sys
-sys.path.append('..')
-import numpy as np
 import gurobipy as gp
-from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+from Integrated_Instance import Instance
 from gurobipy import GRB
 
 
-class IntegratedGurobiModel:
+class LinearRelaxedGurobiModel:
     def __init__(self, integrated_instance, time_limit=None, init_flag=True):
         """
-        init the IntegratedGurobiModel with inputting instance.
+        init the LinearRelaxedGurobiModel with inputting instance.
 
         Args:
         integrated_instance (class): instance class of the problem. 
@@ -69,30 +65,30 @@ class IntegratedGurobiModel:
         toe_list = [o for o in range(self.O)]
         toe = model.addVars( toe_list, vtype=GRB.CONTINUOUS, name="toe")
         a1_list = [(o1,o2) for o1 in range(self.O) for o2 in range(self.O)]
-        a1 = model.addVars(a1_list, vtype=GRB.BINARY, name="a1")
+        a1 = model.addVars(a1_list, vtype=GRB.CONTINUOUS, name="a1")
         b1_list = [(o1,o2) for o1 in range(self.O) for o2 in range(self.O)]
-        b1 = model.addVars(b1_list, vtype=GRB.BINARY, name="b1")
+        b1 = model.addVars(b1_list, vtype=GRB.CONTINUOUS, name="b1")
         c1_list = [(o1,o2) for o1 in range(self.O) for o2 in range(self.O)]
-        c1 = model.addVars(c1_list, vtype=GRB.BINARY, name="c1")
+        c1 = model.addVars(c1_list, vtype=GRB.CONTINUOUS, name="c1")
         d1_list = [(o1,o2) for o1 in range(self.O) for o2 in range(self.O)]
-        d1 = model.addVars(d1_list, vtype=GRB.BINARY, name="d1")
+        d1 = model.addVars(d1_list, vtype=GRB.CONTINUOUS, name="d1")
         # picking 决策变量
         x_list = [(i,j) for i in self.N for j in self.N]
-        x = model.addVars(x_list, vtype=GRB.BINARY, name="x") # 车的路径
+        x = model.addVars(x_list, vtype=GRB.CONTINUOUS, name="x") # 车的路径
         Q_list = [i for i in self.N]
         Q = model.addVars( Q_list, vtype=GRB.CONTINUOUS, name="Q")  # 车的载重
         T_list = [i for i in self.N]
         T = model.addVars(T_list, vtype=GRB.CONTINUOUS, name="T")  # 车的时间
         pass_list = [(i,k) for i in self.N for k in self.K]
-        passX = model.addVars( pass_list, vtype=GRB.BINARY, name="passX")  # 车k是否经过点i
+        passX = model.addVars( pass_list, vtype=GRB.CONTINUOUS, name="passX")  # 车k是否经过点i
         FT = model.addVar( vtype=GRB.CONTINUOUS, name="FT") # 所有任务完成的时间
         # sorting 决策变量
         I_list = [i for i in range(self.n)]
         I = model.addVars( I_list, vtype=GRB.INTEGER, name="I")  # 料箱i的初始到达输送机的时间
         y_list = [(i,p) for i in range(self.n) for p in range(self.P)]
-        y = model.addVars(y_list, vtype=GRB.BINARY, name="y") # 料箱i是否被分配给了拣选站p
+        y = model.addVars(y_list, vtype=GRB.CONTINUOUS, name="y") # 料箱i是否被分配给了拣选站p
         z_list = [(o,p) for o in range(self.O) for p in range(self.P)]
-        z = model.addVars(z_list, vtype=GRB.BINARY, name="z") # 订单o是否被分配给了拣选站p
+        z = model.addVars(z_list, vtype=GRB.CONTINUOUS, name="z") # 订单o是否被分配给了拣选站p
         Ta_list = [(i,p) for i in range(self.n) for p in range(self.P)]
         Ta = model.addVars(Ta_list, vtype=GRB.INTEGER, name="Ta") # 料箱i到达拣选站p的时间
         Ts_list = [(i,p) for i in range(self.n) for p in range(self.P)]
@@ -100,7 +96,7 @@ class IntegratedGurobiModel:
         Te_list = [(i,p) for i in range(self.n) for p in range(self.P)]
         Te = model.addVars(Te_list, vtype=GRB.INTEGER, name="Te" ) # 料箱i在拣选站p的结束拣选时间
         f_list = [(i,j,p) for i in range(self.n) for j in range(self.n) for p in range(self.P)]
-        f = model.addVars( f_list, vtype=GRB.BINARY, name="f") # 料箱i是否先于料箱j到达拣选站p
+        f = model.addVars( f_list, vtype=GRB.CONTINUOUS, name="f") # 料箱i是否先于料箱j到达拣选站p
 
 
         # 添加目标函数
@@ -185,47 +181,27 @@ class IntegratedGurobiModel:
 
         return info
 
-    def set_init_solution(self, model):
-        """ set init solution for model """
-        x_val = np.zeros((self.integrated_instance.nodeNum, self.integrated_instance.nodeNum))
-        # init strategy 1
-        init_alg = NNH_heuristic_algorithm(self.integrated_instance)
-        routes = init_alg.NNH_main()
-        # init strategy 2
-        # set init solution
-        for route in routes:
-            for i in range(1, len(route)):
-                pi = route[i-1]
-                pj = route[i]
-                x_val[pi, pj] = 1
-            x_val[route[-1], route[0]] = 1
-        for i in range(self.integrated_instance.nodeNum):
-            for j in range(self.integrated_instance.nodeNum):
-                model.getVarByName("x[{},{}]".format(i,j)).start = x_val[i,j]
-        model.update()
-
     def run_gurobi_model(self):
         model = gp.Model("IntegratedGurobiModel") # 创建gurobi模型
         self.build_gurobi_model(model) # 构建gurobi模型
         if self.time_limit is not None: # 求解时间限制
             model.setParam("TimeLimit", self.time_limit)
         model.setParam("OutputFlag", 1)  # 求解过程展示
-        if self.init_flag: # 设置gurobi模型初始解
-            self.set_init_solution(model)
         model.optimize() # 求解模型
 
-        return model
+        return model.ObjVal
 
 if __name__ == "__main__":
-    w_num = 6
-    l_num = 6
-    bins_num = 10
-    robot_num = 10
+    w_num = 10
+    l_num = 12
+    bins_num = 20
+    robot_num = 20
     picking_station_num = 5
-    orders_num = 10
+    orders_num = 20
     problem = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
-    solver = IntegratedGurobiModel(problem, init_flag=True)
-    model = solver.run_gurobi_model()
+    solver = LinearRelaxedGurobiModel(problem, init_flag=False)
+    obj_val = solver.run_gurobi_model()
+    print(obj_val)
 
 
 

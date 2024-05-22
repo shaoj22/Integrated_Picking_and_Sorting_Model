@@ -25,14 +25,14 @@ def alns_experiment_runner(instances):
     alns_idx = 0
     row_idx = 0
     for instance in instances:
-        if alns_idx <= 7:
-            alns_idx += 1
-            continue
+        # if alns_idx <= 7:
+        #     alns_idx += 1
+        #     continue
         each_alns_idx = 0
         each_alns_results = []
         each_alns_time = []
-        for i in range(2,3):
-            alns_solver = ALNS(instance[i], iter_num=1000000)
+        for i in range(1):
+            alns_solver = ALNS(instance[i], iter_num=30000)
             start_time = time.time()
             solution, obj, obj_of_500 = alns_solver.run()
             end_time = time.time()

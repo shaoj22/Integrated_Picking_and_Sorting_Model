@@ -14,14 +14,14 @@ import sys
 sys.path.append('..')
 import numpy as np
 import gurobipy as gp
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from gurobipy import GRB
-from variable import Variable
-import utils
+from Integrated_Picking_and_Sorting_Model.mathematical_programming_model_decomposition.variable import Variable
+import Integrated_Picking_and_Sorting_Model.utils as utils
 
 
-class masterProblem:
+class MasterProblem:
     def __init__(self, variable, time_limit=None, init_flag=False):
         """
         init the xRelaxedGurobiModel with inputting instance and variable.
@@ -95,6 +95,6 @@ if __name__ == "__main__":
     variable.T_list = [100, 140, 130]
     variable.input_st = [1, 0, 0]
     # 求解
-    solver = masterProblem(variable)
+    solver = MasterProblem(variable)
     st = solver.run_gurobi_model()
     print(st)
