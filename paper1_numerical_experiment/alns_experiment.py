@@ -2,7 +2,7 @@
 Author: shaoj22 935619774@qq.com
 Date: 2024-03-19 19:59:06
 LastEditors: shaoj22 935619774@qq.com
-LastEditTime: 2024-03-20 21:48:13
+LastEditTime: 2024-04-25 09:31:48
 FilePath: \Integrated_Picking_and_Sorting_Model\paper1_numerical_experiment\\alns_experiment.py
 Description: alns experiment.
 '''
@@ -21,18 +21,15 @@ def alns_experiment_runner(instances):
     alns_results = []
     book = xlwt.Workbook(encoding='utf-8')
     sheet = book.add_sheet("alns")
-    save_path = "../Integrated_Picking_and_Sorting_Model/paper1_numerical_experiment/result/alns_results_of_large_scale_instances.xls"
+    save_path = "../Integrated_Picking_and_Sorting_Model/paper1_numerical_experiment/result/alns_results_of_medium_scale_instances.xls"
     alns_idx = 0
     row_idx = 0
     for instance in instances:
-        if alns_idx < 6:
-            alns_idx += 1
-            continue
         each_alns_idx = 0
         each_alns_results = []
         each_alns_time = []
-        for i in range(10):
-            alns_solver = ALNS(instance[i], iter_num=50000)
+        for i in range(1):
+            alns_solver = ALNS(instance[i], iter_num=10000)
             start_time = time.time()
             solution, obj, obj_of_500 = alns_solver.run()
             end_time = time.time()
@@ -61,9 +58,9 @@ if __name__ == "__main__":
     medium_scale_instances_matrix = generate_medium_scale_instances_matrix()
     large_scale_instance_matrix = generate_large_scale_instances_matrix()
     # small_scale_instances = generate_instances(small_scale_instances_matrix)
-    # medium_scale_instances = generate_instances(medium_scale_instances_matrix)
-    large_scale_instances = generate_instances(large_scale_instance_matrix)
+    medium_scale_instances = generate_instances(medium_scale_instances_matrix)
+    # large_scale_instances = generate_instances(large_scale_instance_matrix)
     # run instances
     # alns_results_1 = alns_experiment_runner(small_scale_instances)
-    # alns_results_2 = alns_experiment_runner(medium_scale_instances)
-    alns_results_3 = alns_experiment_runner(large_scale_instances)
+    alns_results_2 = alns_experiment_runner(medium_scale_instances)
+    # alns_results_3 = alns_experiment_runner(large_scale_instances)

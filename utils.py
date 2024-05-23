@@ -400,10 +400,15 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
 # 转换picking_solution, sorting_solution为x_val, y_val, z_val
 def solution_transfer(integrated_instance, picking_solution, sorting_solution):
     x_val = np.zeros((integrated_instance.nodeNum, integrated_instance.nodeNum))
+    passX_val = np.zeros((integrated_instance.nodeNum, integrated_instance.robotNum))
+    k = 0
     for route in picking_solution:
         for i in range(len(route)-1):
             x_val[route[i], route[i+1]] = 1
+            passX_val[route[i], k] = 1
         x_val[route[-1], route[0]] = 1
+        passX_val[route[-1], k] = 1
+        k += 1
     y_val = np.zeros((integrated_instance.n, integrated_instance.P))
     z_val = np.zeros((integrated_instance.O, integrated_instance.P))
     for o in range(integrated_instance.O):
@@ -414,6 +419,6 @@ def solution_transfer(integrated_instance, picking_solution, sorting_solution):
                     if integrated_instance.IO[i][o] == 1:
                         y_val[i,p] = 1
 
-    return x_val, y_val, z_val
+    return x_val, y_val, z_val, passX_val
 
 

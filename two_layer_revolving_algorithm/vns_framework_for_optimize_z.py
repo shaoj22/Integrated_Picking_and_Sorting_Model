@@ -14,15 +14,12 @@ import sys
 sys.path.append("..")
 import numpy as np
 import tqdm
-from common_algorithm_by_gurobi import commonAlgorithmByGurobi
-from two_layer_revolving_algorithm.common_algorithm_by_strengthened_gurobi import commonAlgorithmByStrengthenedGurobi
-from Variable import Variable
-from TRA_utils import *
-from generate_instances.Integrated_Instance import Instance
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-import utils
-import utils_new
-import operators_for_z
+# from TRA_utils import *
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+import Integrated_Picking_and_Sorting_Model.utils
+import Integrated_Picking_and_Sorting_Model.utils_new as utils_new
+import Integrated_Picking_and_Sorting_Model.two_layer_revolving_algorithm.operators_for_z
 
 
 class VNS:
@@ -80,7 +77,7 @@ class VNS:
         Returns:
             obj (double): the update obj after solving by neighborhood;
         """
-        obj, info = utils.efficient_integrated_evaluate(self.problem, self.picking_solution, cur_sorting_solution)
+        obj, info = utils_new.efficient_integrated_evaluate(self.problem, self.picking_solution, cur_sorting_solution)
         
         return obj
 
@@ -112,7 +109,6 @@ class VNS:
         operator_k = 0 # 记录当前操作的operator index
         neighborhood = self.get_neighborhood(self.best_solution, operator=self.operators_list[0]) # 获取第0个operator的邻域
         pbar = tqdm.tqdm(range(self.iter_num), desc="Variable z VNS Iteration")
-        
         # main framework
         # while cur_iter_num < self.iter_num:
         for step in pbar:

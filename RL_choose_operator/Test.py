@@ -9,9 +9,9 @@ Description: 测试模型在ALNS中的效果，以目标值为观测指标
 import sys
 sys.path.append('..')
 import os
-from generate_instances import Integrated_Instance
-from generate_instances.generate_instances import generate_medium_instances
-from RL_choose_operator.Env import ALNSGymEnv
+from Integrated_Picking_and_Sorting_Model.generate_instances import Integrated_Instance
+from Integrated_Picking_and_Sorting_Model.generate_instances.generate_instances import generate_medium_instances
+from Integrated_Picking_and_Sorting_Model.RL_choose_operator.Env import ALNSGymEnv
 from stable_baselines3 import PPO
 from collections import defaultdict
 import numpy as np
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/test_instances.txt').readlines()]
     # instance_params_list = [eval(params_str) for params_str in open(cur_dir + '/data/train_instances.txt').readlines()]
     instance_list = [Integrated_Instance.Instance(*params) for params in instance_params_list]
-    tester = Tester(instance_list, 10000, cur_dir + '\log\sb3\ppo-20240414-203214\model.zip', cur_dir + '/result')
+    tester = Tester(instance_list, 500, cur_dir + '\log\sb3\ppo-20240414-203214\model.zip', cur_dir + '/result')
     tester.test()
 
         

@@ -14,8 +14,8 @@ import sys
 sys.path.append('..')
 import numpy as np
 import gurobipy as gp
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
-from generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
 from gurobipy import GRB
 from Variable import Variable
 

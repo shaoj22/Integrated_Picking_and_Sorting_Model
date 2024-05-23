@@ -16,8 +16,8 @@ import numpy as np
 from tqdm import trange, tqdm
 from Variable import Variable
 from TRA_utils import *
-from generate_instances.Integrated_Instance import Instance
-from heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
+from Integrated_Picking_and_Sorting_Model.generate_instances.Integrated_Instance import Instance
+from Integrated_Picking_and_Sorting_Model.heuristic_algorithm.NNH_heuristic_algorithm import NNH_heuristic_algorithm
 from common_algorithm_by_gurobi import commonAlgorithmByGurobi
 import utils
 import operators_for_x, operators_for_z

@@ -64,6 +64,21 @@ def generate_large_scale_instances_matrix():
     
     return large_scale_instances_matrix
 
+
+def generate_RL_instances_matrix():
+    """ generate RL instances matrix """
+
+    RL_instances_matrix = [
+        [5, 5, 30, 30, 10, 6],
+        [6, 6, 40, 40, 15, 7],
+        [7, 7, 50, 50, 20, 8],
+        [8, 8, 60, 60, 25, 9],
+        [9, 9, 70, 70, 30, 11],
+    ]
+    
+    return RL_instances_matrix
+
+
 def generate_instances(instances_matrix):
     """ input instances matrix, output instances """
 

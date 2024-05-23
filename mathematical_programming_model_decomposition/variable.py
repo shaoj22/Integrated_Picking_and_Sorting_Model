@@ -56,7 +56,10 @@ class Variable:
 
     def set_z_variable(self, variable_update_dict):
         self.z = variable_update_dict['z']
-
+        
+    def set_passX_variable(self, variable_update_dict):
+        self.passX = variable_update_dict['passX']
+    
     def set_auxiliary_variable(self, variable_update_dict):
         self.a1 = variable_update_dict['a1']
         self.b1 = variable_update_dict['b1']

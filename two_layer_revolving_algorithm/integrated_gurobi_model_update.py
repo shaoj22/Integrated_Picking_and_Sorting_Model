@@ -30,7 +30,7 @@ class IntegratedGurobiModel:
         # common param
         self.integrated_instance = integrated_instance
         self.time_limit = time_limit
-        self.bigM = 2000
+        self.bigM = 1200
         # picking param
         self.init_flag = init_flag
         self.Q = integrated_instance.capacity
@@ -219,12 +219,12 @@ class IntegratedGurobiModel:
 if __name__ == "__main__":
     w_num = 6
     l_num = 6
-    bins_num = 40
-    robot_num = 20
-    picking_station_num = 10
-    orders_num = 30
+    bins_num = 10
+    robot_num = 10
+    picking_station_num = 5
+    orders_num = 10
     problem = Instance(w_num, l_num, bins_num, orders_num, robot_num, picking_station_num)
-    solver = IntegratedGurobiModel(problem, init_flag=False)
+    solver = IntegratedGurobiModel(problem, init_flag=True)
     model = solver.run_gurobi_model()
 
 

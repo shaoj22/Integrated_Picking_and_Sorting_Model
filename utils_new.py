@@ -2,7 +2,7 @@
 Author: shaoj22 935619774@qq.com
 Date: 2024-03-10 16:33:10
 LastEditors: shaoj22 935619774@qq.com
-LastEditTime: 2024-03-20 21:44:06
+LastEditTime: 2024-04-07 10:05:57
 FilePath: /Integrated_Picking_and_Sorting_Model/utils_new.py.
 Description: new utils for the fitness evaluate.
 '''
@@ -47,10 +47,10 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
     T = np.zeros(integrated_instance.nodeNum) # 记录车到达每个点的时间
     num = 0
     # 每个车按访问点位前进
-    while robot_completed.count(False)>0:
+    while robot_completed.count(False) > 0:
         # base case: 不符合约束的解直接退出
         num += 1
-        if num == 30000:
+        if num == 10000:
             print("error")
             obj += 10000
             return obj, info
@@ -67,6 +67,13 @@ def efficient_integrated_evaluate(integrated_instance, picking_solution, sorting
                 # 当前车已完成
                 robot_completed[r] = True
             cur_node = picking_solution[r][robot_cur_visit_idx[r]] # 当前车访问的当前节点
+            # 判断cur_node是否为d1点并且它的p1点是否完成
+            if integrated_instance.node2type[cur_node] in ['D1', 'D2']:
+                d_idx = picking_solution[r].index(cur_node) # 当前d点在当前robot的路径中的索引
+                p_idx = picking_solution[r].index(cur_node-2*integrated_instance.n) # 当前d点对应的p点在当前robot的路径中的索引
+                if d_idx < p_idx:
+                    obj += 10000
+                    return obj, info
             # 如果是p2点则需判断是否d1点已经完成，并且更新p2的时间
             if integrated_instance.node2type[cur_node] == 'P2':
                 # P2是否在P1之前
